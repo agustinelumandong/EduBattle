@@ -3,7 +3,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { GAME_CONFIG, SUBJECT_COLORS, SUBJECT_ICONS } from '../../data/game-config';
 import type { GameState } from '../battle/BattleScene';
 
@@ -22,10 +21,6 @@ const GameHUD: React.FC<GameHUDProps> = ({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const canAffordUnit = (unitCost: number): boolean => {
-    return gameState.playerGold >= unitCost;
   };
 
   return (
@@ -64,7 +59,6 @@ const GameHUD: React.FC<GameHUDProps> = ({
       <div className="flex justify-center mb-4">
         <div className="grid grid-cols-3 gap-4">
           {GAME_CONFIG.units.map((unit) => {
-            const affordable = canAffordUnit(unit.cost);
             const subjectColor = SUBJECT_COLORS[unit.subject];
             const subjectIcon = SUBJECT_ICONS[unit.subject];
             
@@ -72,21 +66,16 @@ const GameHUD: React.FC<GameHUDProps> = ({
               <Button
                 key={unit.id}
                 onClick={() => onUnitClick(unit.id)}
-                disabled={!affordable || gameState.isGameOver}
-                className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all ${
-                  affordable 
-                    ? 'hover:scale-105 hover:shadow-lg' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
+                disabled={gameState.isGameOver}
+                className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all hover:scale-105 hover:shadow-lg`}
                 style={{
-                  backgroundColor: affordable ? subjectColor : '#666',
-                  borderColor: affordable ? '#fff' : '#999'
+                  backgroundColor: subjectColor,
+                  borderColor: '#fff'
                 }}
               >
                 <div className="text-2xl mb-1">{subjectIcon}</div>
                 <div className="text-xs text-center leading-tight">
-                  {unit.name.split(' ')[0]}<br />
-                  💰{unit.cost}
+                  {unit.name.split(' ')[0]}
                 </div>
               </Button>
             );
@@ -98,7 +87,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
       <div className="flex justify-center">
         <div className="flex gap-2">
           {GAME_CONFIG.spells.map((spell) => {
-            const affordable = canAffordUnit(spell.cost);
+            const affordable = gameState.playerGold >= spell.cost;
             
             return (
               <Button
@@ -119,7 +108,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
       {/* Mobile-specific instructions */}
       <div className="lg:hidden mt-2 text-center">
         <p className="text-xs text-gray-400">
-          Tap unit buttons to deploy! Answer quizzes correctly for stronger units! 💪
+          Answer quizzes correctly for stronger units! Use gold for spells! ✨
         </p>
       </div>
     </div>

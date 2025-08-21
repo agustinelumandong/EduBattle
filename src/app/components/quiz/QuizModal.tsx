@@ -83,6 +83,9 @@ const QuizModal: React.FC<QuizModalProps> = ({
     setTimeout(() => {
       onAnswer(false);
       onClose();
+      // Reset state after closing
+      setHasAnswered(false);
+      setShowResult(false);
     }, 1500);
   }, [hasAnswered, onAnswer, onClose]);
 
@@ -105,6 +108,9 @@ const QuizModal: React.FC<QuizModalProps> = ({
     setTimeout(() => {
       onAnswer(correct);
       onClose();
+      // Reset state after closing
+      setHasAnswered(false);
+      setShowResult(false);
     }, 1500);
   }, [question, selectedAnswer, numericAnswer, hasAnswered, onAnswer, onClose]);
 

@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
-import { UnitHelpers, type BattleUnit } from './helpers/unitHelpers';
-import { soundManager } from './helpers/soundManager';
 import { GAME_CONFIG } from '../../data/game-config';
+import { soundManager } from './helpers/soundManager';
+import { UnitHelpers, type BattleUnit } from './helpers/unitHelpers';
 
 export interface GameState {
   playerGold: number;
@@ -26,6 +26,7 @@ export default class BattleScene extends Phaser.Scene {
   private enemyBase?: Phaser.GameObjects.Graphics;
   private goldTimer?: Phaser.Time.TimerEvent;
   private matchTimer?: Phaser.Time.TimerEvent;
+  private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
   private lastTime: number = 0;
   
   // Callbacks for React components
@@ -51,6 +52,9 @@ export default class BattleScene extends Phaser.Scene {
     
     // Start match timer
     this.startMatchTimer();
+    
+    // Start global quiz timer
+    this.startQuizTimer();
     
     // Add input handling
     this.setupInput();
@@ -141,9 +145,32 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
   
+  private startQuizTimer(): void {
+    // Timer for global quiz interval - every 30 seconds
+    this.quizTimer = this.time.addEvent({
+      delay: GAME_CONFIG.quiz.globalQuizIntervalSeconds * 1000,
+      callback: () => {
+        if (this.gameState.isGameOver) return;
+        
+        // Randomly select a unit type to ask about
+        const randomUnit = GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
+        
+        if (this.onRequestQuiz) {
+          this.onRequestQuiz(randomUnit.id, (correct: boolean) => {
+            // Only deploy unit if answer is correct - player must make a choice
+            if (correct) {
+              this.deployUnit(randomUnit.id, true);
+            }
+          });
+        }
+      },
+      loop: true
+    });
+  }
+  
   private setupInput(): void {
     // Click to deploy units (will be handled by React UI)
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    this.input.on('pointerdown', () => {
       // This will be handled by the UI overlay
     });
   }
@@ -185,7 +212,8 @@ export default class BattleScene extends Phaser.Scene {
     for (const unit of this.units) {
       // Find target
       if (!unit.target || UnitHelpers.isUnitDead(unit.target)) {
-        unit.target = UnitHelpers.findTarget(unit, this.units);
+        const newTarget = UnitHelpers.findTarget(unit, this.units);
+        unit.target = newTarget || undefined;
       }
       
       if (unit.target) {
@@ -256,6 +284,7 @@ export default class BattleScene extends Phaser.Scene {
     // Stop timers
     if (this.goldTimer) this.goldTimer.destroy();
     if (this.matchTimer) this.matchTimer.destroy();
+    if (this.quizTimer) this.quizTimer.destroy();
     
     // Play victory sound
     if (this.gameState.winner === 'player') {
@@ -267,22 +296,13 @@ export default class BattleScene extends Phaser.Scene {
   
   // Public methods for React components
   public deployUnit(unitType: string, isCorrect: boolean): void {
+    // Don't allow deployment if game is over
+    if (this.gameState.isGameOver) return;
+    
     const unitConfig = GAME_CONFIG.units.find(u => u.id === unitType);
     if (!unitConfig) return;
     
-    // Check if player has enough gold
-    if (this.gameState.playerGold < unitConfig.cost) return;
-    
-    // Deduct gold
-    this.gameState.playerGold -= unitConfig.cost;
-    
-    // Add bonus/penalty gold
-    if (isCorrect) {
-      this.gameState.playerGold += GAME_CONFIG.economy.correctBonus;
-    } else {
-      this.gameState.playerGold = Math.max(0, this.gameState.playerGold - GAME_CONFIG.economy.wrongPenalty);
-    }
-    
+    // For units, no gold cost is applied - units are deployed based on quiz answers
     // Spawn unit
     const unit = UnitHelpers.createUnit(
       this,
@@ -305,7 +325,7 @@ export default class BattleScene extends Phaser.Scene {
   private spawnEnemyUnit(): void {
     // Simple AI: randomly pick a unit type
     const randomUnit = GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
-    const isWeak = Math.random() < 0.3; // 30% chance of weak unit
+    const isWeak = Math.random() < 0.90; // 30% chance of weak unit
     
     const unit = UnitHelpers.createUnit(
       this,
@@ -321,6 +341,85 @@ export default class BattleScene extends Phaser.Scene {
   
   public getGameState(): GameState {
     return { ...this.gameState };
+  }
+  
+  public castSpell(spellId: string): boolean {
+    // Don't allow if game is over
+    if (this.gameState.isGameOver) return false;
+    
+    const spellConfig = GAME_CONFIG.spells.find(s => s.id === spellId);
+    if (!spellConfig) return false;
+    
+    // Check if player has enough gold
+    if (this.gameState.playerGold < spellConfig.cost) return false;
+    
+    // Deduct gold
+    this.gameState.playerGold = Math.max(0, this.gameState.playerGold - spellConfig.cost);
+    
+    // Apply spell effect based on ID
+    switch(spellConfig.id) {
+      case 'freeze':
+        // Freeze enemy units for 3 seconds
+        this.units.forEach(unit => {
+          if (unit.team === 'enemy') {
+            unit.isFrozen = true;
+            
+            // Unfreeze after 3 seconds
+            this.time.delayedCall(3000, () => {
+              if (unit && !UnitHelpers.isUnitDead(unit)) {
+                unit.isFrozen = false;
+              }
+            });
+          }
+        });
+        soundManager.playSpellCast();
+        break;
+        
+      case 'heal':
+        // Heal base by 10%
+        const healAmount = Math.floor(GAME_CONFIG.battle.baseMaxHealth * 0.1);
+        this.gameState.playerBaseHp = Math.min(
+          GAME_CONFIG.battle.baseMaxHealth,
+          this.gameState.playerBaseHp + healAmount
+        );
+        this.updateBases();
+        soundManager.playSpellCast();
+        break;
+        
+      case 'double_gold':
+        // Double gold income for 10 seconds
+        if (this.goldTimer) {
+          this.goldTimer.destroy();
+        }
+        
+        // Create a new gold timer with double rate
+        this.goldTimer = this.time.addEvent({
+          delay: 1000, // Every second
+          callback: () => {
+            this.gameState.playerGold += GAME_CONFIG.economy.goldPerSecond * 2;
+            this.updateGameState();
+          },
+          loop: true,
+          repeat: 10 // 10 seconds
+        });
+        
+        // After 10 seconds, restore normal gold rate
+        this.time.delayedCall(10000, () => {
+          if (this.goldTimer) {
+            this.goldTimer.destroy();
+          }
+          
+          this.startGoldIncome();
+        });
+        soundManager.playSpellCast();
+        break;
+        
+      default:
+        return false;
+    }
+    
+    this.updateGameState();
+    return true;
   }
   
   private updateGameState(): void {

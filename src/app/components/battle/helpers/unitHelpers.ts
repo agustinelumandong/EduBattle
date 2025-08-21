@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import type { UnitConfig } from '../../../data/game-config';
 
 export interface BattleUnit extends Phaser.GameObjects.Graphics {
+  body: Phaser.Physics.Matter.Sprite['body'];
   unitId: string;
   unitType: string;
   team: 'player' | 'enemy';
@@ -12,6 +13,7 @@ export interface BattleUnit extends Phaser.GameObjects.Graphics {
   speed: number;
   isWrongAnswer: boolean;
   lastAttackTime: number;
+  isFrozen?: boolean; // New property for freeze spell
   target?: BattleUnit;
   healthBar?: Phaser.GameObjects.Graphics;
 }
@@ -70,7 +72,6 @@ export class UnitHelpers {
     const size = isWrongAnswer ? 10 : 12; // Smaller for wrong answers
     
     unit.fillStyle(color, 0.8);
-    unit.strokeLineWidth(2);
     unit.lineStyle(2, 0x000000);
     
     switch (config.id) {
@@ -155,7 +156,7 @@ export class UnitHelpers {
   }
   
   static moveUnit(unit: BattleUnit, deltaTime: number): void {
-    if (!unit.body) return;
+    if (!unit.body || unit.isFrozen) return; // Don't move if frozen
     
     const direction = unit.team === 'player' ? 1 : -1;
     const velocity = (unit.speed * deltaTime) / 1000;
@@ -192,7 +193,8 @@ export class UnitHelpers {
   static attackTarget(unit: BattleUnit, target: BattleUnit, currentTime: number): boolean {
     const attackCooldown = 1000; // 1 second between attacks
     
-    if (currentTime - unit.lastAttackTime < attackCooldown) {
+    // Don't attack if frozen
+    if (unit.isFrozen || currentTime - unit.lastAttackTime < attackCooldown) {
       return false;
     }
     

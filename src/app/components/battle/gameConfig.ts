@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import PhaserMatterCollisionPlugin from 'phaser-matter-collision-plugin';
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
-  width: 800,
+  width: 1000,
   height: 400,
   type: Phaser.AUTO,
   backgroundColor: '#2D5016',

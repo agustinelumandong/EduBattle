@@ -60,8 +60,8 @@ export interface QuizQuestion {
 
 export const GAME_CONFIG: GameConfig = {
   economy: {
-    startGold: 300,
-    goldPerSecond: 5,
+    startGold: 99999,
+    goldPerSecond: 99999,
     killGold: 20,
     correctBonus: 50,
     wrongPenalty: 10,
@@ -108,7 +108,7 @@ export const GAME_CONFIG: GameConfig = {
   ],
   quiz: {
     timerSeconds: 10,
-    globalQuizIntervalSeconds: 30,
+    globalQuizIntervalSeconds: 10, // Quiz every 30 seconds
     subjects: ['math', 'science', 'history', 'language'],
   },
   spells: [
@@ -139,7 +139,7 @@ export const GAME_CONFIG: GameConfig = {
   ],
   battle: {
     matchDurationMinutes: 4,
-    baseMaxHealth: 1000,
+    baseMaxHealth: 100,
     laneWidth: 800,
     unitSpeed: 50,
   },

@@ -8,12 +8,18 @@ import type { GameState } from './BattleScene';
 let game: Phaser.Game | null = null;
 let battleScene: BattleScene | null = null;
 
+export interface PhaserGameRef {
+  deployUnit: (unitType: string, isCorrect: boolean) => void;
+  castSpell: (spellId: string) => boolean;
+  getGameState: () => GameState | null;
+}
+
 interface PhaserGameComponentProps {
   onGameStateUpdate: (state: GameState) => void;
   onRequestQuiz: (unitType: string, callback: (correct: boolean) => void) => void;
 }
 
-const PhaserGameComponent = React.forwardRef<any, PhaserGameComponentProps>(({
+const PhaserGameComponent = React.forwardRef<PhaserGameRef, PhaserGameComponentProps>(({
   onGameStateUpdate,
   onRequestQuiz
 }, ref) => {
@@ -50,6 +56,12 @@ const PhaserGameComponent = React.forwardRef<any, PhaserGameComponentProps>(({
       if (battleScene) {
         battleScene.deployUnit(unitType, isCorrect);
       }
+    },
+    castSpell: (spellId: string) => {
+      if (battleScene) {
+        return battleScene.castSpell(spellId);
+      }
+      return false;
     },
     getGameState: () => {
       return battleScene ? battleScene.getGameState() : null;

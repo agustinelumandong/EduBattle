@@ -3,6 +3,7 @@
 import React, { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { GameState } from './BattleScene';
+import type { PhaserGameRef } from './PhaserGameComponent';
 
 // Dynamically import PhaserGameComponent only on client
 const PhaserGameComponent = dynamic(() => import('./PhaserGameComponent'), {
@@ -14,19 +15,24 @@ const PhaserGameComponent = dynamic(() => import('./PhaserGameComponent'), {
   ),
 });
 
+export interface BattleArenaRef {
+  deployUnit: (unitType: string, isCorrect: boolean) => void;
+  castSpell: (spellId: string) => boolean;
+}
+
 interface BattleArenaProps {
   gameState: GameState;
   onGameStateUpdate: (state: GameState) => void;
   onRequestQuiz: (unitType: string, callback: (correct: boolean) => void) => void;
 }
 
-const BattleArena = React.forwardRef<any, BattleArenaProps>(({
+const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(({
   gameState,
   onGameStateUpdate,
   onRequestQuiz
 }, ref) => {
   const [isClient, setIsClient] = useState<boolean>(false);
-  const gameRef = React.useRef<any>(null);
+  const gameRef = React.useRef<PhaserGameRef>(null);
 
   React.useEffect(() => { 
     setIsClient(true); 
@@ -46,6 +52,12 @@ const BattleArena = React.forwardRef<any, BattleArenaProps>(({
       if (gameRef.current) {
         gameRef.current.deployUnit(unitType, isCorrect);
       }
+    },
+    castSpell: (spellId: string) => {
+      if (gameRef.current) {
+        return gameRef.current.castSpell(spellId);
+      }
+      return false;
     }
   }), []);
 

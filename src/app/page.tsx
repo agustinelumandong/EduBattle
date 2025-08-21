@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 import BattleArena from './components/battle/BattleArena';
+import type { BattleArenaRef } from './components/battle/BattleArena';
 import type { GameState } from './components/battle/BattleScene';
 import QuizModal from './components/quiz/QuizModal';
 import GameHUD from './components/ui/GameHUD';
@@ -28,7 +29,7 @@ export default function EduBattle(): ReactElement {
   const [pendingQuiz, setPendingQuiz] = useState<PendingQuiz | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   
-  const battleArenaRef = useRef<any>(null);
+  const battleArenaRef = useRef<BattleArenaRef>(null);
 
   const handleGameStateUpdate = useCallback((state: GameState) => {
     setGameState(state);
@@ -45,6 +46,10 @@ export default function EduBattle(): ReactElement {
       setPendingQuiz(null);
     }
     setIsQuizOpen(false);
+    // Add a small delay before allowing new quizzes
+    setTimeout(() => {
+      setPendingQuiz(null);
+    }, 100);
   }, [pendingQuiz]);
 
   const handleQuizClose = useCallback(() => {
@@ -53,22 +58,18 @@ export default function EduBattle(): ReactElement {
       setPendingQuiz(null);
     }
     setIsQuizOpen(false);
+    // Add a small delay before allowing new quizzes
+    setTimeout(() => {
+      setPendingQuiz(null);
+    }, 100);
   }, [pendingQuiz]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUnitClick = useCallback((unitType: string) => {
-    if (!gameStarted || gameState.isGameOver) return;
-    
-    // Check if player has enough gold
-    const unitConfig = GAME_CONFIG.units.find(u => u.id === unitType);
-    if (!unitConfig || gameState.playerGold < unitConfig.cost) return;
-    
-    // Trigger quiz modal
-    handleRequestQuiz(unitType, (correct: boolean) => {
-      if (battleArenaRef.current) {
-        battleArenaRef.current.deployUnit(unitType, correct);
-      }
-    });
-  }, [gameStarted, gameState.isGameOver, gameState.playerGold, handleRequestQuiz]);
+    // Since units are now only deployed through the quiz system,
+    // We'll ignore direct unit clicks from the UI
+    return;
+  }, []);
 
   const handleSpellClick = useCallback((spellId: string) => {
     if (!gameStarted || gameState.isGameOver) return;
@@ -76,8 +77,10 @@ export default function EduBattle(): ReactElement {
     const spellConfig = GAME_CONFIG.spells.find(s => s.id === spellId);
     if (!spellConfig || gameState.playerGold < spellConfig.cost) return;
     
-    // TODO: Implement spell effects
-    console.log(`Cast spell: ${spellId}`);
+    // Cast spell through BattleArena component
+    if (battleArenaRef.current) {
+      battleArenaRef.current.castSpell(spellId);
+    }
   }, [gameStarted, gameState.isGameOver, gameState.playerGold]);
 
   const startGame = useCallback(() => {
@@ -129,11 +132,11 @@ export default function EduBattle(): ReactElement {
                 <ul className="space-y-2 text-lg">
                   <li className="flex items-center gap-2">
                     <span className="text-yellow-500">💰</span>
-                    Start with 300 gold, earn 5 gold/second
+                    Gold is only used for spells, units are free after quizzes
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-blue-500">⏰</span>
-                    4-minute battles with sudden death
+                    Quizzes appear every 30 seconds - make your choice!
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-500">🔢</span>
