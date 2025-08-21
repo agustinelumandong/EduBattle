@@ -1,36 +1,40 @@
-import * as Phaser from 'phaser';
-import PhaserMatterCollisionPlugin from 'phaser-matter-collision-plugin';
+import * as Phaser from "phaser";
+import PhaserMatterCollisionPlugin from "phaser-matter-collision-plugin";
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
-  width: 1000,
+  width: 3200, // 4× the original viewport width (800 × 4)
   height: 400,
   type: Phaser.AUTO,
-  backgroundColor: '#2D5016',
+  backgroundColor: "#000000", // Black space background
   physics: {
-    default: 'matter',
+    default: "matter",
     matter: {
       gravity: { x: 0, y: 0 }, // No gravity for top-down battle
-      debug: false
-    }
+      debug: false,
+    },
   },
   plugins: {
     scene: [
-      { plugin: PhaserMatterCollisionPlugin, key: 'matterCollision', mapping: 'matterCollision' }
-    ]
+      {
+        plugin: PhaserMatterCollisionPlugin,
+        key: "matterCollision",
+        mapping: "matterCollision",
+      },
+    ],
   },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800,
-    height: 400
+    width: 800, // Viewport width stays the same
+    height: 400,
   },
   fps: { target: 60, forceSetTimeOut: true },
   input: {
     gamepad: false,
     mouse: true,
     touch: true,
-    keyboard: false
-  }
+    keyboard: true, // Enable keyboard for camera controls,
+  },
 };
 
 export default gameConfig;
