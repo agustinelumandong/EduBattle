@@ -27,7 +27,8 @@ export default class BattleScene extends Phaser.Scene {
   private goldTimer?: Phaser.Time.TimerEvent;
   private matchTimer?: Phaser.Time.TimerEvent;
   private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
-  private isQuizActive: boolean = false; // Track if a quiz is currently active
+  private isQuizActive: boolean = false;
+  private isFirstQuiz: boolean = true; // Track if a quiz is currently active
   private lastTime: number = 0;
 
   // Spell cooldowns
@@ -89,6 +90,10 @@ export default class BattleScene extends Phaser.Scene {
   create() {
     // Initialize sound
     soundManager.init();
+
+    // Load and start background music immediately
+    // Make sure you put your music file at: EduBattle/public/music/background-music.mp3
+    soundManager.loadBackgroundMusic("/music/background-music.mp3", true);
 
     // Set up camera for expanded world
     this.setupCamera();
@@ -716,14 +721,55 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private startQuizTimer(): void {
-    // Timer for global quiz interval - every 15 seconds
+    this.scheduleNextQuiz();
+  }
+
+  private scheduleNextQuiz(): void {
+    // Don't schedule if game is over
+    if (this.gameState.isGameOver) return;
+
+    // Clear any existing quiz timer to prevent overlaps
+    if (this.quizTimer) {
+      this.quizTimer.destroy();
+      this.quizTimer = undefined;
+    }
+
+    // Use 5 seconds for first quiz, 15 seconds for subsequent quizzes
+    const delay = this.isFirstQuiz
+      ? 5000
+      : GAME_CONFIG.quiz.globalQuizIntervalSeconds * 1000;
+
+    console.log(
+      `⏰ Scheduling ${this.isFirstQuiz ? "FIRST" : "next"} quiz in ${
+        delay / 1000
+      } seconds`
+    );
+
+    // Schedule next quiz (one-shot, not looping)
     this.quizTimer = this.time.addEvent({
-      delay: GAME_CONFIG.quiz.globalQuizIntervalSeconds * 1000,
+      delay: delay,
       callback: () => {
-        if (this.gameState.isGameOver || this.isQuizActive) return;
+        // Double-check conditions before showing quiz
+        if (this.gameState.isGameOver) {
+          console.log("❌ Game over - not showing quiz");
+          return;
+        }
+
+        if (this.isQuizActive) {
+          console.log("❌ Quiz already active - rescheduling in 2 seconds");
+          // If quiz is still active, try again in 2 seconds
+          this.time.delayedCall(2000, () => this.scheduleNextQuiz());
+          return;
+        }
 
         // Set quiz as active to prevent new ones
         this.isQuizActive = true;
+        console.log("✅ Starting quiz - isQuizActive set to true");
+
+        // Mark that we're no longer on the first quiz
+        if (this.isFirstQuiz) {
+          this.isFirstQuiz = false;
+        }
 
         // Randomly select a unit type to ask about
         const randomUnit =
@@ -732,33 +778,41 @@ export default class BattleScene extends Phaser.Scene {
           ];
 
         if (this.onRequestQuiz) {
+          console.log("📝 Quiz triggered:", randomUnit.id);
+
           this.onRequestQuiz(randomUnit.id, (correct: boolean) => {
+            console.log("✅ Quiz answered:", correct);
             // Reset quiz active flag when quiz is completed
             this.isQuizActive = false;
 
             // Always deploy units - correct answer = strong units, wrong/skip = weak units
             this.deployUnit(randomUnit.id, correct);
+
+            // Schedule the next quiz only after this one is completed
+            console.log("⏰ Scheduling next quiz in 15 seconds");
+            this.scheduleNextQuiz();
           });
         }
       },
-      loop: true,
+      loop: false, // Important: Not looping!
     });
   }
 
   // Public method to reset quiz state (called from React when quiz closes)
   public resetQuizState(): void {
     this.isQuizActive = false;
+    // Note: Don't schedule next quiz here - it should be handled by the quiz callback
   }
 
   private getRandomSpawnCount(): number {
     const random = Math.random() * 100;
 
-    if (random < 60) {
-      return 2; // 60% chance for 2 units
-    } else if (random < 90) {
-      return 3; // 30% chance for 3 units (60% + 30% = 90%)
+    if (random < 70) {
+      return 3; // 70% chance for 3 units
+    } else if (random < 95) {
+      return 4; // 25% chance for 4 units (70% + 25% = 95%)
     } else {
-      return 4; // 10% chance for 4 units (remaining 10%)
+      return 5; // 5% chance for 5 units (remaining 5%)
     }
   }
 
@@ -910,6 +964,9 @@ export default class BattleScene extends Phaser.Scene {
     if (this.goldTimer) this.goldTimer.destroy();
     if (this.matchTimer) this.matchTimer.destroy();
     if (this.quizTimer) this.quizTimer.destroy();
+
+    // Stop background music
+    soundManager.stopBackgroundMusic();
 
     // Play victory sound
     if (this.gameState.winner === "player") {
