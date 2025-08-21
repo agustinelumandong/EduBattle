@@ -174,7 +174,7 @@ export default function EduBattle(): ReactElement {
               <Button
                 onClick={startGame}
                 size="lg"
-                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer mb-4"
               >
                 🚀 Start Battle!
               </Button>

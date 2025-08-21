@@ -9,7 +9,7 @@ import type { PhaserGameRef } from "./PhaserGameComponent";
 const PhaserGameComponent = dynamic(() => import("./PhaserGameComponent"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-96 bg-gray-800 rounded-lg flex items-center justify-center">
+    <div className="w-full h-dvh bg-gray-800 rounded-lg flex items-center justify-center">
       <div className="text-white text-lg">Loading Battle Arena...</div>
     </div>
   ),
