@@ -170,34 +170,129 @@ export default class BattleScene extends Phaser.Scene {
     graphics.setPosition(x, y);
     graphics.clear();
 
-    const color = team === "player" ? 0x00ffff : 0xff4444; // Cyan for player, red for enemy
     const hpPercent =
       team === "player"
         ? this.gameState.playerBaseHp / GAME_CONFIG.battle.baseMaxHealth
         : this.gameState.enemyBaseHp / GAME_CONFIG.battle.baseMaxHealth;
 
-    // Base crystal
-    graphics.fillStyle(color, 0.8);
-    graphics.fillRect(-25, -40, 50, 80);
-    graphics.lineStyle(3, 0xffffff);
-    graphics.strokeRect(-25, -40, 50, 80);
+    // Draw retro pixel-style planet
+    this.drawRetroPlanet(graphics, hpPercent, team);
 
-    // Health indicator
-    const healthColor =
-      hpPercent > 0.5 ? 0x00ff00 : hpPercent > 0.25 ? 0xffff00 : 0xff0000;
-    graphics.fillStyle(healthColor, 0.6);
-    graphics.fillRect(-20, -35, 40 * hpPercent, 10);
-
-    // Pulsing effect
+    // Add spinning animation
     this.tweens.add({
       targets: graphics,
-      scaleX: 1.1,
-      scaleY: 1.1,
-      duration: 1000,
-      yoyo: true,
+      rotation: Math.PI * 2,
+      duration: 8000, // 8 seconds for full rotation
       repeat: -1,
-      ease: "Sine.easeInOut",
+      ease: "Linear",
     });
+  }
+
+  private drawRetroPlanet(
+    graphics: Phaser.GameObjects.Graphics,
+    hpPercent: number,
+    team: "player" | "enemy"
+  ): void {
+    const radius = 30;
+
+    // Determine planet colors based on team and health
+    let baseColor, continentColor, atmosphereColor;
+
+    if (team === "player") {
+      // Earth-like colors that get damaged
+      baseColor =
+        hpPercent > 0.5 ? 0x1e40af : hpPercent > 0.25 ? 0x1e3a8a : 0x7f1d1d;
+      continentColor =
+        hpPercent > 0.5 ? 0x16a34a : hpPercent > 0.25 ? 0x15803d : 0x991b1b;
+      atmosphereColor =
+        hpPercent > 0.5 ? 0x3b82f6 : hpPercent > 0.25 ? 0x2563eb : 0xdc2626;
+    } else {
+      // Mars-like enemy planet
+      baseColor =
+        hpPercent > 0.5 ? 0xdc2626 : hpPercent > 0.25 ? 0xb91c1c : 0x450a0a;
+      continentColor =
+        hpPercent > 0.5 ? 0x7f1d1d : hpPercent > 0.25 ? 0x6b1d1d : 0x3f0a0a;
+      atmosphereColor =
+        hpPercent > 0.5 ? 0xff6b6b : hpPercent > 0.25 ? 0xff5252 : 0xff1744;
+    }
+
+    // Draw outer atmosphere glow
+    graphics.fillStyle(atmosphereColor, 0.2);
+    graphics.fillCircle(0, 0, radius + 8);
+
+    // Draw main planet body
+    graphics.fillStyle(baseColor, 1);
+    graphics.fillCircle(0, 0, radius);
+
+    // Draw retro pixel-style continents/land masses
+    this.drawRetroLandmasses(graphics, continentColor, radius);
+
+    // Add some retro-style details
+    this.drawRetroDetails(graphics, radius, hpPercent, team);
+
+    // Planet outline
+    graphics.lineStyle(2, 0xffffff, 0.8);
+    graphics.strokeCircle(0, 0, radius);
+  }
+
+  private drawRetroLandmasses(
+    graphics: Phaser.GameObjects.Graphics,
+    continentColor: number,
+    radius: number
+  ): void {
+    graphics.fillStyle(continentColor, 0.9);
+
+    // Draw chunky, pixel-art style landmasses
+    // Continent 1 (top-left area)
+    graphics.fillRect(-20, -15, 12, 8);
+    graphics.fillRect(-15, -10, 8, 6);
+
+    // Continent 2 (right side)
+    graphics.fillRect(5, -8, 10, 12);
+    graphics.fillRect(12, 0, 6, 8);
+
+    // Continent 3 (bottom)
+    graphics.fillRect(-8, 10, 14, 6);
+    graphics.fillRect(-5, 16, 8, 4);
+
+    // Small islands
+    graphics.fillRect(-25, 5, 4, 3);
+    graphics.fillRect(18, -20, 3, 4);
+  }
+
+  private drawRetroDetails(
+    graphics: Phaser.GameObjects.Graphics,
+    radius: number,
+    hpPercent: number,
+    team: "player" | "enemy"
+  ): void {
+    // Add some retro-style details based on health
+    if (hpPercent < 0.5) {
+      // Damage effects - red pixels scattered around
+      graphics.fillStyle(0xff0000, 0.8);
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+        const x = Math.cos(angle) * (radius * 0.7);
+        const y = Math.sin(angle) * (radius * 0.7);
+        graphics.fillRect(x - 1, y - 1, 2, 2);
+      }
+    }
+
+    if (hpPercent < 0.25) {
+      // Critical damage - more intense effects
+      graphics.fillStyle(0xffff00, 0.6);
+      graphics.fillRect(-2, -2, 4, 4); // Center explosion effect
+    }
+
+    // Add some retro "city lights" or surface details
+    if (team === "player" && hpPercent > 0.5) {
+      graphics.fillStyle(0xffff00, 0.7);
+      // Small yellow dots for cities
+      graphics.fillRect(-10, -5, 1, 1);
+      graphics.fillRect(8, 3, 1, 1);
+      graphics.fillRect(-3, 12, 1, 1);
+      graphics.fillRect(15, -10, 1, 1);
+    }
   }
 
   private startGoldIncome(): void {
