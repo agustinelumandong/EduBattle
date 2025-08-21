@@ -3,7 +3,7 @@ import PhaserMatterCollisionPlugin from "phaser-matter-collision-plugin";
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
   width: 3200, // 4× the original viewport width (800 × 4)
-  height: 400,
+  height: 800, // Increased height for full screen
   type: Phaser.AUTO,
   backgroundColor: "#000000", // Black space background
   physics: {
@@ -23,10 +23,10 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
     ],
   },
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800, // Viewport width stays the same
-    height: 400,
+    width: "100%",
+    height: "100%",
   },
   fps: { target: 60, forceSetTimeOut: true },
   input: {

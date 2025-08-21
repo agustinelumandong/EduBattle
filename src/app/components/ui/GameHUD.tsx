@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { GAME_CONFIG, SUBJECT_COLORS, SUBJECT_ICONS } from '../../data/game-config';
-import type { GameState } from '../battle/BattleScene';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  GAME_CONFIG,
+  SUBJECT_COLORS,
+  SUBJECT_ICONS,
+} from "../../data/game-config";
+import type { GameState } from "../battle/BattleScene";
 
 interface GameHUDProps {
   gameState: GameState;
@@ -15,12 +19,12 @@ interface GameHUDProps {
 const GameHUD: React.FC<GameHUDProps> = ({
   gameState,
   onUnitClick,
-  onSpellClick
+  onSpellClick,
 }) => {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -30,8 +34,12 @@ const GameHUD: React.FC<GameHUDProps> = ({
         <Card className="bg-yellow-600 text-white">
           <CardContent className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold">💰 {gameState.playerGold}</div>
-              <div className="text-xs">Gold (+{GAME_CONFIG.economy.goldPerSecond}/s)</div>
+              <div className="text-2xl font-bold">
+                💰 {gameState.playerGold}
+              </div>
+              <div className="text-xs">
+                Gold (+{GAME_CONFIG.economy.goldPerSecond}/s)
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -39,7 +47,9 @@ const GameHUD: React.FC<GameHUDProps> = ({
         <Card className="bg-gray-800 text-white">
           <CardContent className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold">⏰ {formatTime(gameState.matchTimeLeft)}</div>
+              <div className="text-2xl font-bold">
+                ⏰ {formatTime(gameState.matchTimeLeft)}
+              </div>
               <div className="text-xs">Time Remaining</div>
             </div>
           </CardContent>
@@ -48,7 +58,9 @@ const GameHUD: React.FC<GameHUDProps> = ({
         <Card className="bg-cyan-600 text-white">
           <CardContent className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold">💙 {gameState.playerBaseHp}</div>
+              <div className="text-2xl font-bold">
+                💙 {gameState.playerBaseHp}
+              </div>
               <div className="text-xs">Base Health</div>
             </div>
           </CardContent>
@@ -61,7 +73,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
           {GAME_CONFIG.units.map((unit) => {
             const subjectColor = SUBJECT_COLORS[unit.subject];
             const subjectIcon = SUBJECT_ICONS[unit.subject];
-            
+
             return (
               <Button
                 key={unit.id}
@@ -70,12 +82,12 @@ const GameHUD: React.FC<GameHUDProps> = ({
                 className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all hover:scale-105 hover:shadow-lg`}
                 style={{
                   backgroundColor: subjectColor,
-                  borderColor: '#fff'
+                  borderColor: "#fff",
                 }}
               >
                 <div className="text-2xl mb-1">{subjectIcon}</div>
                 <div className="text-xs text-center leading-tight">
-                  {unit.name.split(' ')[0]}
+                  {unit.name.split(" ")[0]}
                 </div>
               </Button>
             );
@@ -88,7 +100,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
         <div className="flex gap-2">
           {GAME_CONFIG.spells.map((spell) => {
             const affordable = gameState.playerGold >= spell.cost;
-            
+
             return (
               <Button
                 key={spell.id}
@@ -96,7 +108,9 @@ const GameHUD: React.FC<GameHUDProps> = ({
                 disabled={!affordable || gameState.isGameOver}
                 variant={affordable ? "default" : "outline"}
                 size="sm"
-                className={`${affordable ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                className={`${
+                  affordable ? "bg-purple-600 hover:bg-purple-700" : ""
+                }`}
               >
                 ✨ {spell.name} (💰{spell.cost})
               </Button>

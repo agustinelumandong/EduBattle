@@ -27,7 +27,19 @@ export default class BattleScene extends Phaser.Scene {
   private goldTimer?: Phaser.Time.TimerEvent;
   private matchTimer?: Phaser.Time.TimerEvent;
   private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
+  private isQuizActive: boolean = false; // Track if a quiz is currently active
   private lastTime: number = 0;
+
+  // Spell cooldowns
+  private spellCooldowns: Map<string, number> = new Map();
+
+  // Prevent double-spawning in development mode
+  private lastSpawnTime: number = 0;
+
+  // Freeze effect properties
+  private freezeOverlay?: Phaser.GameObjects.Graphics;
+  private snowflakes: Phaser.GameObjects.Graphics[] = [];
+  private freezeIndicator?: Phaser.GameObjects.Graphics;
 
   // Callbacks for React components
   public onGameStateUpdate?: (state: GameState) => void;
@@ -41,12 +53,12 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private setupCamera(): void {
-    // Set camera bounds to cover the entire world (3200 x 400)
-    this.cameras.main.setBounds(0, 0, 3200, 400);
+    // Set camera bounds to cover the entire world (3200 x 800)
+    this.cameras.main.setBounds(0, 0, 3200, 800);
 
     // Start camera centered on player base area
     this.cameras.main.setZoom(1);
-    this.cameras.main.centerOn(400, 200); // Start view on left side near player base
+    this.cameras.main.centerOn(400, 400); // Start view on left side near player base
 
     // Enable camera controls with mouse/touch
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -70,7 +82,7 @@ export default class BattleScene extends Phaser.Scene {
 
     this.input.keyboard?.on("keydown-SPACE", () => {
       // Center camera on action (middle of battlefield)
-      this.cameras.main.centerOn(1600, 200);
+      this.cameras.main.centerOn(1600, 400);
     });
   }
 
@@ -104,28 +116,28 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private createBattlefield(): void {
-    // Space background - black with stars
-    this.add.rectangle(1600, 200, 3200, 400, 0x000000);
+    // Space background - black with stars (full screen height)
+    this.add.rectangle(1600, 400, 3200, 800, 0x000000);
 
     // Create random stars across the battlefield
     this.createStars();
 
     // Lane lines - make them more space-like (dim blue/cyan)
-    this.add.line(1600, 150, 0, 0, 3200, 0, 0x1e40af, 1);
-    this.add.line(1600, 250, 0, 0, 3200, 0, 0x1e40af, 1);
+    this.add.line(1600, 300, 0, 0, 3200, 0, 0x1e40af, 1);
+    this.add.line(1600, 500, 0, 0, 3200, 0, 0x1e40af, 1);
 
     // Center line - dim and space-like
-    this.add.line(1600, 200, 0, 0, 0, 400, 0x374151, 1);
+    this.add.line(1600, 400, 0, 0, 0, 800, 0x374151, 1);
   }
 
   private createStars(): void {
     // Create random stars of varying sizes across the expanded battlefield
-    const starCount = 300; // Number of stars to generate
+    const starCount = 500; // More stars for full screen
 
     for (let i = 0; i < starCount; i++) {
-      // Random position across the entire 3200x400 battlefield
+      // Random position across the entire 3200x800 battlefield
       const x = Math.random() * 3200;
-      const y = Math.random() * 400;
+      const y = Math.random() * 800;
 
       // Random star size (1-4 pixels)
       const size = Math.random() * 3 + 1;
@@ -152,13 +164,13 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private createBases(): void {
-    // Player base (left) - positioned at far left of expanded world
+    // Player base (left) - positioned partially off-screen (more visible)
     this.playerBase = this.add.graphics();
-    this.drawBase(this.playerBase, 100, 200, "player");
+    this.drawBase(this.playerBase, 40, 400, "player"); // More visible on left
 
-    // Enemy base (right) - positioned at far right of expanded world
+    // Enemy base (right) - positioned partially off-screen (more visible)
     this.enemyBase = this.add.graphics();
-    this.drawBase(this.enemyBase, 3100, 200, "enemy");
+    this.drawBase(this.enemyBase, 3160, 400, "enemy"); // More visible on right
   }
 
   private drawBase(
@@ -193,7 +205,7 @@ export default class BattleScene extends Phaser.Scene {
     hpPercent: number,
     team: "player" | "enemy"
   ): void {
-    const radius = 30;
+    const radius = 80; // Much bigger planets!
 
     // Determine planet colors based on team and health
     let baseColor, continentColor, atmosphereColor;
@@ -218,7 +230,7 @@ export default class BattleScene extends Phaser.Scene {
 
     // Draw outer atmosphere glow
     graphics.fillStyle(atmosphereColor, 0.2);
-    graphics.fillCircle(0, 0, radius + 8);
+    graphics.fillCircle(0, 0, radius + 20); // Bigger atmosphere for bigger planets
 
     // Draw main planet body
     graphics.fillStyle(baseColor, 1);
@@ -233,6 +245,11 @@ export default class BattleScene extends Phaser.Scene {
     // Planet outline
     graphics.lineStyle(2, 0xffffff, 0.8);
     graphics.strokeCircle(0, 0, radius);
+
+    // Add orbital ring for enemy Mars planet
+    if (team === "enemy") {
+      this.drawOrbitalRing(graphics, radius);
+    }
   }
 
   private drawRetroLandmasses(
@@ -242,22 +259,25 @@ export default class BattleScene extends Phaser.Scene {
   ): void {
     graphics.fillStyle(continentColor, 0.9);
 
-    // Draw chunky, pixel-art style landmasses
+    // Scale factor for bigger planets
+    const scale = radius / 30; // Scale based on radius
+
+    // Draw chunky, pixel-art style landmasses (scaled up)
     // Continent 1 (top-left area)
-    graphics.fillRect(-20, -15, 12, 8);
-    graphics.fillRect(-15, -10, 8, 6);
+    graphics.fillRect(-20 * scale, -15 * scale, 12 * scale, 8 * scale);
+    graphics.fillRect(-15 * scale, -10 * scale, 8 * scale, 6 * scale);
 
     // Continent 2 (right side)
-    graphics.fillRect(5, -8, 10, 12);
-    graphics.fillRect(12, 0, 6, 8);
+    graphics.fillRect(5 * scale, -8 * scale, 10 * scale, 12 * scale);
+    graphics.fillRect(12 * scale, 0, 6 * scale, 8 * scale);
 
     // Continent 3 (bottom)
-    graphics.fillRect(-8, 10, 14, 6);
-    graphics.fillRect(-5, 16, 8, 4);
+    graphics.fillRect(-8 * scale, 10 * scale, 14 * scale, 6 * scale);
+    graphics.fillRect(-5 * scale, 16 * scale, 8 * scale, 4 * scale);
 
     // Small islands
-    graphics.fillRect(-25, 5, 4, 3);
-    graphics.fillRect(18, -20, 3, 4);
+    graphics.fillRect(-25 * scale, 5 * scale, 4 * scale, 3 * scale);
+    graphics.fillRect(18 * scale, -20 * scale, 3 * scale, 4 * scale);
   }
 
   private drawRetroDetails(
@@ -266,6 +286,8 @@ export default class BattleScene extends Phaser.Scene {
     hpPercent: number,
     team: "player" | "enemy"
   ): void {
+    const scale = radius / 30; // Scale factor for bigger planets
+
     // Add some retro-style details based on health
     if (hpPercent < 0.5) {
       // Damage effects - red pixels scattered around
@@ -274,25 +296,390 @@ export default class BattleScene extends Phaser.Scene {
         const angle = (Math.PI * 2 * i) / 8;
         const x = Math.cos(angle) * (radius * 0.7);
         const y = Math.sin(angle) * (radius * 0.7);
-        graphics.fillRect(x - 1, y - 1, 2, 2);
+        graphics.fillRect(x - 2 * scale, y - 2 * scale, 4 * scale, 4 * scale);
       }
     }
 
     if (hpPercent < 0.25) {
       // Critical damage - more intense effects
       graphics.fillStyle(0xffff00, 0.6);
-      graphics.fillRect(-2, -2, 4, 4); // Center explosion effect
+      graphics.fillRect(-4 * scale, -4 * scale, 8 * scale, 8 * scale); // Center explosion effect
     }
 
     // Add some retro "city lights" or surface details
     if (team === "player" && hpPercent > 0.5) {
       graphics.fillStyle(0xffff00, 0.7);
-      // Small yellow dots for cities
-      graphics.fillRect(-10, -5, 1, 1);
-      graphics.fillRect(8, 3, 1, 1);
-      graphics.fillRect(-3, 12, 1, 1);
-      graphics.fillRect(15, -10, 1, 1);
+      // Scaled city lights
+      graphics.fillRect(-10 * scale, -5 * scale, 2 * scale, 2 * scale);
+      graphics.fillRect(8 * scale, 3 * scale, 2 * scale, 2 * scale);
+      graphics.fillRect(-3 * scale, 12 * scale, 2 * scale, 2 * scale);
+      graphics.fillRect(15 * scale, -10 * scale, 2 * scale, 2 * scale);
     }
+  }
+
+  private drawOrbitalRing(
+    graphics: Phaser.GameObjects.Graphics,
+    planetRadius: number
+  ): void {
+    const ringRadius = planetRadius + 25; // Bigger ring for bigger planet
+    const ringThickness = 5; // Thicker ring
+    const scale = planetRadius / 30;
+
+    // Main orbital ring
+    graphics.lineStyle(ringThickness, 0xff6b6b, 0.6);
+    graphics.strokeCircle(0, 0, ringRadius);
+
+    // Inner ring detail
+    graphics.lineStyle(2, 0xffa726, 0.4);
+    graphics.strokeCircle(0, 0, ringRadius - 4);
+
+    // Add some orbital debris/stations as scaled rectangles
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI * 2 * i) / 12;
+      const x = Math.cos(angle) * ringRadius;
+      const y = Math.sin(angle) * ringRadius;
+
+      graphics.fillStyle(0xff5722, 0.8);
+      graphics.fillRect(x - 2 * scale, y - 2 * scale, 4 * scale, 4 * scale);
+    }
+  }
+
+  private createFreezeEffect(): void {
+    // Create freeze overlay
+    this.freezeOverlay = this.add.graphics();
+    this.freezeOverlay.fillStyle(0x87ceeb, 0.15); // Light blue overlay
+    this.freezeOverlay.fillRect(0, 0, 3200, 800);
+
+    // Create corner freeze indicator
+    this.createFreezeIndicator();
+
+    // Create snowflakes
+    this.createSnowflakes();
+
+    // Remove freeze effect after 3 seconds
+    this.time.delayedCall(3000, () => {
+      this.removeFreezeEffect();
+    });
+  }
+
+  private createFreezeIndicator(): void {
+    this.freezeIndicator = this.add.graphics();
+    this.freezeIndicator.setPosition(50, 50); // Top-left corner
+
+    // Ice crystal shape
+    this.freezeIndicator.lineStyle(3, 0x87ceeb, 0.9);
+    this.freezeIndicator.fillStyle(0xb0e0e6, 0.7);
+
+    // Draw snowflake/ice crystal
+    const size = 20;
+
+    // Main cross
+    this.freezeIndicator.lineBetween(-size, 0, size, 0);
+    this.freezeIndicator.lineBetween(0, -size, 0, size);
+
+    // Diagonal cross
+    this.freezeIndicator.lineBetween(
+      -size * 0.7,
+      -size * 0.7,
+      size * 0.7,
+      size * 0.7
+    );
+    this.freezeIndicator.lineBetween(
+      -size * 0.7,
+      size * 0.7,
+      size * 0.7,
+      -size * 0.7
+    );
+
+    // Small decorative branches
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const x1 = Math.cos(angle) * size * 0.5;
+      const y1 = Math.sin(angle) * size * 0.5;
+      const x2 = Math.cos(angle) * size * 0.8;
+      const y2 = Math.sin(angle) * size * 0.8;
+      this.freezeIndicator.lineBetween(x1, y1, x2, y2);
+    }
+
+    // Add pulsing animation
+    this.tweens.add({
+      targets: this.freezeIndicator,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0.5,
+      duration: 500,
+      yoyo: true,
+      repeat: 5,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  private createSnowflakes(): void {
+    // Create 50 snowflakes across the battlefield
+    for (let i = 0; i < 50; i++) {
+      const snowflake = this.add.graphics();
+
+      // Random position across battlefield
+      const x = Math.random() * 3200;
+      const y = Math.random() * 800;
+      snowflake.setPosition(x, y);
+
+      // Draw snowflake
+      const size = Math.random() * 3 + 2; // 2-5 pixel size
+      snowflake.fillStyle(0xffffff, 0.8);
+      snowflake.lineStyle(1, 0x87ceeb, 0.6);
+
+      // Simple 6-pointed star
+      for (let j = 0; j < 6; j++) {
+        const angle = (Math.PI * 2 * j) / 6;
+        const x1 = Math.cos(angle) * size;
+        const y1 = Math.sin(angle) * size;
+        snowflake.lineBetween(0, 0, x1, y1);
+      }
+
+      this.snowflakes.push(snowflake);
+
+      // Add falling animation
+      this.tweens.add({
+        targets: snowflake,
+        y: y + 100,
+        x: x + (Math.random() - 0.5) * 50, // Slight horizontal drift
+        alpha: 0,
+        duration: 3000,
+        ease: "Linear",
+        onComplete: () => {
+          snowflake.destroy();
+        },
+      });
+
+      // Add rotation
+      this.tweens.add({
+        targets: snowflake,
+        rotation: Math.PI * 2,
+        duration: 2000 + Math.random() * 1000,
+        repeat: -1,
+        ease: "Linear",
+      });
+    }
+  }
+
+  private removeFreezeEffect(): void {
+    // Remove freeze overlay
+    if (this.freezeOverlay) {
+      this.tweens.add({
+        targets: this.freezeOverlay,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => {
+          this.freezeOverlay?.destroy();
+          this.freezeOverlay = undefined;
+        },
+      });
+    }
+
+    // Remove freeze indicator
+    if (this.freezeIndicator) {
+      this.freezeIndicator.destroy();
+      this.freezeIndicator = undefined;
+    }
+
+    // Clean up any remaining snowflakes
+    this.snowflakes.forEach((snowflake) => {
+      if (snowflake && snowflake.active) {
+        snowflake.destroy();
+      }
+    });
+    this.snowflakes = [];
+  }
+
+  private createMeteorStrike(): void {
+    // Get all enemy units
+    const enemyUnits = this.units.filter((unit) => unit.team === "enemy");
+
+    if (enemyUnits.length === 0) return;
+
+    // Create meteors for each enemy unit with random delays
+    enemyUnits.forEach((unit, index) => {
+      const delay = index * 200 + Math.random() * 500; // Stagger meteors
+
+      this.time.delayedCall(delay, () => {
+        if (!UnitHelpers.isUnitDead(unit)) {
+          this.createSingleMeteor(unit.x, unit.y);
+        }
+      });
+    });
+
+    // Create some extra meteors for visual impact
+    for (let i = 0; i < 3; i++) {
+      const randomX = Math.random() * 3200;
+      const randomY = Math.random() * 800;
+      const delay = Math.random() * 1000;
+
+      this.time.delayedCall(delay, () => {
+        this.createSingleMeteor(randomX, randomY);
+      });
+    }
+  }
+
+  private createSingleMeteor(targetX: number, targetY: number): void {
+    // Create meteor starting from high above the target
+    const startX = targetX + (Math.random() - 0.5) * 100;
+    const startY = -100;
+
+    const meteor = this.add.graphics();
+    meteor.setPosition(startX, startY);
+
+    // Draw meteor (orange/red glowing rock)
+    meteor.fillStyle(0xff4500, 1);
+    meteor.fillCircle(0, 0, 8);
+    meteor.fillStyle(0xff6347, 0.8);
+    meteor.fillCircle(0, 0, 6);
+    meteor.fillStyle(0xffd700, 0.6);
+    meteor.fillCircle(0, 0, 4);
+
+    // Create trailing fire effect
+    const trail = this.add.graphics();
+    trail.setPosition(startX, startY);
+
+    // Animate meteor falling
+    this.tweens.add({
+      targets: meteor,
+      x: targetX,
+      y: targetY,
+      duration: 800,
+      ease: "Power2",
+      onUpdate: () => {
+        // Update trail position
+        trail.setPosition(meteor.x, meteor.y);
+
+        // Redraw trail
+        trail.clear();
+        trail.fillStyle(0xff4500, 0.4);
+        trail.fillRect(-3, -20, 6, 20);
+        trail.fillStyle(0xffd700, 0.3);
+        trail.fillRect(-2, -15, 4, 15);
+      },
+      onComplete: () => {
+        // Impact explosion
+        this.createMeteorExplosion(targetX, targetY);
+
+        // Damage nearby enemy units
+        this.damageUnitsInRadius(targetX, targetY, 60, 40);
+
+        // Clean up
+        meteor.destroy();
+        trail.destroy();
+      },
+    });
+  }
+
+  private createMeteorExplosion(x: number, y: number): void {
+    // Create explosion graphics
+    const explosion = this.add.graphics();
+    explosion.setPosition(x, y);
+
+    // Draw explosion rings
+    explosion.fillStyle(0xffffff, 0.8);
+    explosion.fillCircle(0, 0, 5);
+    explosion.fillStyle(0xffd700, 0.6);
+    explosion.fillCircle(0, 0, 15);
+    explosion.fillStyle(0xff4500, 0.4);
+    explosion.fillCircle(0, 0, 30);
+    explosion.fillStyle(0xff0000, 0.2);
+    explosion.fillCircle(0, 0, 50);
+
+    // Create explosion particles
+    for (let i = 0; i < 12; i++) {
+      const particle = this.add.graphics();
+      particle.setPosition(x, y);
+
+      const colors = [0xff4500, 0xff6347, 0xffd700, 0xffffff];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      particle.fillStyle(color, 0.8);
+      particle.fillCircle(0, 0, Math.random() * 4 + 2);
+
+      const angle = (Math.PI * 2 * i) / 12;
+      const distance = Math.random() * 60 + 30;
+
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        duration: 600,
+        ease: "Power2",
+        onComplete: () => particle.destroy(),
+      });
+    }
+
+    // Fade out explosion
+    this.tweens.add({
+      targets: explosion,
+      alpha: 0,
+      duration: 400,
+      onComplete: () => explosion.destroy(),
+    });
+
+    // Screen shake effect
+    this.cameras.main.shake(200, 0.01);
+  }
+
+  private damageUnitsInRadius(
+    x: number,
+    y: number,
+    radius: number,
+    damage: number
+  ): void {
+    this.units.forEach((unit) => {
+      if (
+        unit.team === "enemy" &&
+        unit.x !== undefined &&
+        unit.y !== undefined
+      ) {
+        const distance = Phaser.Math.Distance.Between(unit.x, unit.y, x, y);
+        if (distance <= radius) {
+          // Deal damage
+          unit.hp = Math.max(0, unit.hp - damage);
+
+          // Create damage number
+          this.createDamageNumber(unit.x, unit.y, damage, 0xff4500);
+
+          // Check if unit died
+          if (unit.hp <= 0) {
+            this.gameState.playerGold += GAME_CONFIG.economy.killGold;
+            UnitHelpers.destroyUnit(unit);
+          } else {
+            // Update health bar
+            UnitHelpers.updateHealthBar(unit);
+          }
+        }
+      }
+    });
+  }
+
+  private createDamageNumber(
+    x: number,
+    y: number,
+    damage: number,
+    color: number
+  ): void {
+    const damageText = this.add.text(x, y - 20, `-${damage}`, {
+      fontSize: "16px",
+      color: `#${color.toString(16).padStart(6, "0")}`,
+      fontStyle: "bold",
+    });
+
+    damageText.setOrigin(0.5);
+
+    this.tweens.add({
+      targets: damageText,
+      y: y - 50,
+      alpha: 0,
+      duration: 800,
+      ease: "Power2",
+      onComplete: () => damageText.destroy(),
+    });
   }
 
   private startGoldIncome(): void {
@@ -310,6 +697,9 @@ export default class BattleScene extends Phaser.Scene {
     this.matchTimer = this.time.addEvent({
       delay: 1000, // Every second
       callback: () => {
+        // Pause main timer when quiz is active, but keep battle running
+        if (this.isQuizActive) return;
+
         this.gameState.matchTimeLeft = Math.max(
           0,
           this.gameState.matchTimeLeft - 1
@@ -326,11 +716,14 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private startQuizTimer(): void {
-    // Timer for global quiz interval - every 30 seconds
+    // Timer for global quiz interval - every 15 seconds
     this.quizTimer = this.time.addEvent({
       delay: GAME_CONFIG.quiz.globalQuizIntervalSeconds * 1000,
       callback: () => {
-        if (this.gameState.isGameOver) return;
+        if (this.gameState.isGameOver || this.isQuizActive) return;
+
+        // Set quiz as active to prevent new ones
+        this.isQuizActive = true;
 
         // Randomly select a unit type to ask about
         const randomUnit =
@@ -340,15 +733,33 @@ export default class BattleScene extends Phaser.Scene {
 
         if (this.onRequestQuiz) {
           this.onRequestQuiz(randomUnit.id, (correct: boolean) => {
-            // Only deploy unit if answer is correct - player must make a choice
-            if (correct) {
-              this.deployUnit(randomUnit.id, true);
-            }
+            // Reset quiz active flag when quiz is completed
+            this.isQuizActive = false;
+
+            // Always deploy units - correct answer = strong units, wrong/skip = weak units
+            this.deployUnit(randomUnit.id, correct);
           });
         }
       },
       loop: true,
     });
+  }
+
+  // Public method to reset quiz state (called from React when quiz closes)
+  public resetQuizState(): void {
+    this.isQuizActive = false;
+  }
+
+  private getRandomSpawnCount(): number {
+    const random = Math.random() * 100;
+
+    if (random < 60) {
+      return 2; // 60% chance for 2 units
+    } else if (random < 90) {
+      return 3; // 30% chance for 3 units (60% + 30% = 90%)
+    } else {
+      return 4; // 10% chance for 4 units (remaining 10%)
+    }
   }
 
   private setupInput(): void {
@@ -400,27 +811,41 @@ export default class BattleScene extends Phaser.Scene {
       }
 
       if (unit.target) {
-        // Attack if in range
-        const distance = Phaser.Math.Distance.Between(
-          unit.x,
-          unit.y,
-          unit.target.x,
-          unit.target.y
-        );
-        if (distance <= unit.range * 50) {
-          if (UnitHelpers.attackTarget(unit, unit.target, this.time.now)) {
-            soundManager.playUnitAttack();
+        // Store target reference to prevent it from becoming undefined mid-check
+        const target = unit.target;
+
+        // Check if target still exists and has valid position
+        if (
+          target &&
+          typeof target.x === "number" &&
+          typeof target.y === "number"
+        ) {
+          // Attack if in range
+          const distance = Phaser.Math.Distance.Between(
+            unit.x,
+            unit.y,
+            target.x,
+            target.y
+          );
+          if (distance <= unit.range * 60) {
+            // Bigger range for bigger ships
+            if (UnitHelpers.attackTarget(unit, target, this.time.now)) {
+              soundManager.playUnitAttack();
+            }
+          } else {
+            // Move towards target
+            UnitHelpers.moveUnit(unit, deltaTime);
           }
         } else {
-          // Move towards target
-          UnitHelpers.moveUnit(unit, deltaTime);
+          // Target is invalid, clear it
+          unit.target = undefined;
         }
       } else {
         // No target, move towards enemy base
         UnitHelpers.moveUnit(unit, deltaTime);
 
         // Check if reached enemy base
-        const enemyBaseX = unit.team === "player" ? 3100 : 100;
+        const enemyBaseX = unit.team === "player" ? 3160 : 40;
         if (Math.abs(unit.x - enemyBaseX) < 30) {
           this.damageBase(
             unit.team === "player" ? "enemy" : "player",
@@ -453,10 +878,10 @@ export default class BattleScene extends Phaser.Scene {
 
   private updateBases(): void {
     if (this.playerBase) {
-      this.drawBase(this.playerBase, 100, 200, "player");
+      this.drawBase(this.playerBase, 40, 400, "player"); // More visible on left
     }
     if (this.enemyBase) {
-      this.drawBase(this.enemyBase, 3100, 200, "enemy");
+      this.drawBase(this.enemyBase, 3160, 400, "enemy"); // More visible on right
     }
   }
 
@@ -502,37 +927,92 @@ export default class BattleScene extends Phaser.Scene {
     const unitConfig = GAME_CONFIG.units.find((u) => u.id === unitType);
     if (!unitConfig) return;
 
-    // For units, no gold cost is applied - units are deployed based on quiz answers
-    // Spawn unit
-    const unit = UnitHelpers.createUnit(
-      this,
-      unitConfig,
-      200, // Start position - moved right from base
-      200, // Lane center
-      "player",
-      !isCorrect // Weaker if wrong answer
-    );
+    // Prevent double-spawning (protects against rapid duplicate calls)
+    const currentTime = Date.now();
+    if (currentTime - this.lastSpawnTime < 100) {
+      return; // Ignore duplicate calls within 100ms
+    }
+    this.lastSpawnTime = currentTime;
 
-    this.units.push(unit);
+    // Get random spawn count for player (2-4 units)
+    const playerSpawnCount = this.getRandomSpawnCount();
+
+    // Spawn multiple units for player
+    for (let i = 0; i < playerSpawnCount; i++) {
+      // Randomize unit type for each spawn (except first one which uses quiz answer)
+      const currentUnitConfig =
+        i === 0
+          ? unitConfig
+          : GAME_CONFIG.units[
+              Math.floor(Math.random() * GAME_CONFIG.units.length)
+            ];
+
+      // Stagger spawn positions slightly
+      const spawnY = 400 + (i - Math.floor(playerSpawnCount / 2)) * 40; // Spread vertically
+      const spawnX = 200 + i * 30; // Slight horizontal offset
+
+      const unit = UnitHelpers.createUnit(
+        this,
+        currentUnitConfig,
+        spawnX,
+        spawnY,
+        "player",
+        !isCorrect // Weaker if wrong answer
+      );
+
+      this.units.push(unit);
+    }
+
     soundManager.playUnitSpawn();
 
-    // Spawn enemy unit (AI)
-    this.spawnEnemyUnit();
+    // Spawn enemy units (AI) - also multiple
+    this.spawnEnemyUnits();
 
     this.updateGameState();
   }
 
+  private spawnEnemyUnits(): void {
+    // Get random spawn count for enemy (2-4 units)
+    const enemySpawnCount = this.getRandomSpawnCount();
+
+    // Spawn multiple units for enemy
+    for (let i = 0; i < enemySpawnCount; i++) {
+      // Randomize unit type for each spawn
+      const randomUnit =
+        GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
+
+      // Enemy always spawns normal strength units (no buff/debuff)
+      const isWeak = false; // Always normal strength
+
+      // Stagger spawn positions slightly
+      const spawnY = 400 + (i - Math.floor(enemySpawnCount / 2)) * 40; // Spread vertically
+      const spawnX = 3000 - i * 30; // Slight horizontal offset (move left from base)
+
+      const unit = UnitHelpers.createUnit(
+        this,
+        randomUnit,
+        spawnX,
+        spawnY,
+        "enemy",
+        isWeak
+      );
+
+      this.units.push(unit);
+    }
+  }
+
+  // Keep old method for backward compatibility if needed elsewhere
   private spawnEnemyUnit(): void {
     // Simple AI: randomly pick a unit type
     const randomUnit =
       GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
-    const isWeak = Math.random() < 0.9; // 30% chance of weak unit
+    const isWeak = false; // Enemy always normal strength
 
     const unit = UnitHelpers.createUnit(
       this,
       randomUnit,
       3000, // Enemy start position - moved left from base
-      200,
+      400, // Lane center (full screen)
       "enemy",
       isWeak
     );
@@ -551,6 +1031,15 @@ export default class BattleScene extends Phaser.Scene {
     const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
     if (!spellConfig) return false;
 
+    // Check cooldown
+    const currentTime = this.time.now;
+    const lastCast = this.spellCooldowns.get(spellId) || 0;
+    const cooldownTime = spellConfig.cooldownSeconds * 1000;
+
+    if (currentTime - lastCast < cooldownTime) {
+      return false; // Still on cooldown
+    }
+
     // Check if player has enough gold
     if (this.gameState.playerGold < spellConfig.cost) return false;
 
@@ -560,6 +1049,9 @@ export default class BattleScene extends Phaser.Scene {
       this.gameState.playerGold - spellConfig.cost
     );
 
+    // Set cooldown
+    this.spellCooldowns.set(spellId, currentTime);
+
     // Apply spell effect based on ID
     switch (spellConfig.id) {
       case "freeze":
@@ -568,25 +1060,28 @@ export default class BattleScene extends Phaser.Scene {
           if (unit.team === "enemy") {
             unit.isFrozen = true;
 
+            // Add blue freeze effect to the ship
+            UnitHelpers.addFreezeEffect(unit);
+
             // Unfreeze after 3 seconds
             this.time.delayedCall(3000, () => {
               if (unit && !UnitHelpers.isUnitDead(unit)) {
                 unit.isFrozen = false;
+                // Remove freeze effect from ship
+                UnitHelpers.removeFreezeEffect(unit);
               }
             });
           }
         });
+
+        // Create freeze visual effect
+        this.createFreezeEffect();
         soundManager.playSpellCast();
         break;
 
-      case "heal":
-        // Heal base by 10%
-        const healAmount = Math.floor(GAME_CONFIG.battle.baseMaxHealth * 0.1);
-        this.gameState.playerBaseHp = Math.min(
-          GAME_CONFIG.battle.baseMaxHealth,
-          this.gameState.playerBaseHp + healAmount
-        );
-        this.updateBases();
+      case "meteor":
+        // Meteor strike on all enemy units
+        this.createMeteorStrike();
         soundManager.playSpellCast();
         break;
 

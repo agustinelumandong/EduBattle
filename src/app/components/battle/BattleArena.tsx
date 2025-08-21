@@ -18,6 +18,7 @@ const PhaserGameComponent = dynamic(() => import("./PhaserGameComponent"), {
 export interface BattleArenaRef {
   deployUnit: (unitType: string, isCorrect: boolean) => void;
   castSpell: (spellId: string) => boolean;
+  resetQuizState: () => void;
 }
 
 interface BattleArenaProps {
@@ -52,7 +53,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
       [onRequestQuiz]
     );
 
-    // Expose deploy method to parent
+    // Expose methods to parent
     React.useImperativeHandle(
       ref,
       () => ({
@@ -66,6 +67,11 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
             return gameRef.current.castSpell(spellId);
           }
           return false;
+        },
+        resetQuizState: () => {
+          if (gameRef.current) {
+            gameRef.current.resetQuizState();
+          }
         },
       }),
       []
@@ -102,13 +108,13 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         </div>
 
         {/* Camera controls hint */}
-        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none">
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none">
           🎮 Drag to pan • A/D keys to move • SPACE to center
         </div>
 
         {/* Game over overlay */}
         {gameState.isGameOver && (
-          <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
             <div className="bg-white rounded-lg p-6 text-center">
               <h2 className="text-2xl font-bold mb-4">
                 {gameState.winner === "player" ? "🎉 Victory!" : "💥 Defeat!"}
