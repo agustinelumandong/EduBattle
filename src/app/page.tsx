@@ -1,103 +1,236 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCallback, useRef, useState, type ReactElement } from 'react';
+import BattleArena from './components/battle/BattleArena';
+import type { GameState } from './components/battle/BattleScene';
+import QuizModal from './components/quiz/QuizModal';
+import GameHUD from './components/ui/GameHUD';
+import { GAME_CONFIG } from './data/game-config';
+
+interface PendingQuiz {
+  unitType: string;
+  callback: (correct: boolean) => void;
+}
+
+export default function EduBattle(): ReactElement {
+  const [gameState, setGameState] = useState<GameState>({
+    playerGold: GAME_CONFIG.economy.startGold,
+    playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
+    enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
+    matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
+    isGameOver: false,
+  });
+  
+  const [showTutorial, setShowTutorial] = useState<boolean>(true);
+  const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
+  const [pendingQuiz, setPendingQuiz] = useState<PendingQuiz | null>(null);
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  
+  const battleArenaRef = useRef<any>(null);
+
+  const handleGameStateUpdate = useCallback((state: GameState) => {
+    setGameState(state);
+  }, []);
+
+  const handleRequestQuiz = useCallback((unitType: string, callback: (correct: boolean) => void) => {
+    setPendingQuiz({ unitType, callback });
+    setIsQuizOpen(true);
+  }, []);
+
+  const handleQuizAnswer = useCallback((correct: boolean) => {
+    if (pendingQuiz) {
+      pendingQuiz.callback(correct);
+      setPendingQuiz(null);
+    }
+    setIsQuizOpen(false);
+  }, [pendingQuiz]);
+
+  const handleQuizClose = useCallback(() => {
+    if (pendingQuiz) {
+      pendingQuiz.callback(false); // Default to incorrect if closed
+      setPendingQuiz(null);
+    }
+    setIsQuizOpen(false);
+  }, [pendingQuiz]);
+
+  const handleUnitClick = useCallback((unitType: string) => {
+    if (!gameStarted || gameState.isGameOver) return;
+    
+    // Check if player has enough gold
+    const unitConfig = GAME_CONFIG.units.find(u => u.id === unitType);
+    if (!unitConfig || gameState.playerGold < unitConfig.cost) return;
+    
+    // Trigger quiz modal
+    handleRequestQuiz(unitType, (correct: boolean) => {
+      if (battleArenaRef.current) {
+        battleArenaRef.current.deployUnit(unitType, correct);
+      }
+    });
+  }, [gameStarted, gameState.isGameOver, gameState.playerGold, handleRequestQuiz]);
+
+  const handleSpellClick = useCallback((spellId: string) => {
+    if (!gameStarted || gameState.isGameOver) return;
+    
+    const spellConfig = GAME_CONFIG.spells.find(s => s.id === spellId);
+    if (!spellConfig || gameState.playerGold < spellConfig.cost) return;
+    
+    // TODO: Implement spell effects
+    console.log(`Cast spell: ${spellId}`);
+  }, [gameStarted, gameState.isGameOver, gameState.playerGold]);
+
+  const startGame = useCallback(() => {
+    setShowTutorial(false);
+    setGameStarted(true);
+  }, []);
+
+  const restartGame = useCallback(() => {
+    window.location.reload(); // Simple restart
+  }, []);
+
+  if (showTutorial) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-4xl">
+          <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <CardTitle className="text-4xl font-bold mb-2">
+              🎮 Welcome to EduBattle! ⚔️
+            </CardTitle>
+            <p className="text-xl">Educational Lane Battle Game</p>
+          </CardHeader>
+          
+          <CardContent className="p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-semibold text-blue-600">🎯 How to Play</h3>
+                <ul className="space-y-2 text-lg">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    Click unit buttons to deploy warriors
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">🧠</span>
+                    Answer quiz questions to deploy units
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-yellow-500">💪</span>
+                    Correct answers = stronger units!
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-500">⚡</span>
+                    Destroy the enemy crystal to win!
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-2xl font-semibold text-purple-600">🎲 Game Rules</h3>
+                <ul className="space-y-2 text-lg">
+                  <li className="flex items-center gap-2">
+                    <span className="text-yellow-500">💰</span>
+                    Start with 300 gold, earn 5 gold/second
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">⏰</span>
+                    4-minute battles with sudden death
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">🔢</span>
+                    Math Knights, Science Mages, History Archers
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-500">💥</span>
+                    Wrong answers deploy weaker units
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+              <div className="p-4 bg-blue-100 rounded-lg">
+                <div className="text-3xl mb-2">🔢</div>
+                <h4 className="font-semibold text-blue-600">Math Knight</h4>
+                <p className="text-sm">Strong melee warrior<br />💰200 gold</p>
+              </div>
+              <div className="p-4 bg-green-100 rounded-lg">
+                <div className="text-3xl mb-2">🧪</div>
+                <h4 className="font-semibold text-green-600">Science Mage</h4>
+                <p className="text-sm">Ranged spell caster<br />💰220 gold</p>
+              </div>
+              <div className="p-4 bg-amber-100 rounded-lg">
+                <div className="text-3xl mb-2">📜</div>
+                <h4 className="font-semibold text-amber-600">History Archer</h4>
+                <p className="text-sm">Long-range archer<br />💰180 gold</p>
+              </div>
+            </div>
+            
+            <div className="mt-8 text-center">
+              <Button 
+                onClick={startGame}
+                size="lg"
+                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                🚀 Start Battle! 
+              </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                Get ready for educational warfare! 🎓⚔️
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 relative overflow-hidden">
+      {/* Battle Arena */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl">
+          <BattleArena
+            ref={battleArenaRef}
+            gameState={gameState}
+            onGameStateUpdate={handleGameStateUpdate}
+            onRequestQuiz={handleRequestQuiz}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* Game HUD */}
+      <GameHUD
+        gameState={gameState}
+        onUnitClick={handleUnitClick}
+        onSpellClick={handleSpellClick}
+      />
+
+      {/* Quiz Modal */}
+      <QuizModal
+        isOpen={isQuizOpen}
+        unitType={pendingQuiz?.unitType || ''}
+        onAnswer={handleQuizAnswer}
+        onClose={handleQuizClose}
+      />
+
+      {/* Game Over Actions */}
+      {gameState.isGameOver && (
+        <div className="absolute top-4 right-4">
+          <Button onClick={restartGame} size="lg" variant="outline">
+            🔄 Play Again
+          </Button>
+        </div>
+      )}
+
+      {/* Instructions (Mobile) */}
+      <div className="lg:hidden absolute top-4 left-4 right-4">
+        <Card className="bg-black bg-opacity-50 text-white text-center">
+          <CardContent className="p-2">
+            <p className="text-xs">
+              Deploy units by answering quizzes! Correct = stronger units! 🧠⚔️
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
