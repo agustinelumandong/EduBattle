@@ -59,8 +59,31 @@ export default class BattleScene extends Phaser.Scene {
     // Start camera centered on player base area
     this.cameras.main.setZoom(1);
     this.cameras.main.centerOn(400, 400); // Start view on left side near player base
+    
+    // Set initial cursor style for camera movement
+    this.game.canvas.style.cursor = "grab";
 
     // Enable camera controls with mouse/touch
+    this.input.on("pointerdown", () => {
+      // Change cursor to grabbing when dragging starts
+      this.game.canvas.style.cursor = "grabbing";
+    });
+
+    this.input.on("pointerup", () => {
+      // Change cursor back to grab when dragging stops
+      this.game.canvas.style.cursor = "grab";
+    });
+
+    this.input.on("pointerout", () => {
+      // Reset cursor when pointer leaves canvas
+      this.game.canvas.style.cursor = "default";
+    });
+
+    this.input.on("pointerover", () => {
+      // Set grab cursor when pointer enters canvas
+      this.game.canvas.style.cursor = "grab";
+    });
+
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
         // Pan camera when dragging
@@ -74,6 +97,13 @@ export default class BattleScene extends Phaser.Scene {
     // Add keyboard controls for camera movement
     this.input.keyboard?.on("keydown-A", () => {
       this.cameras.main.scrollX -= 50;
+    });
+
+    this.input.keyboard?.on("keydown-LEFT", () => {
+      this.cameras.main.scrollX -= 50;
+    });
+    this.input.keyboard?.on("keydown-RIGHT", () => {
+      this.cameras.main.scrollX += 50;
     });
 
     this.input.keyboard?.on("keydown-D", () => {
@@ -123,11 +153,11 @@ export default class BattleScene extends Phaser.Scene {
     this.createStars();
 
     // Lane lines - make them more space-like (dim blue/cyan)
-    this.add.line(1600, 300, 0, 0, 3200, 0, 0x1e40af, 1);
-    this.add.line(1600, 500, 0, 0, 3200, 0, 0x1e40af, 1);
+    // this.add.line(1600, 300, 0, 0, 3200, 0, 0x1e40af, 1);
+    // this.add.line(1600, 500, 0, 0, 3200, 0, 0x1e40af, 1);
 
     // Center line - dim and space-like
-    this.add.line(1600, 400, 0, 0, 0, 800, 0x374151, 1);
+    // this.add.line(1600, 400, 0, 0, 0, 800, 0x374151, 1);
   }
 
   private createStars(): void {
@@ -166,11 +196,11 @@ export default class BattleScene extends Phaser.Scene {
   private createBases(): void {
     // Player base (left) - positioned partially off-screen (more visible)
     this.playerBase = this.add.graphics();
-    this.drawBase(this.playerBase, 40, 400, "player"); // More visible on left
+    this.drawBase(this.playerBase, 10, 400, "player"); // More visible on left
 
     // Enemy base (right) - positioned partially off-screen (more visible)
     this.enemyBase = this.add.graphics();
-    this.drawBase(this.enemyBase, 3160, 400, "enemy"); // More visible on right
+    this.drawBase(this.enemyBase, 3190, 400, "enemy"); // More visible on right
   }
 
   private drawBase(
@@ -205,7 +235,7 @@ export default class BattleScene extends Phaser.Scene {
     hpPercent: number,
     team: "player" | "enemy"
   ): void {
-    const radius = 80; // Much bigger planets!
+    const radius = 120; // Much bigger planets!
 
     // Determine planet colors based on team and health
     let baseColor, continentColor, atmosphereColor;
@@ -229,7 +259,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     // Draw outer atmosphere glow
-    graphics.fillStyle(atmosphereColor, 0.2);
+    graphics.fillStyle(atmosphereColor, 0.3);
     graphics.fillCircle(0, 0, radius + 20); // Bigger atmosphere for bigger planets
 
     // Draw main planet body
@@ -878,10 +908,10 @@ export default class BattleScene extends Phaser.Scene {
 
   private updateBases(): void {
     if (this.playerBase) {
-      this.drawBase(this.playerBase, 40, 400, "player"); // More visible on left
+      this.drawBase(this.playerBase, 10, 400, "player"); // More visible on left
     }
     if (this.enemyBase) {
-      this.drawBase(this.enemyBase, 3160, 400, "enemy"); // More visible on right
+      this.drawBase(this.enemyBase, 3190, 400, "enemy"); // More visible on right
     }
   }
 

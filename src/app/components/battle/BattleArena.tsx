@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
+import React, { useCallback, useState } from "react";
 import type { GameState } from "./BattleScene";
 import type { PhaserGameRef } from "./PhaserGameComponent";
 
@@ -96,14 +96,15 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         {/* Battle status overlay */}
         <div className="absolute top-2 left-2 right-2 flex justify-between items-center pointer-events-none">
           <div className="bg-cyan-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
-            Player Base: {gameState.playerBaseHp}/{1000}
+            Player Base: {gameState.playerBaseHp}/{100}
           </div>
-          <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-bold">
-            {Math.floor(gameState.matchTimeLeft / 60)}:
+          <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-2xl font-bold">
+          ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
             {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+            <div className="text-xs">Time Remaining</div>
           </div>
           <div className="bg-magenta-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
-            Enemy Base: {gameState.enemyBaseHp}/{1000}
+            Enemy Base: {gameState.enemyBaseHp}/{100}
           </div>
         </div>
 

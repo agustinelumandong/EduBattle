@@ -82,8 +82,7 @@ const PhaserGameComponent = React.forwardRef<
   );
 
   return (
-    <div
-      ref={gameContainerRef}
+    <div ref={gameContainerRef}
       className="w-full h-full bg-gray-900"
       style={{ width: "100vw", height: "100vh" }}
     />

@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCallback, useRef, useState, type ReactElement } from "react";
-import BattleArena from "./components/battle/BattleArena";
 import type { BattleArenaRef } from "./components/battle/BattleArena";
+import BattleArena from "./components/battle/BattleArena";
 import type { GameState } from "./components/battle/BattleScene";
 import QuizModal from "./components/quiz/QuizModal";
 import GameHUD from "./components/ui/GameHUD";
@@ -118,10 +118,9 @@ export default function EduBattle(): ReactElement {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-4xl">
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <CardTitle className="text-4xl font-bold mb-2">
+            <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2">
               🎮 Welcome to EduBattle! ⚔️
             </CardTitle>
-            <p className="text-xl">Educational Lane Battle Game</p>
           </CardHeader>
 
           <CardContent className="p-8">
@@ -161,47 +160,13 @@ export default function EduBattle(): ReactElement {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-blue-500">⏰</span>
-                    Quizzes appear every 30 seconds - make your choice!
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">🔢</span>
-                    Math Knights, Science Mages, History Archers
-                  </li>
+                    Quizzes appear every 10 seconds - make your choice!
+                  </li> 
                   <li className="flex items-center gap-2">
                     <span className="text-red-500">💥</span>
                     Wrong answers deploy weaker units
                   </li>
                 </ul>
-              </div>
-            </div>
-
-            <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-              <div className="p-4 bg-blue-100 rounded-lg">
-                <div className="text-3xl mb-2">🔢</div>
-                <h4 className="font-semibold text-blue-600">Math Knight</h4>
-                <p className="text-sm">
-                  Strong melee warrior
-                  <br />
-                  💰200 gold
-                </p>
-              </div>
-              <div className="p-4 bg-green-100 rounded-lg">
-                <div className="text-3xl mb-2">🧪</div>
-                <h4 className="font-semibold text-green-600">Science Mage</h4>
-                <p className="text-sm">
-                  Ranged spell caster
-                  <br />
-                  💰220 gold
-                </p>
-              </div>
-              <div className="p-4 bg-amber-100 rounded-lg">
-                <div className="text-3xl mb-2">📜</div>
-                <h4 className="font-semibold text-amber-600">History Archer</h4>
-                <p className="text-sm">
-                  Long-range archer
-                  <br />
-                  💰180 gold
-                </p>
               </div>
             </div>
 
