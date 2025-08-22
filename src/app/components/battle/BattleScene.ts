@@ -47,6 +47,7 @@ export default class BattleScene extends Phaser.Scene {
     unitType: string,
     callback: (correct: boolean) => void
   ) => void;
+  public onSceneReady?: () => void;
 
   constructor() {
     super("BattleScene");
@@ -143,6 +144,11 @@ export default class BattleScene extends Phaser.Scene {
 
     // Start game loop
     this.startGameLoop();
+
+    // Notify that scene is ready
+    if (this.onSceneReady) {
+      this.onSceneReady();
+    }
   }
 
   private createBattlefield(): void {

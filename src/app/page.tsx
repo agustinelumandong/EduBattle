@@ -28,6 +28,7 @@ export default function EduBattle(): ReactElement {
   const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
   const [pendingQuiz, setPendingQuiz] = useState<PendingQuiz | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [isGameFullyLoaded, setIsGameFullyLoaded] = useState<boolean>(false);
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
 
@@ -109,7 +110,13 @@ export default function EduBattle(): ReactElement {
     setGameStarted(true);
   }, []);
 
+  const handleGameReady = useCallback(() => {
+    console.log("🎮 Game fully loaded!");
+    setIsGameFullyLoaded(true);
+  }, []);
+
   const restartGame = useCallback(() => {
+    setIsGameFullyLoaded(false);
     window.location.reload(); // Simple restart
   }, []);
 
@@ -188,8 +195,15 @@ export default function EduBattle(): ReactElement {
     );
   }
 
-  return (
+    return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
+      {/* Unified Loading Screen */}
+      {!isGameFullyLoaded && (
+        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center z-50">
+          <div className="text-white text-lg">Loading Battle Arena...</div>
+        </div>
+      )}
+
       {/* Battle Arena - Full Screen */}
       <div className="absolute inset-0">
         <BattleArena
@@ -197,15 +211,18 @@ export default function EduBattle(): ReactElement {
           gameState={gameState}
           onGameStateUpdate={handleGameStateUpdate}
           onRequestQuiz={handleRequestQuiz}
+          onGameReady={handleGameReady}
         />
       </div>
 
-      {/* Game HUD */}
-      <GameHUD
-        gameState={gameState}
-        onUnitClick={handleUnitClick}
-        onSpellClick={handleSpellClick}
-      />
+      {/* Game HUD - shows when game is loaded */}
+      {isGameFullyLoaded && (
+        <GameHUD
+          gameState={gameState}
+          onUnitClick={handleUnitClick}
+          onSpellClick={handleSpellClick}
+        />
+      )}
 
       {/* Quiz Modal */}
       <QuizModal
@@ -216,7 +233,7 @@ export default function EduBattle(): ReactElement {
       />
 
       {/* Game Over Actions */}
-      {gameState.isGameOver && (
+      {gameState.isGameOver && isGameFullyLoaded && (
         <div className="absolute top-4 right-4">
           <Button onClick={restartGame} size="lg" variant="outline">
             🔄 Play Again
@@ -225,15 +242,17 @@ export default function EduBattle(): ReactElement {
       )}
 
       {/* Instructions (Mobile) */}
-      <div className="lg:hidden absolute top-4 left-4 right-4">
-        <Card className="bg-black/50 text-white text-center">
-          <CardContent className="p-2">
-            <p className="text-xs">
-              Deploy units by answering quizzes! Correct = stronger units! 🧠⚔️
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {isGameFullyLoaded && (
+        <div className="lg:hidden absolute top-4 left-4 right-4">
+          <Card className="bg-black/50 text-white text-center">
+            <CardContent className="p-2">
+              <p className="text-xs">
+                Deploy units by answering quizzes! Correct = stronger units! 🧠⚔️
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

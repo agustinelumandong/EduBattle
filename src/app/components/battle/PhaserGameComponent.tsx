@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useRef } from "react";
-import gameConfig from "./gameConfig";
-import BattleScene from "./BattleScene";
 import * as Phaser from "phaser";
+import React, { useEffect, useRef, useState } from "react";
 import type { GameState } from "./BattleScene";
+import BattleScene from "./BattleScene";
+import gameConfig from "./gameConfig";
 
 let game: Phaser.Game | null = null;
 let battleScene: BattleScene | null = null;
@@ -21,20 +21,35 @@ interface PhaserGameComponentProps {
     unitType: string,
     callback: (correct: boolean) => void
   ) => void;
+  onGameReady?: () => void;
 }
 
 const PhaserGameComponent = React.forwardRef<
   PhaserGameRef,
   PhaserGameComponentProps
->(({ onGameStateUpdate, onRequestQuiz }, ref) => {
+>(({ onGameStateUpdate, onRequestQuiz, onGameReady }, ref) => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const [isSceneReady, setIsSceneReady] = useState(false);
 
   useEffect(() => {
     if (!game && typeof window !== "undefined" && gameContainerRef.current) {
+      console.log("🎮 Creating Phaser game...", gameContainerRef.current);
+      
       // Create battle scene instance
       battleScene = new BattleScene();
       battleScene.onGameStateUpdate = onGameStateUpdate;
       battleScene.onRequestQuiz = onRequestQuiz;
+      
+      // Set up scene ready callback
+      battleScene.onSceneReady = () => {
+        console.log("🎯 Scene ready callback fired!");
+        setTimeout(() => {
+          setIsSceneReady(true);
+          if (onGameReady) {
+            onGameReady();
+          }
+        }, 100);
+      };
 
       // Clone config, set scene
       const config = {
@@ -43,6 +58,7 @@ const PhaserGameComponent = React.forwardRef<
         parent: gameContainerRef.current,
       };
       game = new Phaser.Game(config);
+      console.log("✅ Phaser game created:", game);
     }
 
     return () => {
@@ -51,8 +67,9 @@ const PhaserGameComponent = React.forwardRef<
         game = null;
         battleScene = null;
       }
+      setIsSceneReady(false);
     };
-  }, [onGameStateUpdate, onRequestQuiz]);
+  }, [onGameStateUpdate, onRequestQuiz, onGameReady]);
 
   // Expose methods to parent component
   React.useImperativeHandle(
@@ -82,10 +99,23 @@ const PhaserGameComponent = React.forwardRef<
   );
 
   return (
-    <div ref={gameContainerRef}
-      className="w-full h-full bg-gray-900"
-      style={{ width: "100vw", height: "100vh" }}
-    />
+    <div className="relative w-full h-full">
+      {/* Loading overlay that hides until scene is ready */}
+      {!isSceneReady && (
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center z-10">
+          <div className="text-white text-lg">Loading Battle Arena...</div>
+        </div>
+      )}
+      
+      {/* Phaser game container */}
+      <div 
+        ref={gameContainerRef}
+        className={`w-full h-full transition-opacity duration-300 ${
+          isSceneReady ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ width: "100%", height: "100%" }}
+      />
+    </div>
   );
 });
 

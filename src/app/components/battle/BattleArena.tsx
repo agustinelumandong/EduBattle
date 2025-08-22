@@ -5,14 +5,8 @@ import React, { useCallback, useState } from "react";
 import type { GameState } from "./BattleScene";
 import type { PhaserGameRef } from "./PhaserGameComponent";
 
-// Dynamically import PhaserGameComponent only on client
 const PhaserGameComponent = dynamic(() => import("./PhaserGameComponent"), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-dvh bg-gray-800 rounded-lg flex items-center justify-center">
-      <div className="text-white text-lg">Loading Battle Arena...</div>
-    </div>
-  ),
 });
 
 export interface BattleArenaRef {
@@ -28,10 +22,11 @@ interface BattleArenaProps {
     unitType: string,
     callback: (correct: boolean) => void
   ) => void;
+  onGameReady?: () => void;
 }
 
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
-  ({ gameState, onGameStateUpdate, onRequestQuiz }, ref) => {
+  ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady }, ref) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
 
@@ -52,6 +47,12 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
       },
       [onRequestQuiz]
     );
+
+    const handleGameReady = useCallback(() => {
+      if (onGameReady) {
+        onGameReady();
+      }
+    }, [onGameReady]);
 
     // Expose methods to parent
     React.useImperativeHandle(
@@ -79,18 +80,19 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
 
     if (!isClient) {
       return (
-        <div className="w-full h-96 bg-gray-800 rounded-lg flex items-center justify-center">
+        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
           <div className="text-white text-lg">Initializing Battle Arena...</div>
         </div>
       );
     }
 
     return (
-      <div className="relative w-full">
+      <div className="relative w-full h-full">
         <PhaserGameComponent
           ref={gameRef}
           onGameStateUpdate={handleGameStateUpdate}
           onRequestQuiz={handleRequestQuiz}
+          onGameReady={handleGameReady}
         />
 
         {/* Battle status overlay */}
