@@ -132,7 +132,7 @@ export default function EduBattle(): ReactElement {
       <div className="min-h-screen starfield-background flex items-center justify-center p-4">
         <Card className="w-full max-w-4xl">
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2">
+            <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2 game-title">
               🎮 Welcome to EduBattle! ⚔️
             </CardTitle>
           </CardHeader>
@@ -188,7 +188,7 @@ export default function EduBattle(): ReactElement {
               <Button
                 onClick={startGame}
                 size="lg"
-                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer mb-4"
+                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer mb-4 game-button"
               >
                 🚀 Start Battle!
               </Button>
@@ -209,7 +209,7 @@ export default function EduBattle(): ReactElement {
         <div className={`absolute inset-0 starfield-background flex items-center justify-center z-50 ${
           isStarfieldFadingOut ? 'fade-out' : ''
         }`}>
-          <div className={`text-white text-lg transition-opacity duration-500 ${
+                      <div className={`text-white text-lg game-ui-text transition-opacity duration-500 ${
             isStarfieldFadingOut ? 'opacity-0' : 'opacity-100'
           }`}>
             Loading Battle Arena...
@@ -248,7 +248,7 @@ export default function EduBattle(): ReactElement {
       {/* Game Over Actions */}
       {gameState.isGameOver && isGameFullyLoaded && (
         <div className="absolute top-4 right-4">
-          <Button onClick={restartGame} size="lg" variant="outline">
+          <Button onClick={restartGame} size="lg" variant="outline" className="game-button">
             🔄 Play Again
           </Button>
         </div>

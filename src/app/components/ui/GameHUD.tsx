@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
 import {
-  GAME_CONFIG,
-  SUBJECT_COLORS,
-  SUBJECT_ICONS,
+  GAME_CONFIG
 } from "../../data/game-config";
 import type { GameState } from "../battle/BattleScene";
 
@@ -29,70 +27,21 @@ const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent">
-      {/* Top HUD - Gold, Timer, Health */}
+      {/* Top HUD - Gold */}
       <div className="flex justify-between items-center mb-4">
-        <Card className="bg-yellow-600 text-white">
-          <CardContent className="p-2">
+        <Card className=" bg-yellow-600 text-white">
+          <CardContent className="p-2 game-stats">
             <div className="text-center">
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold game-stats">
                 💰 {gameState.playerGold}
               </div>
-              <div className="text-xs">
+              <div className="text-xs game-ui-text">
                 Gold (+{GAME_CONFIG.economy.goldPerSecond}/s)
               </div>
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-gray-800 text-white">
-          <CardContent className="p-2">
-            <div className="text-center">
-              <div className="text-2xl font-bold">
-                ⏰ {formatTime(gameState.matchTimeLeft)}
-              </div>
-              <div className="text-xs">Time Remaining</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-cyan-600 text-white">
-          <CardContent className="p-2">
-            <div className="text-center">
-              <div className="text-2xl font-bold">
-                💙 {gameState.playerBaseHp}
-              </div>
-              <div className="text-xs">Base Health</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Unit Deployment Buttons */}
-      <div className="flex justify-center mb-4">
-        <div className="grid grid-cols-3 gap-4">
-          {GAME_CONFIG.units.map((unit) => {
-            const subjectColor = SUBJECT_COLORS[unit.subject];
-            const subjectIcon = SUBJECT_ICONS[unit.subject];
-
-            return (
-              <Button
-                key={unit.id}
-                onClick={() => onUnitClick(unit.id)}
-                disabled={gameState.isGameOver}
-                className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all hover:scale-105 hover:shadow-lg`}
-                style={{
-                  backgroundColor: subjectColor,
-                  borderColor: "#fff",
-                }}
-              >
-                <div className="text-2xl mb-1">{subjectIcon}</div>
-                <div className="text-xs text-center leading-tight">
-                  {unit.name.split(" ")[0]}
-                </div>
-              </Button>
-            );
-          })}
-        </div>
+ 
       </div>
 
       {/* Spell Buttons */}
@@ -108,11 +57,29 @@ const GameHUD: React.FC<GameHUDProps> = ({
                 disabled={!affordable || gameState.isGameOver}
                 variant={affordable ? "default" : "outline"}
                 size="sm"
-                className={`${
-                  affordable ? "bg-purple-600 hover:bg-purple-700" : ""
-                }`}
+                className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all hover:scale-105 hover:shadow-lg game-button`}
+                style={{
+                  background:
+                    spell.name.toLowerCase() === "freeze lane"
+                      ? "#164e63" // cyan-900
+                      : spell.name.toLowerCase() === "meteor strike"
+                      ? "#7f1d1d" // red-900
+                      : spell.name.toLowerCase() === "double gold"
+                      ? "#854d0e" // yellow-900
+                      : "#4b006e", // purple-900
+                  borderColor: "#fff",
+                }}
               >
-                ✨ {spell.name} (💰{spell.cost})
+                {spell.name.toLowerCase() === "freeze lane" ? (
+                  <span className="text-cyan-200 text-2xl mr-1">❄️</span>
+                ) : spell.name.toLowerCase() === "meteor strike" ? (
+                  <span className="text-red-500 text-2xl mr-1">🔥</span>
+                ) : spell.name.toLowerCase() === "double gold" ? (
+                  <span className="text-yellow-400 text-2xl mr-1">2x💰</span>
+                ) : (
+                  <span className="text-purple-300 text-2xl mr-1">✨</span>
+                )}
+               <span className="text-white game-ui-text" style={{fontSize: '8px'}}>{spell.name}</span>
               </Button>
             );
           })}

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap'); */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,6 +120,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Orbitron', monospace;
   }
 }
 
@@ -232,4 +234,113 @@
   66% {
     opacity: 1;
   }
+}
+
+/* 🎮 Retro Sci-Fi Font Styling */
+.font-orbitron-light {
+  font-family: 'Orbitron', monospace;
+  font-weight: 400;
+}
+
+.font-orbitron-bold {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+}
+
+.font-orbitron-black {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+}
+
+/* Game UI Elements */
+.game-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.game-button {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.game-ui-text {
+  font-family: 'Orbitron', monospace;
+  font-weight: 400;
+}
+
+.game-stats {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+}
+
+/* 🎮 Retro 8-bit Health Bar Styling */
+.retro-health-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-health-label {
+  color: white;
+  text-shadow: 1px 1px 0 black;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-health-bar {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+  box-shadow:
+    inset -1px -1px 0 rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.9);
+}
+
+.retro-health-fill {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+}
+
+.retro-health-shine {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* 8-bit Button Styling */
+.retro-button {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+  border: 2px solid;
+  box-shadow:
+    inset -2px -2px 0 rgba(0, 0, 0, 0.6),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+  font-family: monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-button:hover {
+  box-shadow:
+    inset -1px -1px 0 rgba(0, 0, 0, 0.6),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.retro-button:active {
+  box-shadow:
+    inset 2px 2px 0 rgba(0, 0, 0, 0.6),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.1);
 }

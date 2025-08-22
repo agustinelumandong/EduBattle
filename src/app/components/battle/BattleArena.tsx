@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useState } from "react";
+import RetroHealthBar from "../ui/RetroHealthBar";
 import type { GameState } from "./BattleScene";
 import type { PhaserGameRef } from "./PhaserGameComponent";
 
@@ -95,23 +96,42 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           onGameReady={handleGameReady}
         />
 
-        {/* Battle status overlay */}
-        <div className="absolute top-2 left-2 right-2 flex justify-between items-center pointer-events-none">
-          <div className="bg-cyan-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
-            Player Base: {gameState.playerBaseHp}/{100}
+        {/* Retro Health Bars Overlay */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+          {/* Player Health Bar */}
+          <div className="flex flex-col items-start">
+            <RetroHealthBar
+              currentHealth={gameState.playerBaseHp}
+              maxHealth={100}
+              label="PLAYER BASE"
+              color="blue"
+              size="large"
+            />
           </div>
-          <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-2xl font-bold">
-          ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
-            {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
-            <div className="text-xs">Time Remaining</div>
+
+          {/* Timer Display */}
+          <div className="bg-gray-800 text-white px-4 py-2 border-2 border-gray-600 retro-button">
+            <div className="text-xl font-bold game-stats text-center">
+              ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+              {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+            </div>
+            <div className="text-xs game-ui-text text-center">TIME REMAINING</div>
           </div>
-          <div className="bg-magenta-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
-            Enemy Base: {gameState.enemyBaseHp}/{100}
+
+          {/* Enemy Health Bar */}
+          <div className="flex flex-col items-end">
+            <RetroHealthBar
+              currentHealth={gameState.enemyBaseHp}
+              maxHealth={100}
+              label="ENEMY BASE"
+              color="red"
+              size="large"
+            />
           </div>
         </div>
 
         {/* Camera controls hint */}
-        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none">
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none game-ui-text">
           🎮 Drag to pan • A/D keys to move • SPACE to center
         </div>
 
@@ -119,7 +139,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         {gameState.isGameOver && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
             <div className="bg-white rounded-lg p-6 text-center">
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-bold mb-4 game-title">
                 {gameState.winner === "player" ? "🎉 Victory!" : "💥 Defeat!"}
               </h2>
               <p className="text-lg mb-4">
