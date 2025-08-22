@@ -25,15 +25,14 @@ const GameHUD: React.FC<GameHUDProps> = ({
       {/* Spell Buttons */}
       <div className="flex justify-center">
         <div className="flex gap-2">
-          {GAME_CONFIG.spells.map((spell) => {
-            const affordable = gameState.playerGold >= spell.cost;
+          {GAME_CONFIG.spells.map((spell) => { 
 
             return (
               <button
                 key={spell.id}
                 onClick={() => onSpellClick(spell.id)}
-                disabled={!affordable || gameState.isGameOver}
-                className={`nes-btn ${affordable ? 'is-primary' : 'is-disabled'}`}
+                disabled={gameState.isGameOver}
+                className={`nes-btn ${gameState.isGameOver ? 'is-disabled' : 'is-primary'}`}
                 style={{
                   height: "80px",
                   width: "96px",
@@ -48,18 +47,14 @@ const GameHUD: React.FC<GameHUDProps> = ({
                       ? "#164e63" // cyan-900
                       : spell.name.toLowerCase() === "meteor strike"
                       ? "#7f1d1d" // red-900
-                      : spell.name.toLowerCase() === "double gold"
-                      ? "#854d0e" // yellow-900
-                      : "#4b006e", // purple-900
+                      : "#854d0e" // yellow-900
                 }}
               >
                 {spell.name.toLowerCase() === "freeze lane" ? (
                   <span className="text-cyan-200 text-2xl mr-1">❄️</span>
                 ) : spell.name.toLowerCase() === "meteor strike" ? (
-                  <span className="text-red-500 text-2xl mr-1">🔥</span>
-                ) : spell.name.toLowerCase() === "double gold" ? (
-                  <span className="text-yellow-400 text-2xl mr-1">💰</span>
-                ) : (
+                  <span className="text-red-500 text-2xl mr-1">🔥</span>) 
+                  : (
                   <span className="text-purple-300 text-2xl mr-1">✨</span>
                 )}
                <span className="text-white" style={{fontSize: '10px', fontFamily: "'Press Start 2P', cursive"}}>{spell.name}</span>
@@ -72,7 +67,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
       {/* Mobile-specific instructions */}
       <div className="lg:hidden mt-2 text-center">
         <p className="text-xs text-gray-400">
-          Answer quizzes correctly for stronger units! Use gold for spells! ✨
+          Answer quizzes correctly for stronger units! Use spells wisely! ✨
         </p>
       </div>
     </div>

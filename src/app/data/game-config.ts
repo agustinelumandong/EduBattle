@@ -1,11 +1,4 @@
 export interface GameConfig {
-  economy: {
-    startGold: number;
-    goldPerSecond: number;
-    killGold: number;
-    correctBonus: number;
-    wrongPenalty: number;
-  };
   units: UnitConfig[];
   quiz: {
     timerSeconds: number;
@@ -59,13 +52,6 @@ export interface QuizQuestion {
 }
 
 export const GAME_CONFIG: GameConfig = {
-  economy: {
-    startGold: 99999,
-    goldPerSecond: 99999,
-    killGold: 20,
-    correctBonus: 50,
-    wrongPenalty: 10,
-  },
   units: [
     {
       id: "knight",
@@ -127,15 +113,7 @@ export const GAME_CONFIG: GameConfig = {
       cooldownSeconds: 45,
       description: "Rains meteors on all enemy units dealing massive damage",
       effect: "meteor_strike",
-    },
-    {
-      id: "double_gold",
-      name: "Double Gold",
-      cost: 200,
-      cooldownSeconds: 60,
-      description: "Double gold income for 10 seconds",
-      effect: "double_gold",
-    },
+    }, 
   ],
   battle: {
     matchDurationMinutes: 4,

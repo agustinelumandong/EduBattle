@@ -21,8 +21,7 @@ interface PendingSpellQuiz {
 }
 
 export default function EduBattle(): ReactElement {
-  const [gameState, setGameState] = useState<GameState>({
-    playerGold: GAME_CONFIG.economy.startGold,
+  const [gameState, setGameState] = useState<GameState>({ 
     playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
@@ -138,14 +137,14 @@ export default function EduBattle(): ReactElement {
       if (!gameStarted || gameState.isGameOver) return;
 
       const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
-      if (!spellConfig || gameState.playerGold < spellConfig.cost) return;
+      if (!spellConfig) return;
 
       // Cast spell through BattleArena component
       if (battleArenaRef.current) {
         battleArenaRef.current.castSpell(spellId);
       }
     },
-    [gameStarted, gameState.isGameOver, gameState.playerGold]
+    [gameStarted, gameState.isGameOver]
   );
 
   const startGame = useCallback(() => {
@@ -210,10 +209,6 @@ export default function EduBattle(): ReactElement {
                   🎲 Game Rules
                 </h3>
                 <ul className="space-y-4 text-sm">
-                  <li className="flex items-center gap-2">
-                    <span className="text-yellow-500">💰</span>
-                    Gold is only used for spells, units are free after quizzes
-                  </li>
                   <li className="flex items-center gap-2">
                     <span className="text-blue-500">⏰</span>
                     Quizzes appear every 10 seconds - make your choice!

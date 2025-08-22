@@ -41,8 +41,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
       if (spellId) {
         const spellSubjectMap: Record<string, string> = {
           freeze: "science", // Ice/freezing is science
-          meteor: "science", // Astronomy/meteors is science
-          double_gold: "math", // Economics/multiplication is math
+          meteor: "math", // Astronomy/meteors is science
         };
 
         const subject = spellSubjectMap[spellId] || "math";
@@ -157,7 +156,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
   };
 
   const subject = subjectMap[unitType] || "math";
-  const subjectColor = SUBJECT_COLORS[subject as keyof typeof SUBJECT_COLORS];
+  // const subjectColor = SUBJECT_COLORS[subject as keyof typeof SUBJECT_COLORS];
   const subjectIcon = SUBJECT_ICONS[subject as keyof typeof SUBJECT_ICONS];
 
   return (
@@ -169,9 +168,8 @@ const QuizModal: React.FC<QuizModalProps> = ({
         >
           <CardTitle className="text-2xl flex items-center justify-center gap-2">
             <span className="text-3xl">{subjectIcon}</span>
-            <span className="text-lg">{subjectIcon}</span>
             {spellId ? "Spell Quiz" : "Quiz Challenge"}
-            <span className="text-lg">{subjectIcon}</span>
+            <span className="text-3xl">{subjectIcon}</span>
           </CardTitle>
           <div className="mt-2">
             <Progress value={(timeLeft / 10) * 100} className="w-full h-3" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 import React, { useCallback, useState } from "react";
 import RetroHealthBar from "../ui/RetroHealthBar";
@@ -30,11 +31,12 @@ interface BattleArenaProps {
   ) => void;
 }
 
+
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
   ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
-
+    const [gameRestarted, setGameRestarted] = useState<boolean>(false);
     React.useEffect(() => {
       setIsClient(true);
     }, []);
@@ -58,6 +60,11 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         onGameReady();
       }
     }, [onGameReady]);
+
+    const restartGame = useCallback(() => {
+      setGameRestarted(true);
+      window.location.reload(); // Simple restart
+    }, []);
 
     // Expose methods to parent
     React.useImperativeHandle(
@@ -90,6 +97,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         </div>
       );
     }
+  
 
     return (
       <div className="relative w-full h-full">
@@ -162,7 +170,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
               <p className="text-lg mb-4">
                 {gameState.winner === "player"
                   ? "Congratulations! You destroyed the enemy base!"
-                  : "The enemy destroyed your base. Better luck next time!"}
+                  : "Better luck next time!"}
               </p>
               <div className="flex justify-center space-x-2">
                 {[1, 2, 3].map((star) => (
@@ -178,6 +186,9 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                   </span>
                 ))}
               </div>
+              <Button onClick={restartGame} size="lg" variant="outline" className="game-button">
+              🔄 Play Again
+              </Button>
             </div>
           </div>
         )}

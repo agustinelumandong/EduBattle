@@ -4,7 +4,6 @@ import { soundManager } from "./helpers/soundManager";
 import { UnitHelpers, type BattleUnit } from "./helpers/unitHelpers";
 
 export interface GameState {
-  playerGold: number;
   playerBaseHp: number;
   enemyBaseHp: number;
   matchTimeLeft: number;
@@ -15,7 +14,6 @@ export interface GameState {
 export default class BattleScene extends Phaser.Scene {
   private units: BattleUnit[] = [];
   private gameState: GameState = {
-    playerGold: GAME_CONFIG.economy.startGold,
     playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
@@ -24,7 +22,6 @@ export default class BattleScene extends Phaser.Scene {
 
   private playerBase?: Phaser.GameObjects.Graphics;
   private enemyBase?: Phaser.GameObjects.Graphics;
-  private goldTimer?: Phaser.Time.TimerEvent;
   private matchTimer?: Phaser.Time.TimerEvent;
   private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
   private isQuizActive: boolean = false;
@@ -68,28 +65,28 @@ export default class BattleScene extends Phaser.Scene {
     this.cameras.main.centerOn(400, 400); // Start view on left side near player base
     
     // Set initial cursor style for camera movement
-    this.game.canvas.style.cursor = "grab";
+    // this.game.canvas.style.cursor = "grab";
 
     // Enable camera controls with mouse/touch
-    this.input.on("pointerdown", () => {
+    // this.input.on("pointerdown", () => {
       // Change cursor to grabbing when dragging starts
-      this.game.canvas.style.cursor = "grabbing";
-    });
+    //   this.game.canvas.style.cursor = "grabbing";
+    // });
 
-    this.input.on("pointerup", () => {
-      // Change cursor back to grab when dragging stops
-      this.game.canvas.style.cursor = "grab";
-    });
+    // this.input.on("pointerup", () => {
+    //   // Change cursor back to grab when dragging stops
+    //   this.game.canvas.style.cursor = "grab";
+    // });
 
-    this.input.on("pointerout", () => {
-      // Reset cursor when pointer leaves canvas
-      this.game.canvas.style.cursor = "default";
-    });
+    // this.input.on("pointerout", () => {
+    //   // Reset cursor when pointer leaves canvas
+    //   this.game.canvas.style.cursor = "default";
+    // });
 
-    this.input.on("pointerover", () => {
-      // Set grab cursor when pointer enters canvas
-      this.game.canvas.style.cursor = "grab";
-    });
+    // this.input.on("pointerover", () => {
+    //   // Set grab cursor when pointer enters canvas
+    //   this.game.canvas.style.cursor = "grab";
+    // });
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
@@ -139,9 +136,6 @@ export default class BattleScene extends Phaser.Scene {
 
     // Create bases
     this.createBases();
-
-    // Start gold income timer
-    this.startGoldIncome();
 
     // Start match timer
     this.startMatchTimer();
@@ -709,10 +703,7 @@ export default class BattleScene extends Phaser.Scene {
 
           // Check if unit died
           if (unit.hp <= 0) {
-            // Only give gold for killing enemy units, not your own
-            if (targetTeam === "enemy") {
-              this.gameState.playerGold += GAME_CONFIG.economy.killGold;
-            }
+           
             UnitHelpers.destroyUnit(unit);
           } else {
             // Update health bar
@@ -747,16 +738,7 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
-  private startGoldIncome(): void {
-    this.goldTimer = this.time.addEvent({
-      delay: 1000, // Every second
-      callback: () => {
-        this.gameState.playerGold += GAME_CONFIG.economy.goldPerSecond;
-        this.updateGameState();
-      },
-      loop: true,
-    });
-  }
+
 
   private startMatchTimer(): void {
     this.matchTimer = this.time.addEvent({
@@ -1023,7 +1005,6 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     // Stop timers
-    if (this.goldTimer) this.goldTimer.destroy();
     if (this.matchTimer) this.matchTimer.destroy();
     if (this.quizTimer) this.quizTimer.destroy();
 
@@ -1159,7 +1140,7 @@ export default class BattleScene extends Phaser.Scene {
       return false; // Still on cooldown
     }
 
-    // Instead of checking gold, trigger a quiz!
+    // Trigger a quiz!
     if (this.onRequestSpellQuiz) {
       console.log(`🧙‍♂️ Casting spell ${spellConfig.name} - quiz required!`);
 
@@ -1248,42 +1229,7 @@ export default class BattleScene extends Phaser.Scene {
         console.log(`☄️ Meteor spell case - backfired = ${backfired}`);
         this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
-        break;
-
-      case "double_gold":
-        // Double gold doesn't backfire, it just does nothing if wrong
-        if (!backfired) {
-          // Double gold income for 10 seconds
-          if (this.goldTimer) {
-            this.goldTimer.destroy();
-          }
-
-          // Create a new gold timer with double rate
-          this.goldTimer = this.time.addEvent({
-            delay: 1000, // Every second
-            callback: () => {
-              this.gameState.playerGold +=
-                GAME_CONFIG.economy.goldPerSecond * 2;
-              this.updateGameState();
-            },
-            loop: true,
-            repeat: 10, // 10 seconds
-          });
-
-          // After 10 seconds, restore normal gold rate
-          this.time.delayedCall(10000, () => {
-            if (this.goldTimer) {
-              this.goldTimer.destroy();
-            }
-
-            this.startGoldIncome();
-          });
-          soundManager.playSpellCast();
-        } else {
-          console.log("💰 Double Gold backfired - no effect!");
-          soundManager.playSpellCast();
-        }
-        break;
+        break; 
 
       default:
         break;
