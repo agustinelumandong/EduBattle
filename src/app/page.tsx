@@ -285,13 +285,13 @@ export default function EduBattle(): ReactElement {
       />
 
       {/* Game Over Actions */}
-      {gameState.isGameOver && isGameFullyLoaded && (
+      {/* {gameState.isGameOver && isGameFullyLoaded && (
         <div className="absolute top-4 right-4">
           <Button onClick={restartGame} size="lg" variant="outline" className="game-button">
             🔄 Play Again
           </Button>
         </div>
-      )}
+      )} */}
 
       {/* Instructions (Mobile) */}
       {/* {isGameFullyLoaded && (

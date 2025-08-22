@@ -162,7 +162,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
 
         {/* Game over overlay */}
         {gameState.isGameOver && (
-          <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 text-center">
               <h2 className="text-2xl font-bold mb-4 game-title">
                 {gameState.winner === "player" ? "🎉 Victory!" : "💥 Defeat!"}
@@ -176,7 +176,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 {[1, 2, 3].map((star) => (
                   <span
                     key={star}
-                    className={`text-2xl ${
+                    className={`text-6xl ${
                       star <= (gameState.winner === "player" ? 3 : 1)
                         ? "text-yellow-500"
                         : "text-gray-300"
@@ -186,8 +186,8 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                   </span>
                 ))}
               </div>
-              <Button onClick={restartGame} size="lg" variant="outline" className="game-button">
-              🔄 Play Again
+              <Button onClick={restartGame} size="lg" variant="outline" className="game-button nes-btn is-primary">
+               Play Again
               </Button>
             </div>
           </div>
