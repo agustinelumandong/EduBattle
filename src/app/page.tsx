@@ -29,6 +29,7 @@ export default function EduBattle(): ReactElement {
   const [pendingQuiz, setPendingQuiz] = useState<PendingQuiz | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [isGameFullyLoaded, setIsGameFullyLoaded] = useState<boolean>(false);
+  const [isStarfieldFadingOut, setIsStarfieldFadingOut] = useState<boolean>(false);
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
 
@@ -112,17 +113,23 @@ export default function EduBattle(): ReactElement {
 
   const handleGameReady = useCallback(() => {
     console.log("🎮 Game fully loaded!");
-    setIsGameFullyLoaded(true);
+    setIsStarfieldFadingOut(true);
+    setTimeout(() => {
+      setIsGameFullyLoaded(true);
+    }, 800); 
   }, []);
 
   const restartGame = useCallback(() => {
-    setIsGameFullyLoaded(false);
+    setTimeout(() => {
+      setIsGameFullyLoaded(false);
+    }, 800);
+    setIsStarfieldFadingOut(false);
     window.location.reload(); // Simple restart
   }, []);
 
   if (showTutorial) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center p-4">
+      <div className="min-h-screen starfield-background flex items-center justify-center p-4">
         <Card className="w-full max-w-4xl">
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white">
             <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2">
@@ -197,10 +204,16 @@ export default function EduBattle(): ReactElement {
 
     return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
-      {/* Unified Loading Screen */}
+      {/* Unified Loading Screen With Fade-out Animation */}
       {!isGameFullyLoaded && (
-        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center z-50">
-          <div className="text-white text-lg">Loading Battle Arena...</div>
+        <div className={`absolute inset-0 starfield-background flex items-center justify-center z-50 ${
+          isStarfieldFadingOut ? 'fade-out' : ''
+        }`}>
+          <div className={`text-white text-lg transition-opacity duration-500 ${
+            isStarfieldFadingOut ? 'opacity-0' : 'opacity-100'
+          }`}>
+            Loading Battle Arena...
+          </div>
         </div>
       )}
 
