@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.540.0",
     "matter-js": "^0.20.0",
+    "nes.css": "^2.2.1",
     "next": "15.5.0",
     "phaser": "^3.90.0",
     "phaser-matter-collision-plugin": "^1.0.0",

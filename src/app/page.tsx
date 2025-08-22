@@ -130,8 +130,8 @@ export default function EduBattle(): ReactElement {
   if (showTutorial) {
     return (
       <div className="min-h-screen starfield-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-4xl">
-          <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <Card className="w-full max-w-4xl nes-container is-rounded is-dark">
+          <CardHeader className="text-center text-white">
             <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2 game-title">
               🎮 Welcome to EduBattle! ⚔️
             </CardTitle>
@@ -140,10 +140,10 @@ export default function EduBattle(): ReactElement {
           <CardContent className="p-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-2xl font-semibold text-blue-600">
+                <h3 className="text-lg font-semibold text-blue-600">
                   🎯 How to Play
                 </h3>
-                <ul className="space-y-2 text-lg">
+                <ul className="space-y-4 text-sm">
                   <li className="flex items-center gap-2">
                     <span className="text-green-500">✅</span>
                     Click unit buttons to deploy warriors
@@ -164,10 +164,10 @@ export default function EduBattle(): ReactElement {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-semibold text-purple-600">
+                <h3 className="text-lg font-semibold text-purple-600">
                   🎲 Game Rules
                 </h3>
-                <ul className="space-y-2 text-lg">
+                <ul className="space-y-4 text-sm">
                   <li className="flex items-center gap-2">
                     <span className="text-yellow-500">💰</span>
                     Gold is only used for spells, units are free after quizzes
@@ -184,18 +184,19 @@ export default function EduBattle(): ReactElement {
               </div>
             </div>
 
-            <div className="mt-8 text-center">
+            <div className="mt-8 mb-8 text-center">
               <Button
                 onClick={startGame}
                 size="lg"
-                className="text-xl px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer mb-4 game-button"
+                className=" is-primary text-sm px-24 py-8 cursor-pointer mb-8 game-button nes-btn"
               >
-                🚀 Start Battle!
+                Start Battle!
               </Button>
-              <p className="text-sm text-gray-500 mt-2">
+              
+            </div>
+            <p className="text-sm text-gray-500 mt-8 text-center">
                 Get ready for educational warfare! 🎓⚔️
               </p>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -232,7 +233,6 @@ export default function EduBattle(): ReactElement {
       {isGameFullyLoaded && (
         <GameHUD
           gameState={gameState}
-          onUnitClick={handleUnitClick}
           onSpellClick={handleSpellClick}
         />
       )}
@@ -255,7 +255,7 @@ export default function EduBattle(): ReactElement {
       )}
 
       {/* Instructions (Mobile) */}
-      {isGameFullyLoaded && (
+      {/* {isGameFullyLoaded && (
         <div className="lg:hidden absolute top-4 left-4 right-4">
           <Card className="bg-black/50 text-white text-center">
             <CardContent className="p-2">
@@ -265,7 +265,7 @@ export default function EduBattle(): ReactElement {
             </CardContent>
           </Card>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

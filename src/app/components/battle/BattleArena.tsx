@@ -104,18 +104,30 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
               currentHealth={gameState.playerBaseHp}
               maxHealth={100}
               label="PLAYER BASE"
-              color="blue"
+              color="primary"
               size="large"
             />
           </div>
 
           {/* Timer Display */}
-          <div className="bg-gray-800 text-white px-4 py-2 border-2 border-gray-600 retro-button">
-            <div className="text-xl font-bold game-stats text-center">
+          <div className="nes-container is-rounded is-dark" style={{ padding: "1rem", background: "rgba(0,0,0,0.8)" }}>
+            <div className="nes-text is-white" style={{ 
+              fontSize: "16px", 
+              fontFamily: "'Press Start 2P', cursive",
+              textAlign: "center",
+              marginBottom: "0.5rem"
+            }}>
               ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
               {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
             </div>
-            <div className="text-xs game-ui-text text-center">TIME REMAINING</div>
+            <div className="nes-text is-white text-center" style={{ 
+              fontSize: "8px", 
+              fontFamily: "'Press Start 2P', cursive",
+              textAlign: "center",
+              opacity: 0.8
+            }}>
+              TIME REMAINING
+            </div>
           </div>
 
           {/* Enemy Health Bar */}
@@ -124,14 +136,14 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
               currentHealth={gameState.enemyBaseHp}
               maxHealth={100}
               label="ENEMY BASE"
-              color="red"
+              color="error"
               size="large"
             />
           </div>
         </div>
 
         {/* Camera controls hint */}
-        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none game-ui-text">
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-3 py-1 rounded-lg text-xs pointer-events-none game-ui-text z-50">
           🎮 Drag to pan • A/D keys to move • SPACE to center
         </div>
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+// Removed unused Button, Card, and CardContent imports for NES.css implementation
 import React from "react";
 import {
   GAME_CONFIG
@@ -10,39 +9,18 @@ import type { GameState } from "../battle/BattleScene";
 
 interface GameHUDProps {
   gameState: GameState;
-  onUnitClick: (unitType: string) => void;
   onSpellClick: (spellId: string) => void;
 }
 
 const GameHUD: React.FC<GameHUDProps> = ({
   gameState,
-  onUnitClick,
   onSpellClick,
 }) => {
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  // Removed unused onUnitClick and formatTime for cleaner code
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent">
-      {/* Top HUD - Gold */}
-      <div className="flex justify-between items-center mb-4">
-        <Card className=" bg-yellow-600 text-white">
-          <CardContent className="p-2 game-stats">
-            <div className="text-center">
-              <div className="text-2xl font-bold game-stats">
-                💰 {gameState.playerGold}
-              </div>
-              <div className="text-xs game-ui-text">
-                Gold (+{GAME_CONFIG.economy.goldPerSecond}/s)
-              </div>
-            </div>
-          </CardContent>
-        </Card>
- 
-      </div>
+    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent"> 
+      
 
       {/* Spell Buttons */}
       <div className="flex justify-center">
@@ -51,14 +29,20 @@ const GameHUD: React.FC<GameHUDProps> = ({
             const affordable = gameState.playerGold >= spell.cost;
 
             return (
-              <Button
+              <button
                 key={spell.id}
                 onClick={() => onSpellClick(spell.id)}
                 disabled={!affordable || gameState.isGameOver}
-                variant={affordable ? "default" : "outline"}
-                size="sm"
-                className={`h-20 w-24 flex flex-col items-center justify-center text-white font-bold border-2 transition-all hover:scale-105 hover:shadow-lg game-button`}
+                className={`nes-btn ${affordable ? 'is-primary' : 'is-disabled'}`}
                 style={{
+                  height: "80px",
+                  width: "96px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "8px",
                   background:
                     spell.name.toLowerCase() === "freeze lane"
                       ? "#164e63" // cyan-900
@@ -67,7 +51,6 @@ const GameHUD: React.FC<GameHUDProps> = ({
                       : spell.name.toLowerCase() === "double gold"
                       ? "#854d0e" // yellow-900
                       : "#4b006e", // purple-900
-                  borderColor: "#fff",
                 }}
               >
                 {spell.name.toLowerCase() === "freeze lane" ? (
@@ -75,12 +58,12 @@ const GameHUD: React.FC<GameHUDProps> = ({
                 ) : spell.name.toLowerCase() === "meteor strike" ? (
                   <span className="text-red-500 text-2xl mr-1">🔥</span>
                 ) : spell.name.toLowerCase() === "double gold" ? (
-                  <span className="text-yellow-400 text-2xl mr-1">2x💰</span>
+                  <span className="text-yellow-400 text-2xl mr-1">💰</span>
                 ) : (
                   <span className="text-purple-300 text-2xl mr-1">✨</span>
                 )}
-               <span className="text-white game-ui-text" style={{fontSize: '8px'}}>{spell.name}</span>
-              </Button>
+               <span className="text-white" style={{fontSize: '10px', fontFamily: "'Press Start 2P', cursive"}}>{spell.name}</span>
+              </button>
             );
           })}
         </div>
