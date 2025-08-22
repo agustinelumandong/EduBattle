@@ -20,9 +20,11 @@ const GameHUD: React.FC<GameHUDProps> = ({
     <>
       {/* Sudden Death Banner - Full Screen */}
       {gameState.isSuddenDeath && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-red-600 text-white text-center py-3 animate-pulse">
-          <div className="text-3xl font-bold">🔥 SUDDEN DEATH MODE! 🔥</div>
-          <div className="text-lg">
+        <div className="absolute top-0 left-0 right-0 z-50 bg-red-600 text-white text-center py-2 sm:py-3 md:py-4 animate-pulse">
+          <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-bold game-title px-2">
+            🔥 SUDDEN DEATH MODE! 🔥
+          </div>
+          <div className="text-xs sm:text-sm md:text-base lg:text-lg game-ui-text px-2 mt-1">
             First base to take damage loses! Fight to the death!
           </div>
         </div>
