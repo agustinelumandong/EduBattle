@@ -88,28 +88,35 @@ export interface PerplexityResearchResponse {
 /**
  * Internal utility: throws if response has any error, failure, or API-side validation issue.
  */
-function _throwIfError(res: any) {
+function _throwIfError(res: unknown) {
   if (!res) throw new Error('No response from Perplexity API');
-  if (res.error) throw new Error(res.error);
-  if (res.detail)
+  
+  const response = res as Record<string, unknown>;
+  
+  if (response.error) throw new Error(String(response.error));
+  if (response.detail)
     throw new Error(
-      typeof res.detail === 'string' ? res.detail : JSON.stringify(res.detail)
+      typeof response.detail === 'string' ? response.detail : JSON.stringify(response.detail)
     );
-  if (res.failure_reason) throw new Error(res.failure_reason);
+  if (response.failure_reason) throw new Error(String(response.failure_reason));
 }
 
 /**
  * Internal utility: validates response structure and ensures citations are present.
  */
-function _validatePerplexityResponse(res: any): void {
+function _validatePerplexityResponse(res: unknown): void {
   _throwIfError(res);
 
-  if (!res.choices || !Array.isArray(res.choices)) {
+  const response = res as Record<string, unknown>;
+
+  if (!response.choices || !Array.isArray(response.choices)) {
     throw new Error('Invalid response: missing or invalid choices array');
   }
 
-  res.choices.forEach((choice: any, index: number) => {
-    if (!choice.message || !choice.message.content) {
+  response.choices.forEach((choice: unknown, index: number) => {
+    const choiceObj = choice as Record<string, unknown>;
+    const message = choiceObj.message as Record<string, unknown>;
+    if (!choiceObj.message || !message.content) {
       throw new Error(
         `Invalid choice at index ${index}: missing message or content`
       );
@@ -117,18 +124,18 @@ function _validatePerplexityResponse(res: any): void {
   });
 
   // Ensure citations is always an array (handle null/undefined)
-  if (!res.citations || !Array.isArray(res.citations)) {
-    res.citations = [];
+  if (!response.citations || !Array.isArray(response.citations)) {
+    response.citations = [];
   }
 }
 
 /**
  * Internal utility: all Perplexity API calls must go through this proxy, never called directly from client.
  */
-async function _proxyPerplexity<T = any>(options: {
+async function _proxyPerplexity<T = unknown>(options: {
   path: string;
   method?: string;
-  body?: any;
+  body?: unknown;
 }): Promise<T> {
   const { path, method = 'POST', body } = options;
 
@@ -138,7 +145,7 @@ async function _proxyPerplexity<T = any>(options: {
     'content-type': 'application/json',
   };
 
-  const payload: any = {
+  const payload: Record<string, unknown> = {
     protocol: 'https',
     origin: 'api.perplexity.ai',
     path,
@@ -393,7 +400,7 @@ export async function perplexitySmall(
  * @returns Promise<boolean> - True if valid, throws error if invalid
  */
 export async function perplexityValidateResponse(
-  response: any
+  response: unknown
 ): Promise<boolean> {
   try {
     _validatePerplexityResponse(response);

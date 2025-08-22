@@ -160,13 +160,13 @@ export default function EduBattle(): ReactElement {
     }, 800); 
   }, []);
 
-  const restartGame = useCallback(() => {
-    setTimeout(() => {
-      setIsGameFullyLoaded(false);
-    }, 800);
-    setIsStarfieldFadingOut(false);
-    window.location.reload(); // Simple restart
-  }, []);
+  // const restartGame = useCallback(() => {
+  //   setTimeout(() => {
+  //     setIsGameFullyLoaded(false);
+  //   }, 800);
+  //   setIsStarfieldFadingOut(false);
+  //   window.location.reload(); // Simple restart
+  // }, []);
 
   if (showTutorial) {
     return (

@@ -115,7 +115,7 @@ export class UnitHelpers {
     }
 
     // Add engine trail effect
-    UnitHelpers.drawEngineTrail(graphics, size, direction, color);
+    UnitHelpers.drawEngineTrail(graphics, size, direction);
   }
 
   static drawHeavyFighter(
@@ -257,8 +257,7 @@ export class UnitHelpers {
   static drawEngineTrail(
     graphics: Phaser.GameObjects.Graphics,
     size: number,
-    direction: number,
-    shipColor: number
+    direction: number
   ): void {
     // Engine glow trail
     const trailLength = size * 0.8;

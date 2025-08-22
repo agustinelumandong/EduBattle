@@ -36,7 +36,6 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
   ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
-    const [gameRestarted, setGameRestarted] = useState<boolean>(false);
     React.useEffect(() => {
       setIsClient(true);
     }, []);
@@ -62,7 +61,6 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
     }, [onGameReady]);
 
     const restartGame = useCallback(() => {
-      setGameRestarted(true);
       window.location.reload(); // Simple restart
     }, []);
 
@@ -109,49 +107,170 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           onRequestSpellQuiz={onRequestSpellQuiz}
         />
 
-        {/* Retro Health Bars Overlay */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
-          {/* Player Health Bar */}
-          <div className="flex flex-col items-start">
-            <RetroHealthBar
-              currentHealth={gameState.playerBaseHp}
-              maxHealth={100}
-              label="PLAYER BASE"
-              color="primary"
-              size="large"
-            />
+        {/* Responsive Retro Health Bars & Timer Overlay */}
+        <div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 pointer-events-none">
+          
+          {/* Mobile Layout: Stacked Design */}
+          <div className="block sm:hidden">
+            {/* Mobile Timer - Top Center */}
+            <div className="flex justify-center ">
+              <div 
+                className="nes-container is-rounded is-dark mobile-timer"
+                style={{ 
+                  padding: "0.5rem", 
+                  background: "rgba(0,0,0,0.9)",
+                  minWidth: "120px"
+                }}
+              >
+                <div 
+                  className="nes-text is-white text-center"
+                  style={{ 
+                    fontSize: "10px", 
+                    fontFamily: "'Press Start 2P', cursive",
+                    lineHeight: "1.2"
+                  }}
+                >
+                  ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+                  {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+                </div>
+              </div>
+            </div>
+            
+            {/* Mobile Health Bars - Side by Side */}
+            <div className="flex justify-between items-center gap-2">
+              <div className="flex-1">
+                <RetroHealthBar
+                  currentHealth={gameState.playerBaseHp}
+                  maxHealth={100}
+                  label="PLAYER"
+                  color="primary"
+                  size="small"
+                  className="mobile-healthbar responsive-healthbar"
+                />
+              </div>
+              <div className="flex-1">
+                <RetroHealthBar
+                  currentHealth={gameState.enemyBaseHp}
+                  maxHealth={100}
+                  label="ENEMY"
+                  color="error"
+                  size="small"
+                  className="mobile-healthbar responsive-healthbar"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Timer Display */}
-          <div className="nes-container is-rounded is-dark" style={{ padding: "1rem", background: "rgba(0,0,0,0.8)" }}>
-            <div className="nes-text is-white" style={{ 
-              fontSize: "16px", 
-              fontFamily: "'Press Start 2P', cursive",
-              textAlign: "center",
-              marginBottom: "0.5rem"
-            }}>
-              ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
-              {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
-            </div>
-            <div className="nes-text is-white text-center" style={{ 
-              fontSize: "8px", 
-              fontFamily: "'Press Start 2P', cursive",
-              textAlign: "center",
-              opacity: 0.8
-            }}>
-              TIME REMAINING
+          {/* Tablet Layout: Balanced Design */}
+          <div className="hidden sm:block lg:hidden">
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col items-start">
+                <RetroHealthBar
+                  currentHealth={gameState.playerBaseHp}
+                  maxHealth={100}
+                  label="PLAYER BASE"
+                  color="primary"
+                  size="medium"
+                  className="tablet-healthbar responsive-healthbar"
+                />
+              </div>
+
+              <div 
+                className="nes-container is-rounded is-dark tablet-timer"
+                style={{ 
+                  padding: "0.75rem", 
+                  background: "rgba(0,0,0,0.8)" 
+                }}
+              >
+                <div 
+                  className="nes-text is-white text-center"
+                  style={{ 
+                    fontSize: "14px", 
+                    fontFamily: "'Press Start 2P', cursive",
+                    marginBottom: "0.25rem"
+                  }}
+                >
+                  ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+                  {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+                </div>
+                <div 
+                  className="nes-text is-white text-center"
+                  style={{ 
+                    fontSize: "7px", 
+                    fontFamily: "'Press Start 2P', cursive",
+                    opacity: 0.8
+                  }}
+                >
+                  TIME REMAINING
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end">
+                <RetroHealthBar
+                  currentHealth={gameState.enemyBaseHp}
+                  maxHealth={100}
+                  label="ENEMY BASE"
+                  color="error"
+                  size="medium"
+                  className="tablet-healthbar responsive-healthbar"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Enemy Health Bar */}
-          <div className="flex flex-col items-end">
-            <RetroHealthBar
-              currentHealth={gameState.enemyBaseHp}
-              maxHealth={100}
-              label="ENEMY BASE"
-              color="error"
-              size="large"
-            />
+          {/* Desktop Layout: Full Design */}
+          <div className="hidden lg:flex justify-between items-start">
+            <div className="flex flex-col items-start">
+              <RetroHealthBar
+                currentHealth={gameState.playerBaseHp}
+                maxHealth={100}
+                label="PLAYER BASE"
+                color="primary"
+                size="large"
+                className="desktop-healthbar responsive-healthbar"
+              />
+            </div>
+
+            <div 
+              className="nes-container is-rounded is-dark desktop-timer"
+              style={{ 
+                padding: "1rem", 
+                background: "rgba(0,0,0,0.8)" 
+              }}
+            >
+              <div 
+                className="nes-text is-white text-center"
+                style={{ 
+                  fontSize: "16px", 
+                  fontFamily: "'Press Start 2P', cursive",
+                  marginBottom: "0.5rem"
+                }}
+              >
+                ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+                {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+              </div>
+              <div 
+                className="nes-text is-white text-center"
+                style={{ 
+                  fontSize: "8px", 
+                  fontFamily: "'Press Start 2P', cursive",
+                  opacity: 0.8
+                }}
+              >
+                TIME REMAINING
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end">
+              <RetroHealthBar
+                currentHealth={gameState.enemyBaseHp}
+                maxHealth={100}
+                label="ENEMY BASE"
+                color="error"
+                size="large"
+                className="desktop-healthbar responsive-healthbar"
+              />
+            </div>
           </div>
         </div>
 

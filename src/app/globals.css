@@ -346,3 +346,52 @@
     inset 2px 2px 0 rgba(0, 0, 0, 0.6),
     inset -1px -1px 0 rgba(255, 255, 255, 0.1);
 }
+
+/* 📱 Responsive Health Bar Enhancements */
+.responsive-healthbar {
+  transition: all 0.3s ease;
+}
+
+/* Mobile-specific health bar optimizations */
+@media (max-width: 640px) {
+  .mobile-healthbar {
+    transform: scale(0.9);
+    margin: 0.25rem 0;
+  }
+
+  .mobile-healthbar .nes-progress {
+    height: 20px !important;
+    min-width: 100px;
+  }
+
+  .mobile-timer {
+    padding: 0.5rem !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-healthbar .nes-progress {
+    height: 28px !important;
+    min-width: 160px;
+  }
+
+  .tablet-timer {
+    padding: 0.75rem !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+  .desktop-healthbar .nes-progress {
+    height: 32px !important;
+    min-width: 200px;
+  }
+
+  .desktop-timer {
+    padding: 1rem !important;
+    font-size: 16px !important;
+  }
+}

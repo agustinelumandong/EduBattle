@@ -38,27 +38,52 @@ const RetroHealthBar: React.FC<RetroHealthBarProps> = ({
     }
   };
 
-  // Size configurations for different progress bar sizes
+  // Responsive size configurations for different screen sizes
   const getSizeStyles = () => {
     switch (size) {
       case "small":
         return {
-          width: "150px",
-          fontSize: "8px",
-          height: "20px",
+          // Mobile-first approach with responsive scaling
+          width: "150px", // Mobile
+          widthSm: "120px", // Small screens
+          widthMd: "150px", // Medium screens
+          fontSize: "12px", // Mobile
+          fontSizeSm: "8px", // Small screens
+          fontSizeMd: "10px", // Medium screens
+          height: "100px", // Mobile
+          heightSm: "100px", // Small screens
+          heightMd: "100px", // Medium screens
         };
       case "large":
         return {
-          width: "300px", 
-          fontSize: "16px",
-          height: "40px",
+          width: "300px", // Mobile
+          widthSm: "300px", // Small screens
+          widthMd: "300px", // Medium screens
+          widthLg: "300px", // Large screens
+          fontSize: "16px", // Mobile
+          fontSizeSm: "12px", // Small screens
+          fontSizeMd: "14px", // Medium screens
+          fontSizeLg: "16px", // Large screens
+          height: "100px", // Mobile
+          heightSm: "100px", // Small screens
+          heightMd: "100px", // Medium screens
+          heightLg: "100px", // Large screens
         };
       case "medium":
       default:
         return {
-          width: "200px",
-          fontSize: "12px",
-          height: "30px",
+          width: "110px", // Mobile
+          widthSm: "140px", // Small screens
+          widthMd: "180px", // Medium screens
+          widthLg: "200px", // Large screens
+          fontSize: "7px", // Mobile
+          fontSizeSm: "9px", // Small screens
+          fontSizeMd: "11px", // Medium screens
+          fontSizeLg: "12px", // Large screens
+          height: "48px", // Mobile
+          heightSm: "32px", // Small screens
+          heightMd: "28px", // Medium screens
+          heightLg: "30px", // Large screens
         };
     }
   };
@@ -66,50 +91,62 @@ const RetroHealthBar: React.FC<RetroHealthBarProps> = ({
   const sizeStyles = getSizeStyles();
 
   return (
-    <div className={`${className}`} style={{ padding: "1rem", marginBottom: "1rem" }}>
-      {/* NES.css Progress Bar */}
-      <div style={{ position: "relative" }}>
+    <div className={`${className}`} style={{ 
+      padding: "0.5rem", // Reduced padding for mobile
+      marginBottom: "0.5rem" 
+    }}>
+      {/* Label with responsive sizing */}
+      <div 
+        className="nes-text is-white mb-2"
+        style={{ 
+          fontFamily: "'Press Start 2P', cursive",
+          textAlign: "center",
+          // Responsive font sizes using CSS custom properties
+          fontSize: sizeStyles.fontSize,
+          lineHeight: "1.2"
+        }}
+      >
+        {label}
+      </div>
+      
+      {/* Responsive NES.css Progress Bar Container */}
+      <div 
+        className="w-full flex justify-center"
+        style={{ position: "relative" }}
+      >
         <progress 
-          className={getProgressClass()}
+          className={`${getProgressClass()} responsive-healthbar`}
           value={healthPercentage} 
           max="100"
           style={{
+            // Mobile-first responsive sizing - using CSS variables for dynamic sizing
             width: sizeStyles.width,
             height: sizeStyles.height,
+            transition: "all 0.3s ease"
           }}
-        >
-           
-        </progress>
+        />
         
-        {/* Health Text Overlay */}
+        {/* Responsive Health Text Overlay */}
         {showText && (
           <div
             style={{
               position: "absolute",
-              top: "50%",
+              top: "40%",
               left: "50%",
               transform: "translate(-50%, -50%)",
               fontSize: sizeStyles.fontSize,
               fontFamily: "'Press Start 2P', cursive",
               color: "white",
-              textShadow: "1px 1px 0 black",
+              textShadow: "1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black",
               pointerEvents: "none",
               zIndex: 10,
+              lineHeight: "1",
+              letterSpacing: "0.5px"
             }}
           >
             {currentHealth}/{maxHealth}
           </div>
         )}
-      </div>
-      
-      {/* Label with NES.css text styling */}
-      <div className="nes-text is-white" style={{ 
-        marginBottom: "0.5rem", 
-        fontSize: sizeStyles.fontSize,
-        fontFamily: "'Press Start 2P', cursive",
-        textAlign: "center"
-      }}>
-        {label}
       </div>
     </div>
   );
