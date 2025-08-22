@@ -28,7 +28,8 @@ export default class BattleScene extends Phaser.Scene {
   private matchTimer?: Phaser.Time.TimerEvent;
   private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
   private isQuizActive: boolean = false;
-  private isFirstQuiz: boolean = true; // Track if a quiz is currently active
+  private isFirstQuiz: boolean = true;
+  private isSpellQuizActive: boolean = false; // Track if a quiz is currently active
   private lastTime: number = 0;
 
   // Spell cooldowns
@@ -46,6 +47,10 @@ export default class BattleScene extends Phaser.Scene {
   public onGameStateUpdate?: (state: GameState) => void;
   public onRequestQuiz?: (
     unitType: string,
+    callback: (correct: boolean) => void
+  ) => void;
+  public onRequestSpellQuiz?: (
+    spellId: string,
     callback: (correct: boolean) => void
   ) => void;
 
@@ -497,19 +502,29 @@ export default class BattleScene extends Phaser.Scene {
     this.snowflakes = [];
   }
 
-  private createMeteorStrike(): void {
-    // Get all enemy units
-    const enemyUnits = this.units.filter((unit) => unit.team === "enemy");
+  private createMeteorStrike(backfired: boolean = false): void {
+    // Get target units based on whether spell backfired
+    const targetTeam = backfired ? "player" : "enemy";
+    const targetUnits = this.units.filter((unit) => unit.team === targetTeam);
 
-    if (enemyUnits.length === 0) return;
+    console.log(
+      `☄️ Meteor strike targeting ${targetTeam} units (${targetUnits.length} targets)`
+    );
 
-    // Create meteors for each enemy unit with random delays
-    enemyUnits.forEach((unit, index) => {
+    if (targetUnits.length === 0) return;
+
+    // Create meteors for each target unit with random delays
+    targetUnits.forEach((unit, index) => {
       const delay = index * 200 + Math.random() * 500; // Stagger meteors
 
+      // Capture unit position to prevent undefined errors if unit is destroyed
+      const targetX = unit.x;
+      const targetY = unit.y;
+
       this.time.delayedCall(delay, () => {
-        if (!UnitHelpers.isUnitDead(unit)) {
-          this.createSingleMeteor(unit.x, unit.y);
+        // Use captured coordinates even if unit is destroyed
+        if (targetX !== undefined && targetY !== undefined) {
+          this.createSingleMeteor(targetX, targetY, targetTeam);
         }
       });
     });
@@ -521,12 +536,16 @@ export default class BattleScene extends Phaser.Scene {
       const delay = Math.random() * 1000;
 
       this.time.delayedCall(delay, () => {
-        this.createSingleMeteor(randomX, randomY);
+        this.createSingleMeteor(randomX, randomY, targetTeam);
       });
     }
   }
 
-  private createSingleMeteor(targetX: number, targetY: number): void {
+  private createSingleMeteor(
+    targetX: number,
+    targetY: number,
+    targetTeam: "player" | "enemy" = "enemy"
+  ): void {
     // Create meteor starting from high above the target
     const startX = targetX + (Math.random() - 0.5) * 100;
     const startY = -100;
@@ -568,8 +587,8 @@ export default class BattleScene extends Phaser.Scene {
         // Impact explosion
         this.createMeteorExplosion(targetX, targetY);
 
-        // Damage nearby enemy units
-        this.damageUnitsInRadius(targetX, targetY, 60, 40);
+        // Damage nearby units based on target team
+        this.damageUnitsInRadius(targetX, targetY, 60, 40, targetTeam);
 
         // Clean up
         meteor.destroy();
@@ -634,11 +653,12 @@ export default class BattleScene extends Phaser.Scene {
     x: number,
     y: number,
     radius: number,
-    damage: number
+    damage: number,
+    targetTeam: "player" | "enemy" = "enemy"
   ): void {
     this.units.forEach((unit) => {
       if (
-        unit.team === "enemy" &&
+        unit.team === targetTeam &&
         unit.x !== undefined &&
         unit.y !== undefined
       ) {
@@ -647,12 +667,16 @@ export default class BattleScene extends Phaser.Scene {
           // Deal damage
           unit.hp = Math.max(0, unit.hp - damage);
 
-          // Create damage number
-          this.createDamageNumber(unit.x, unit.y, damage, 0xff4500);
+          // Create damage number with different color for player units
+          const damageColor = targetTeam === "player" ? 0xff0000 : 0xff4500; // Red for player, orange for enemy
+          this.createDamageNumber(unit.x, unit.y, damage, damageColor);
 
           // Check if unit died
           if (unit.hp <= 0) {
-            this.gameState.playerGold += GAME_CONFIG.economy.killGold;
+            // Only give gold for killing enemy units, not your own
+            if (targetTeam === "enemy") {
+              this.gameState.playerGold += GAME_CONFIG.economy.killGold;
+            }
             UnitHelpers.destroyUnit(unit);
           } else {
             // Update health bar
@@ -702,8 +726,8 @@ export default class BattleScene extends Phaser.Scene {
     this.matchTimer = this.time.addEvent({
       delay: 1000, // Every second
       callback: () => {
-        // Pause main timer when quiz is active, but keep battle running
-        if (this.isQuizActive) return;
+        // Pause main timer when ANY quiz is active, but keep battle running
+        if (this.isQuizActive || this.isSpellQuizActive) return;
 
         this.gameState.matchTimeLeft = Math.max(
           0,
@@ -755,7 +779,7 @@ export default class BattleScene extends Phaser.Scene {
           return;
         }
 
-        if (this.isQuizActive) {
+        if (this.isQuizActive || this.isSpellQuizActive) {
           console.log("❌ Quiz already active - rescheduling in 2 seconds");
           // If quiz is still active, try again in 2 seconds
           this.time.delayedCall(2000, () => this.scheduleNextQuiz());
@@ -800,7 +824,9 @@ export default class BattleScene extends Phaser.Scene {
 
   // Public method to reset quiz state (called from React when quiz closes)
   public resetQuizState(): void {
+    // Reset both types of quiz states
     this.isQuizActive = false;
+    this.isSpellQuizActive = false;
     // Note: Don't schedule next quiz here - it should be handled by the quiz callback
   }
 
@@ -1097,25 +1123,61 @@ export default class BattleScene extends Phaser.Scene {
       return false; // Still on cooldown
     }
 
-    // Check if player has enough gold
-    if (this.gameState.playerGold < spellConfig.cost) return false;
+    // Instead of checking gold, trigger a quiz!
+    if (this.onRequestSpellQuiz) {
+      console.log(`🧙‍♂️ Casting spell ${spellConfig.name} - quiz required!`);
 
-    // Deduct gold
-    this.gameState.playerGold = Math.max(
-      0,
-      this.gameState.playerGold - spellConfig.cost
-    );
+      // Set spell quiz as active
+      this.isSpellQuizActive = true;
 
-    // Set cooldown
-    this.spellCooldowns.set(spellId, currentTime);
+      this.onRequestSpellQuiz(spellId, (correct: boolean) => {
+        console.log(`🧙‍♂️ Spell quiz callback received: correct = ${correct}`);
+        console.log(
+          `✨ Spell quiz result: ${correct ? "SUCCESS" : "BACKFIRE"}`
+        );
+
+        // Reset spell quiz state
+        this.isSpellQuizActive = false;
+
+        // Set cooldown regardless of success/failure
+        this.spellCooldowns.set(spellId, this.time.now);
+
+        if (correct) {
+          // Cast spell on enemies (normal effect)
+          console.log("✅ Spell SUCCESS - targeting enemies");
+          this.executeSpell(spellId, false); // false = not backfired
+        } else {
+          // BACKFIRE! Cast spell on player instead
+          console.log("💥 SPELL BACKFIRED! Casting on player!");
+          this.executeSpell(spellId, true); // true = backfired
+        }
+
+        this.updateGameState();
+      });
+
+      return true; // Quiz was triggered successfully
+    }
+
+    return false;
+  }
+
+  private executeSpell(spellId: string, backfired: boolean): void {
+    const targetTeam = backfired ? "player" : "enemy";
+    console.log(`🎯 Executing ${spellId} on ${targetTeam} units`);
 
     // Apply spell effect based on ID
-    switch (spellConfig.id) {
+    switch (spellId) {
       case "freeze":
-        // Freeze enemy units for 3 seconds
+        // Freeze units for 3 seconds
+        console.log(`❄️ Freezing ${targetTeam} units only`);
+        let frozenCount = 0;
         this.units.forEach((unit) => {
-          if (unit.team === "enemy") {
+          if (unit.team === targetTeam) {
             unit.isFrozen = true;
+            frozenCount++;
+            console.log(
+              `🧊 Freezing ${unit.team} unit at (${unit.x}, ${unit.y})`
+            );
 
             // Add blue freeze effect to the ship
             UnitHelpers.addFreezeEffect(unit);
@@ -1126,56 +1188,70 @@ export default class BattleScene extends Phaser.Scene {
                 unit.isFrozen = false;
                 // Remove freeze effect from ship
                 UnitHelpers.removeFreezeEffect(unit);
+                console.log(`🔥 Unfrozen ${unit.team} unit`);
               }
             });
           }
         });
+        console.log(
+          `❄️ Total frozen units: ${frozenCount} (${targetTeam} team)`
+        );
 
-        // Create freeze visual effect
-        this.createFreezeEffect();
+        // Create freeze visual effect only if targeting enemies
+        if (!backfired) {
+          console.log("🌨️ Creating screen freeze effect (targeting enemies)");
+          this.createFreezeEffect();
+        } else {
+          console.log("💥 No screen freeze effect (spell backfired)");
+        }
         soundManager.playSpellCast();
         break;
 
       case "meteor":
-        // Meteor strike on all enemy units
-        this.createMeteorStrike();
+        // Meteor strike on units
+        console.log(`☄️ Meteor spell case - backfired = ${backfired}`);
+        this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
         break;
 
       case "double_gold":
-        // Double gold income for 10 seconds
-        if (this.goldTimer) {
-          this.goldTimer.destroy();
-        }
-
-        // Create a new gold timer with double rate
-        this.goldTimer = this.time.addEvent({
-          delay: 1000, // Every second
-          callback: () => {
-            this.gameState.playerGold += GAME_CONFIG.economy.goldPerSecond * 2;
-            this.updateGameState();
-          },
-          loop: true,
-          repeat: 10, // 10 seconds
-        });
-
-        // After 10 seconds, restore normal gold rate
-        this.time.delayedCall(10000, () => {
+        // Double gold doesn't backfire, it just does nothing if wrong
+        if (!backfired) {
+          // Double gold income for 10 seconds
           if (this.goldTimer) {
             this.goldTimer.destroy();
           }
 
-          this.startGoldIncome();
-        });
-        soundManager.playSpellCast();
+          // Create a new gold timer with double rate
+          this.goldTimer = this.time.addEvent({
+            delay: 1000, // Every second
+            callback: () => {
+              this.gameState.playerGold +=
+                GAME_CONFIG.economy.goldPerSecond * 2;
+              this.updateGameState();
+            },
+            loop: true,
+            repeat: 10, // 10 seconds
+          });
+
+          // After 10 seconds, restore normal gold rate
+          this.time.delayedCall(10000, () => {
+            if (this.goldTimer) {
+              this.goldTimer.destroy();
+            }
+
+            this.startGoldIncome();
+          });
+          soundManager.playSpellCast();
+        } else {
+          console.log("💰 Double Gold backfired - no effect!");
+          soundManager.playSpellCast();
+        }
         break;
 
       default:
-        return false;
+        break;
     }
-
-    this.updateGameState();
-    return true;
   }
 
   private updateGameState(): void {

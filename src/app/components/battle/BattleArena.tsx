@@ -28,10 +28,17 @@ interface BattleArenaProps {
     unitType: string,
     callback: (correct: boolean) => void
   ) => void;
+  onRequestSpellQuiz: (
+    spellId: string,
+    callback: (correct: boolean) => void
+  ) => void;
 }
 
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
-  ({ gameState, onGameStateUpdate, onRequestQuiz }, ref) => {
+  (
+    { gameState, onGameStateUpdate, onRequestQuiz, onRequestSpellQuiz },
+    ref
+  ) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
 
@@ -91,6 +98,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           ref={gameRef}
           onGameStateUpdate={handleGameStateUpdate}
           onRequestQuiz={handleRequestQuiz}
+          onRequestSpellQuiz={onRequestSpellQuiz}
         />
 
         {/* Battle status overlay */}

@@ -15,6 +15,11 @@ interface PendingQuiz {
   callback: (correct: boolean) => void;
 }
 
+interface PendingSpellQuiz {
+  spellId: string;
+  callback: (correct: boolean) => void;
+}
+
 export default function EduBattle(): ReactElement {
   const [gameState, setGameState] = useState<GameState>({
     playerGold: GAME_CONFIG.economy.startGold,
@@ -27,6 +32,8 @@ export default function EduBattle(): ReactElement {
   const [showTutorial, setShowTutorial] = useState<boolean>(true);
   const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
   const [pendingQuiz, setPendingQuiz] = useState<PendingQuiz | null>(null);
+  const [pendingSpellQuiz, setPendingSpellQuiz] =
+    useState<PendingSpellQuiz | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
@@ -43,13 +50,36 @@ export default function EduBattle(): ReactElement {
     []
   );
 
+  const handleRequestSpellQuiz = useCallback(
+    (spellId: string, callback: (correct: boolean) => void) => {
+      setPendingSpellQuiz({ spellId, callback });
+      setIsQuizOpen(true);
+    },
+    []
+  );
+
   const handleQuizAnswer = useCallback(
     (correct: boolean) => {
-      if (pendingQuiz) {
+      console.log("📝 Quiz answered:", correct);
+      console.log("🔍 pendingQuiz:", pendingQuiz);
+      console.log("🔍 pendingSpellQuiz:", pendingSpellQuiz);
+
+      if (pendingSpellQuiz) {
+        console.log("🧙‍♂️ Processing SPELL quiz callback");
+        console.log("🧙‍♂️ About to call spell callback with:", correct);
+        pendingSpellQuiz.callback(correct);
+        console.log("🧙‍♂️ Spell callback completed, clearing state");
+        setPendingSpellQuiz(null);
+        setIsQuizOpen(false);
+        console.log("🧙‍♂️ Spell quiz state cleared, returning early");
+        // Clear spell quiz immediately to prevent double execution
+        return; // Exit early to prevent further processing
+      } else if (pendingQuiz) {
+        console.log("⚔️ Processing UNIT quiz callback");
         pendingQuiz.callback(correct);
         setPendingQuiz(null);
+        setIsQuizOpen(false);
       }
-      setIsQuizOpen(false);
 
       // Reset quiz state in battle scene to allow new quizzes
       if (battleArenaRef.current) {
@@ -59,13 +89,24 @@ export default function EduBattle(): ReactElement {
       // Add a small delay before allowing new quizzes
       setTimeout(() => {
         setPendingQuiz(null);
+        setPendingSpellQuiz(null);
       }, 100);
     },
-    [pendingQuiz]
+    [pendingQuiz, pendingSpellQuiz]
   );
 
   const handleQuizClose = useCallback(() => {
-    if (pendingQuiz) {
+    console.log("❌ Quiz closed/skipped");
+    console.log("🔍 pendingQuiz:", pendingQuiz);
+    console.log("🔍 pendingSpellQuiz:", pendingSpellQuiz);
+
+    if (pendingSpellQuiz) {
+      console.log("🧙‍♂️ Processing SPELL quiz close (default to incorrect)");
+      console.log("🧙‍♂️ WARNING: Spell quiz should have been cleared already!");
+      pendingSpellQuiz.callback(false); // Default to incorrect if closed
+      setPendingSpellQuiz(null);
+    } else if (pendingQuiz) {
+      console.log("⚔️ Processing UNIT quiz close (default to incorrect)");
       pendingQuiz.callback(false); // Default to incorrect if closed
       setPendingQuiz(null);
     }
@@ -79,8 +120,9 @@ export default function EduBattle(): ReactElement {
     // Add a small delay before allowing new quizzes
     setTimeout(() => {
       setPendingQuiz(null);
+      setPendingSpellQuiz(null);
     }, 100);
-  }, [pendingQuiz]);
+  }, [pendingQuiz, pendingSpellQuiz]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUnitClick = useCallback((unitType: string) => {
@@ -232,6 +274,7 @@ export default function EduBattle(): ReactElement {
           gameState={gameState}
           onGameStateUpdate={handleGameStateUpdate}
           onRequestQuiz={handleRequestQuiz}
+          onRequestSpellQuiz={handleRequestSpellQuiz}
         />
       </div>
 
@@ -246,6 +289,7 @@ export default function EduBattle(): ReactElement {
       <QuizModal
         isOpen={isQuizOpen}
         unitType={pendingQuiz?.unitType || ""}
+        spellId={pendingSpellQuiz?.spellId || ""}
         onAnswer={handleQuizAnswer}
         onClose={handleQuizClose}
       />
