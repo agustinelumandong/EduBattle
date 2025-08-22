@@ -81,23 +81,6 @@ const QuizModal: React.FC<QuizModalProps> = ({
     }
   }, [isOpen, unitType, spellId, hasAnswered, generateQuestion]);
 
-  useEffect(() => {
-    if (!isOpen || hasAnswered) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // Time's up
-          handleTimeUp();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isOpen, hasAnswered]);
-
   const handleTimeUp = useCallback(() => {
     if (hasAnswered) return;
 
@@ -113,7 +96,24 @@ const QuizModal: React.FC<QuizModalProps> = ({
       setHasAnswered(false);
       setShowResult(false);
     }, 1500);
-  }, [hasAnswered, onAnswer, onClose]);
+  }, [hasAnswered, onAnswer]);
+
+  useEffect(() => {
+    if (!isOpen || hasAnswered) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Time's up
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isOpen, hasAnswered, handleTimeUp]);
 
   const handleSubmitAnswer = useCallback(() => {
     if (!question || hasAnswered) return;
@@ -141,7 +141,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
       setHasAnswered(false);
       setShowResult(false);
     }, 1500);
-  }, [question, selectedAnswer, numericAnswer, hasAnswered, onAnswer, onClose]);
+  }, [question, selectedAnswer, numericAnswer, hasAnswered, onAnswer]);
 
   if (!isOpen || !question) return null;
 
@@ -155,33 +155,100 @@ const QuizModal: React.FC<QuizModalProps> = ({
   // const subjectColor = SUBJECT_COLORS[subject as keyof typeof SUBJECT_COLORS];
   const subjectIcon = SUBJECT_ICONS[subject as keyof typeof SUBJECT_ICONS];
 
+  // 🎨 Spell Theme Detection
+  const getSpellTheme = (): string => {
+    if (!spellId) return ""; // Regular quiz - no theme
+    
+    // Map spell IDs to theme classes
+    const spellThemeMap: Record<string, string> = {
+      freeze: "quiz-freeze-theme", // ❄️ Ice/Frost theme
+      meteor: "quiz-meteor-theme", // 🔥 Fire/Cosmic theme
+    };
+    
+    return spellThemeMap[spellId] || "";
+  };
+
+  const spellTheme = getSpellTheme();
+  
+  // 🌟 Enhanced spell-specific styling
+  const getSpellEnhancements = () => {
+    if (!spellId) return {};
+    
+    switch (spellId) {
+      case "freeze":
+        return {
+          progressColor: "is-primary", // Blue progress bar
+          cardBorder: "border-blue-300",
+          textGlow: "text-shadow: 0 0 10px rgba(59, 130, 246, 0.5)",
+          buttonStyle: {
+            backgroundImage: "linear-gradient(135deg, #3b82f6, #1e40af)",
+            border: "2px solid #60a5fa"
+          }
+        };
+      case "meteor":
+        return {
+          progressColor: "is-error", // Red progress bar
+          cardBorder: "border-red-300", 
+          textGlow: "text-shadow: 0 0 10px rgba(239, 68, 68, 0.5)",
+          buttonStyle: {
+            backgroundImage: "linear-gradient(135deg, #dc2626, #991b1b)",
+            border: "2px solid #f87171"
+          }
+        };
+      default:
+        return {
+          progressColor: "is-warning",
+          cardBorder: "",
+          textGlow: "",
+          buttonStyle: {}
+        };
+    }
+  };
+
+  const spellEnhancements = getSpellEnhancements();
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <Card className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-white/95 backdrop-blur-sm border-2 shadow-2xl  ">
+    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-2 sm:p-4 h-screen w-screen ${spellTheme}`}>
+      <Card className={`w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-white/95 backdrop-blur-sm border-2 shadow-2xl z-50 ${spellEnhancements.cardBorder}`}>
         <CardHeader className="text-center p-3 sm:p-4">
           <CardTitle 
             className="text-lg sm:text-xl md:text-2xl flex items-center justify-center gap-1 sm:gap-2"
             style={{ 
               color: "black", 
               fontFamily: "'Press Start 2P', cursive",
-              lineHeight: "1.4"
+              lineHeight: "1.4",
+              ...(spellEnhancements.textGlow && { textShadow: spellEnhancements.textGlow })
             }}
           >
-            <span className="text-xl sm:text-2xl md:text-3xl">{subjectIcon}</span>
-            <span className="text-center px-1">
-              {spellId ? "Spell Quiz" : "Quiz Challenge"}
+            <span className="text-xl sm:text-2xl md:text-3xl">
+              {spellId === "freeze" ? "❄️" : spellId === "meteor" ? "🔥" : subjectIcon}
             </span>
-            <span className="text-xl sm:text-2xl md:text-3xl">{subjectIcon}</span>
+            <span className="text-center px-1">
+              {spellId === "freeze" ? "❄️ Freeze Spell Quiz ❄️" 
+               : spellId === "meteor" ? "🔥 Meteor Spell Quiz 🔥"
+               : spellId ? "✨ Spell Quiz ✨" 
+               : "Quiz Challenge"}
+            </span>
+            <span className="text-xl sm:text-2xl md:text-3xl">
+              {spellId === "freeze" ? "❄️" : spellId === "meteor" ? "🔥" : subjectIcon}
+            </span>
           </CardTitle>
           
           {/* Mobile-optimized Timer and Progress */}
           <div className="space-y-2">
-            <div className=" p-2">
+            <div className="p-2">
               <progress 
-                className="nes-progress is-warning w-full"
+                className={`nes-progress ${spellEnhancements.progressColor} w-full`}
                 value={timeLeft} 
                 max="10"
-                style={{ height: "20px" }}
+                style={{ 
+                  height: "20px",
+                  ...(spellId && {
+                    filter: spellId === "freeze" 
+                      ? "drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))" 
+                      : "drop-shadow(0 0 10px rgba(239, 68, 68, 0.5))"
+                  })
+                }}
               />
               <div 
                 className="text-center mt-1"
@@ -288,16 +355,24 @@ const QuizModal: React.FC<QuizModalProps> = ({
                     hasAnswered ||
                     (question.options ? !selectedAnswer : !numericAnswer.trim())
                       ? "is-disabled"
-                      : "is-success"
+                      : spellId ? "is-primary" : "is-success"
                   } flex-1`}
                   style={{
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "10px",
                     minHeight: "48px", // Extra touch-friendly
-                    padding: "12px 16px"
+                    padding: "12px 16px",
+                    ...(spellId && !hasAnswered && (question.options ? selectedAnswer : numericAnswer.trim()) && spellEnhancements.buttonStyle),
+                    ...(spellId && {
+                      filter: spellId === "freeze" 
+                        ? "drop-shadow(0 0 8px rgba(59, 130, 246, 0.4))" 
+                        : "drop-shadow(0 0 8px rgba(239, 68, 68, 0.4))"
+                    })
                   }}
                 >
-                  Submit Answer
+                  {spellId === "freeze" ? "❄️ Cast Freeze" 
+                   : spellId === "meteor" ? "🔥 Launch Meteor"
+                   : "Submit Answer"}
                 </button>
                 <button
                   onClick={() => {
@@ -309,10 +384,13 @@ const QuizModal: React.FC<QuizModalProps> = ({
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "10px",
                     minHeight: "48px", // Extra touch-friendly
-                    padding: "12px 16px"
+                    padding: "12px 16px",
+                    ...(spellId && {
+                      filter: "drop-shadow(0 0 6px rgba(155, 27, 27, 0.4))"
+                    })
                   }}
                 >
-                  Skip
+                  {spellId ? "❌ Cancel Spell" : "Skip"}
                 </button>
               </div>
             </div>

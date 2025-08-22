@@ -229,7 +229,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 size="large"
                 className="desktop-healthbar responsive-healthbar"
               />
-            </div>
+          </div>
 
             <div 
               className="nes-container is-rounded is-dark desktop-timer"
@@ -246,8 +246,8 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                   marginBottom: "0.5rem"
                 }}
               >
-                ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
-                {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+          ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+            {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
               </div>
               <div 
                 className="nes-text is-white text-center"
@@ -270,7 +270,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 size="large"
                 className="desktop-healthbar responsive-healthbar"
               />
-            </div>
+          </div>
           </div>
         </div>
 
@@ -283,9 +283,9 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         {gameState.isGameOver && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 text-center">
-              <h2 className="text-2xl font-bold mb-4 game-title">
+              <h1 className="text-6xl font-bold mb-4 game-title">
                 {gameState.winner === "player" ? "🎉 Victory!" : "💥 Defeat!"}
-              </h2>
+              </h1>
               <p className="text-lg mb-4">
                 {gameState.winner === "player"
                   ? "Congratulations! You destroyed the enemy base!"
