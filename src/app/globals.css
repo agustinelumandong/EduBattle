@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "nes.css/css/nes.min.css";
+/* @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap'); */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -116,7 +119,512 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Orbitron', monospace;
+  }
+}
+
+/* ✨ CSS Starfield Animation - Matches Phaser galaxy background */
+.starfield-background {
+  background: #000000;
+  /* Pure black space background */
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  opacity: 1;
+  transition: opacity 0.8s ease-out;
+}
+
+.starfield-background.fade-out {
+  opacity: 0;
+}
+
+.starfield-background::before,
+.starfield-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Layer 1: Large, bright stars */
+.starfield-background::before {
+  background-image:
+    radial-gradient(4px 4px at 20px 30px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(4px 4px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(3px 3px at 90px 40px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(4px 4px at 130px 80px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 160px 30px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(4px 4px at 200px 60px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(4px 4px at 240px 90px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(3px 3px at 280px 10px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 320px 50px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(3px 3px at 360px 80px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(4px 4px at 400px 20px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(4px 4px at 440px 60px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(3px 3px at 480px 90px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(4px 4px at 520px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(4px 4px at 560px 70px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(3px 3px at 600px 10px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 640px 50px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(3px 3px at 680px 80px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(4px 4px at 720px 40px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(3px 3px at 760px 70px, rgba(255, 255, 255, 0.6), transparent);
+  background-repeat: repeat;
+  background-size: 800px 100px;
+  animation: starfield-twinkle-1 4s linear infinite;
+}
+
+/* Layer 2: Small, medium stars */
+.starfield-background::after {
+  background-image:
+    radial-gradient(3px 3px at 50px 15px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(4px 4px at 80px 45px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(3px 3px at 120px 75px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 150px 25px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(3px 3px at 180px 55px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(4px 4px at 220px 85px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(3px 3px at 250px 35px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(4px 4px at 290px 65px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(3px 3px at 330px 95px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 370px 15px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(3px 3px at 410px 45px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(4px 4px at 450px 75px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(3px 3px at 490px 25px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(4px 4px at 530px 55px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(3px 3px at 570px 85px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(4px 4px at 610px 35px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(3px 3px at 650px 65px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(4px 4px at 690px 95px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(3px 3px at 730px 5px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(4px 4px at 770px 35px, rgba(255, 255, 255, 0.4), transparent);
+  background-repeat: repeat;
+  background-size: 800px 100px;
+  animation: starfield-twinkle-2 6s linear infinite;
+}
+
+/* Twinkling animations with different speeds */
+@keyframes starfield-twinkle-1 {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes starfield-twinkle-2 {
+
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  33% {
+    opacity: 0.2;
+  }
+
+  66% {
+    opacity: 1;
+  }
+}
+
+/* 🎮 Retro Sci-Fi Font Styling */
+.font-orbitron-light {
+  font-family: 'Orbitron', monospace;
+  font-weight: 400;
+}
+
+.font-orbitron-bold {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+}
+
+.font-orbitron-black {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+}
+
+/* Game UI Elements */
+.game-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.game-button {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.game-ui-text {
+  font-family: 'Orbitron', monospace;
+  font-weight: 400;
+}
+
+.game-stats {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+}
+
+/* 🎮 Retro 8-bit Health Bar Styling */
+.retro-health-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-health-label {
+  color: white;
+  text-shadow: 1px 1px 0 black;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-health-bar {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+  box-shadow:
+    inset -1px -1px 0 rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.9);
+}
+
+.retro-health-fill {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+}
+
+.retro-health-shine {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* 8-bit Button Styling */
+.retro-button {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+  border: 2px solid;
+  box-shadow:
+    inset -2px -2px 0 rgba(0, 0, 0, 0.6),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+  font-family: monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-button:hover {
+  box-shadow:
+    inset -1px -1px 0 rgba(0, 0, 0, 0.6),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.retro-button:active {
+  box-shadow:
+    inset 2px 2px 0 rgba(0, 0, 0, 0.6),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 📱 Responsive Health Bar Enhancements */
+.responsive-healthbar {
+  transition: all 0.3s ease;
+}
+
+/* Mobile-specific health bar optimizations */
+@media (max-width: 640px) {
+  .mobile-healthbar {
+    transform: scale(0.9);
+    margin: 0.25rem 0;
+  }
+
+  .mobile-healthbar .nes-progress {
+    height: 20px !important;
+    min-width: 100px;
+  }
+
+  .mobile-timer {
+    padding: 0.5rem !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-healthbar .nes-progress {
+    height: 28px !important;
+    min-width: 160px;
+  }
+
+  .tablet-timer {
+    padding: 0.75rem !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+  .desktop-healthbar .nes-progress {
+    height: 32px !important;
+    min-width: 200px;
+  }
+
+  .desktop-timer {
+    padding: 1rem !important;
+    font-size: 16px !important;
+  }
+}
+
+/* 🧙‍♂️ Spell-Themed Quiz Modal Backgrounds */
+
+/* 🎭 Enhanced Modal Pop-up Effect */
+.quiz-freeze-theme .nes-container,
+.quiz-meteor-theme .nes-container {
+  transform: scale(1.02);
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.4),
+    0 15px 30px rgba(0, 0, 0, 0.2),
+    0 5px 15px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  animation: modalPulse 2s ease-in-out infinite;
+}
+
+.quiz-freeze-theme .nes-container {
+  box-shadow:
+    0 25px 50px rgba(30, 58, 138, 0.3),
+    0 15px 30px rgba(59, 130, 246, 0.2),
+    0 5px 15px rgba(191, 219, 254, 0.1),
+    inset 0 0 30px rgba(255, 255, 255, 0.1);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.quiz-meteor-theme .nes-container {
+  box-shadow:
+    0 25px 50px rgba(127, 29, 29, 0.3),
+    0 15px 30px rgba(220, 38, 38, 0.2),
+    0 5px 15px rgba(251, 191, 36, 0.1),
+    inset 0 0 30px rgba(255, 255, 255, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+@keyframes modalPulse {
+
+  0%,
+  100% {
+    transform: scale(1.02);
+  }
+
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+/* ❄️ Freeze Lane Spell Theme */
+.quiz-freeze-theme {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(59, 130, 246, 0.4) 50%, rgba(191, 219, 254, 0.2) 100%);
+  position: relative;
+  overflow: hidden;
+  animation: frostShimmer 4s ease-in-out infinite;
+}
+
+.quiz-freeze-theme::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    radial-gradient(circle at 60% 70%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
+  background-size: 50px 50px, 80px 80px, 60px 60px, 70px 70px;
+  animation: snowfall 8s linear infinite;
+  pointer-events: none;
+}
+
+.quiz-freeze-theme::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 15% 60%, rgba(191, 219, 254, 0.15) 2px, transparent 2px),
+    radial-gradient(circle at 85% 40%, rgba(191, 219, 254, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 30% 10%, rgba(255, 255, 255, 0.2) 1.5px, transparent 1.5px);
+  background-size: 90px 90px, 120px 120px, 75px 75px;
+  animation: slowSnowfall 12s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes frostShimmer {
+
+  0%,
+  100% {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(59, 130, 246, 0.4) 50%, rgba(191, 219, 254, 0.2) 100%);
+  }
+
+  50% {
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.35) 0%, rgba(96, 165, 250, 0.45) 50%, rgba(219, 234, 254, 0.25) 100%);
+  }
+}
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(-100px) translateX(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(100vh + 100px)) translateX(50px);
+    opacity: 0;
+  }
+}
+
+@keyframes slowSnowfall {
+  0% {
+    transform: translateY(-150px) translateX(20px);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 0.8;
+  }
+
+  85% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(calc(100vh + 150px)) translateX(-30px);
+    opacity: 0;
+  }
+}
+
+/* 🔥 Meteor Strike Spell Theme */
+.quiz-meteor-theme {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.3) 0%, rgba(220, 38, 38, 0.4) 50%, rgba(251, 191, 36, 0.2) 100%);
+  position: relative;
+  overflow: hidden;
+  animation: emberGlow 3s ease-in-out infinite;
+}
+
+.quiz-meteor-theme::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 25% 75%, rgba(251, 191, 36, 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 70% 30%, rgba(239, 68, 68, 0.2) 1px, transparent 1px),
+    radial-gradient(circle at 15% 40%, rgba(245, 158, 11, 0.25) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 85% 80%, rgba(220, 38, 38, 0.15) 2px, transparent 2px);
+  background-size: 60px 60px, 80px 80px, 70px 70px, 90px 90px;
+  animation: embersRise 6s linear infinite;
+  pointer-events: none;
+}
+
+.quiz-meteor-theme::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 40% 90%, rgba(251, 191, 36, 0.2) 1px, transparent 1px),
+    radial-gradient(circle at 90% 20%, rgba(245, 158, 11, 0.15) 2px, transparent 2px),
+    radial-gradient(circle at 10% 70%, rgba(239, 68, 68, 0.25) 1.5px, transparent 1.5px);
+  background-size: 100px 100px, 85px 85px, 95px 95px;
+  animation: slowEmbersRise 10s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes emberGlow {
+
+  0%,
+  100% {
+    background: linear-gradient(135deg, rgba(127, 29, 29, 0.3) 0%, rgba(220, 38, 38, 0.4) 50%, rgba(251, 191, 36, 0.2) 100%);
+    box-shadow: inset 0 0 50px rgba(251, 191, 36, 0.15);
+  }
+
+  50% {
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.35) 0%, rgba(239, 68, 68, 0.45) 50%, rgba(245, 158, 11, 0.25) 100%);
+    box-shadow: inset 0 0 80px rgba(245, 158, 11, 0.2);
+  }
+}
+
+@keyframes embersRise {
+  0% {
+    transform: translateY(100px) translateX(0) scale(0.8);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(-150px) translateX(30px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes slowEmbersRise {
+  0% {
+    transform: translateY(120px) translateX(-10px) scale(0.6);
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 0.9;
+  }
+
+  75% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translateY(-180px) translateX(40px) scale(1.4);
+    opacity: 0;
   }
 }
