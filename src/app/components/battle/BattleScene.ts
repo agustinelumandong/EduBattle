@@ -8,6 +8,7 @@ export interface GameState {
   enemyBaseHp: number;
   matchTimeLeft: number;
   isGameOver: boolean;
+  isSuddenDeath: boolean; // New: Sudden death mode flag
   winner?: "player" | "enemy";
 }
 
@@ -18,6 +19,7 @@ export default class BattleScene extends Phaser.Scene {
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
     isGameOver: false,
+    isSuddenDeath: false, // Initialize sudden death as false
   };
 
   private playerBase?: Phaser.GameObjects.Graphics;
@@ -39,6 +41,10 @@ export default class BattleScene extends Phaser.Scene {
   private freezeOverlay?: Phaser.GameObjects.Graphics;
   private snowflakes: Phaser.GameObjects.Graphics[] = [];
   private freezeIndicator?: Phaser.GameObjects.Graphics;
+
+  // Sudden death properties
+  private suddenDeathOverlay?: Phaser.GameObjects.Graphics;
+  private suddenDeathText?: Phaser.GameObjects.Text;
 
   // Callbacks for React components
   public onGameStateUpdate?: (state: GameState) => void;
@@ -532,10 +538,127 @@ export default class BattleScene extends Phaser.Scene {
     this.snowflakes = [];
   }
 
+  private triggerSuddenDeath(): void {
+    console.log("🔥 SUDDEN DEATH MODE ACTIVATED!");
+
+    // Set sudden death state
+    this.gameState.isSuddenDeath = true;
+
+    // Create visual effects
+    this.createSuddenDeathEffect();
+
+    // Spawn massive waves of units
+    this.spawnMassiveWaves();
+
+    // Make bases invulnerable (they won't take damage from units)
+    // The victory condition is now: first base to take damage loses
+
+    // Update game state
+    this.updateGameState();
+
+    // Play sudden death sound
+    soundManager.playSpellCast(); // We'll use this for now, can add specific sound later
+  }
+
+  private createSuddenDeathEffect(): void {
+    // Create dramatic overlay
+    this.suddenDeathOverlay = this.add.graphics();
+    this.suddenDeathOverlay.fillStyle(0xff0000, 0.1); // Red tint
+    this.suddenDeathOverlay.fillRect(0, 0, 3200, 800);
+
+    // Create "SUDDEN DEATH!" text
+    this.suddenDeathText = this.add.text(1600, 200, "🔥 SUDDEN DEATH! 🔥", {
+      fontSize: "64px",
+      fontStyle: "bold",
+      color: "#ff0000",
+      stroke: "#ffffff",
+      strokeThickness: 4,
+    });
+    this.suddenDeathText.setOrigin(0.5);
+
+    // Add dramatic animation
+    this.tweens.add({
+      targets: this.suddenDeathText,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 200,
+      yoyo: true,
+      repeat: 5,
+      ease: "Power2",
+    });
+
+    // Add screen shake
+    this.cameras.main.shake(1000, 0.02);
+
+    // Remove text after 3 seconds
+    this.time.delayedCall(3000, () => {
+      if (this.suddenDeathText) {
+        this.suddenDeathText.destroy();
+        this.suddenDeathText = undefined;
+      }
+    });
+  }
+
+  private spawnMassiveWaves(): void {
+    console.log("⚔️ Spawning massive waves for sudden death!");
+
+    // Spawn massive player wave (10-15 units)
+    const playerWaveSize = 10 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < playerWaveSize; i++) {
+      const randomUnit =
+        GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
+      const spawnY = 200 + (i % 8) * 50; // Spread across height
+      const spawnX = 100 + (i % 5) * 30; // Stagger horizontally
+
+      const unit = UnitHelpers.createUnit(
+        this,
+        randomUnit,
+        spawnX,
+        spawnY,
+        "player",
+        false // Normal strength for sudden death
+      );
+
+      this.units.push(unit);
+    }
+
+    // Spawn massive enemy wave (10-15 units)
+    const enemyWaveSize = 10 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < enemyWaveSize; i++) {
+      const randomUnit =
+        GAME_CONFIG.units[Math.floor(Math.random() * GAME_CONFIG.units.length)];
+      const spawnY = 200 + (i % 8) * 50; // Spread across height
+      const spawnX = 3100 - (i % 5) * 30; // Stagger horizontally from right
+
+      const unit = UnitHelpers.createUnit(
+        this,
+        randomUnit,
+        spawnX,
+        spawnY,
+        "enemy",
+        false // Normal strength for sudden death
+      );
+
+      this.units.push(unit);
+    }
+
+    console.log(
+      `⚔️ Spawned ${playerWaveSize} player units and ${enemyWaveSize} enemy units!`
+    );
+    soundManager.playUnitSpawn();
+  }
+
   private createMeteorStrike(backfired: boolean = false): void {
     // Get target units based on whether spell backfired
     const targetTeam = backfired ? "player" : "enemy";
-    const targetUnits = this.units.filter((unit) => unit.team === targetTeam);
+    const targetUnits = this.units.filter(
+      (unit) =>
+        unit.team === targetTeam &&
+        typeof unit.x === "number" &&
+        typeof unit.y === "number" &&
+        Number.isFinite(unit.x) &&
+        Number.isFinite(unit.y)
+    );
 
     console.log(
       `☄️ Meteor strike targeting ${targetTeam} units (${targetUnits.length} targets)`
@@ -545,29 +668,75 @@ export default class BattleScene extends Phaser.Scene {
 
     // Create meteors for each target unit with random delays
     targetUnits.forEach((unit, index) => {
-      const delay = index * 200 + Math.random() * 500; // Stagger meteors
-
-      // Capture unit position to prevent undefined errors if unit is destroyed
+      // Capture unit position up-front
       const targetX = unit.x;
       const targetY = unit.y;
 
+      // Validate captured coordinates; skip if invalid
+      if (
+        typeof targetX !== "number" ||
+        typeof targetY !== "number" ||
+        !Number.isFinite(targetX) ||
+        !Number.isFinite(targetY)
+      ) {
+        return;
+      }
+
+      const delay = index * 200 + Math.random() * 500; // Stagger meteors
+
       this.time.delayedCall(delay, () => {
-        // Use captured coordinates even if unit is destroyed
-        if (targetX !== undefined && targetY !== undefined) {
-          this.createSingleMeteor(targetX, targetY, targetTeam);
-        }
+        // Always create the meteor - it will damage any units in the area when it lands
+        this.createSingleMeteor(targetX, targetY, targetTeam);
       });
     });
 
-    // Create some extra meteors for visual impact
-    for (let i = 0; i < 3; i++) {
-      const randomX = Math.random() * 3200;
-      const randomY = Math.random() * 800;
-      const delay = Math.random() * 1000;
+    // Create additional meteors to cover the entire enemy formation area
+    if (targetTeam === "enemy") {
+      // Cover enemy spawn area (right side of battlefield)
+      const enemySpawnArea = {
+        minX: 2800, // Enemy base area
+        maxX: 3200,
+        minY: 200, // Cover most of the height
+        maxY: 600,
+      };
 
-      this.time.delayedCall(delay, () => {
-        this.createSingleMeteor(randomX, randomY, targetTeam);
-      });
+      // Create 5-8 meteors across the enemy formation area
+      for (let i = 0; i < 6 + Math.floor(Math.random() * 3); i++) {
+        const randomX =
+          enemySpawnArea.minX +
+          Math.random() * (enemySpawnArea.maxX - enemySpawnArea.minX);
+        const randomY =
+          enemySpawnArea.minY +
+          Math.random() * (enemySpawnArea.maxY - enemySpawnArea.minY);
+        const delay = Math.random() * 1500 + 500; // 0.5 to 2 seconds delay
+
+        this.time.delayedCall(delay, () => {
+          this.createSingleMeteor(randomX, randomY, targetTeam);
+        });
+      }
+    } else if (targetTeam === "player") {
+      // Cover player spawn area (left side of battlefield)
+      const playerSpawnArea = {
+        minX: 0,
+        maxX: 400,
+        minY: 200,
+        maxY: 600,
+      };
+
+      // Create 5-8 meteors across the player formation area
+      for (let i = 0; i < 6 + Math.floor(Math.random() * 3); i++) {
+        const randomX =
+          playerSpawnArea.minX +
+          Math.random() * (playerSpawnArea.maxX - playerSpawnArea.minX);
+        const randomY =
+          playerSpawnArea.minY +
+          Math.random() * (playerSpawnArea.maxY - playerSpawnArea.minY);
+        const delay = Math.random() * 1500 + 500; // 0.5 to 2 seconds delay
+
+        this.time.delayedCall(delay, () => {
+          this.createSingleMeteor(randomX, randomY, targetTeam);
+        });
+      }
     }
   }
 
@@ -576,6 +745,15 @@ export default class BattleScene extends Phaser.Scene {
     targetY: number,
     targetTeam: "player" | "enemy" = "enemy"
   ): void {
+    // Guard against invalid coordinates
+    if (
+      typeof targetX !== "number" ||
+      typeof targetY !== "number" ||
+      !Number.isFinite(targetX) ||
+      !Number.isFinite(targetY)
+    ) {
+      return;
+    }
     // Create meteor starting from high above the target
     const startX = targetX + (Math.random() - 0.5) * 100;
     const startY = -100;
@@ -687,10 +865,16 @@ export default class BattleScene extends Phaser.Scene {
     targetTeam: "player" | "enemy" = "enemy"
   ): void {
     this.units.forEach((unit) => {
+      // First check if unit exists and is valid
+      if (!unit || typeof unit !== "object") {
+        return; // Skip undefined/null units
+      }
+
       if (
         unit.team === targetTeam &&
         unit.x !== undefined &&
-        unit.y !== undefined
+        unit.y !== undefined &&
+        unit.hp > 0 // Only process living units
       ) {
         const distance = Phaser.Math.Distance.Between(unit.x, unit.y, x, y);
         if (distance <= radius) {
@@ -703,7 +887,6 @@ export default class BattleScene extends Phaser.Scene {
 
           // Check if unit died
           if (unit.hp <= 0) {
-           
             UnitHelpers.destroyUnit(unit);
           } else {
             // Update health bar
@@ -738,8 +921,6 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
-
-
   private startMatchTimer(): void {
     this.matchTimer = this.time.addEvent({
       delay: 1000, // Every second
@@ -752,8 +933,11 @@ export default class BattleScene extends Phaser.Scene {
           this.gameState.matchTimeLeft - 1
         );
 
-        if (this.gameState.matchTimeLeft <= 0) {
-          this.endGame("time");
+        if (
+          this.gameState.matchTimeLeft <= 0 &&
+          !this.gameState.isSuddenDeath
+        ) {
+          this.triggerSuddenDeath();
         }
 
         this.updateGameState();
@@ -848,15 +1032,47 @@ export default class BattleScene extends Phaser.Scene {
     // Note: Don't schedule next quiz here - it should be handled by the quiz callback
   }
 
+  // Public method to reset game state (called when restarting)
+  public resetGameState(): void {
+    this.gameState = {
+      playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
+      enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
+      matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
+      isGameOver: false,
+      isSuddenDeath: false,
+    };
+
+    // Reset other state variables
+    this.isFirstQuiz = true;
+    this.isQuizActive = false;
+    this.isSpellQuizActive = false;
+
+    // Clear any existing effects
+    if (this.suddenDeathOverlay) {
+      this.suddenDeathOverlay.destroy();
+      this.suddenDeathOverlay = undefined;
+    }
+    if (this.suddenDeathText) {
+      this.suddenDeathText.destroy();
+      this.suddenDeathText = undefined;
+    }
+
+    this.startMatchTimer();
+    this.startQuizTimer();
+
+    // Update game state
+    this.updateGameState();
+  }
+
   private getRandomSpawnCount(): number {
     const random = Math.random() * 100;
 
     if (random < 70) {
-      return 3; // 70% chance for 3 units
+      return 5; // 70% chance for 3 units
     } else if (random < 95) {
-      return 4; // 25% chance for 4 units (70% + 25% = 95%)
+      return 6; // 25% chance for 4 units (70% + 25% = 95%)
     } else {
-      return 5; // 5% chance for 5 units (remaining 5%)
+      return 8; // 5% chance for 5 units (remaining 5%)
     }
   }
 
@@ -890,8 +1106,13 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private updateUnits(deltaTime: number): void {
-    // Remove dead units
+    // Remove dead units and clean up undefined/null entries
     this.units = this.units.filter((unit) => {
+      // Remove undefined/null units
+      if (!unit || typeof unit !== "object") {
+        return false;
+      }
+
       if (UnitHelpers.isUnitDead(unit)) {
         UnitHelpers.destroyUnit(unit);
         soundManager.playUnitDestroyed();
@@ -957,6 +1178,21 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private damageBase(team: "player" | "enemy", damage: number): void {
+    // In sudden death mode, any base damage means instant defeat for that team
+    if (this.gameState.isSuddenDeath) {
+      console.log(
+        `💥 SUDDEN DEATH: ${team} base took damage! ${
+          team === "player" ? "ENEMY" : "PLAYER"
+        } WINS!`
+      );
+
+      // Determine winner (opposite of who took damage)
+      const winner = team === "player" ? "enemy" : "player";
+      this.endGame(winner);
+      return;
+    }
+
+    // Normal damage logic
     if (team === "player") {
       this.gameState.playerBaseHp = Math.max(
         0,
@@ -1002,6 +1238,16 @@ export default class BattleScene extends Phaser.Scene {
           : "enemy";
     } else {
       this.gameState.winner = winner;
+    }
+
+    // Clean up sudden death effects if they exist
+    if (this.suddenDeathOverlay) {
+      this.suddenDeathOverlay.destroy();
+      this.suddenDeathOverlay = undefined;
+    }
+    if (this.suddenDeathText) {
+      this.suddenDeathText.destroy();
+      this.suddenDeathText = undefined;
     }
 
     // Stop timers

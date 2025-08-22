@@ -13,6 +13,7 @@ export interface PhaserGameRef {
   castSpell: (spellId: string) => boolean;
   getGameState: () => GameState | null;
   resetQuizState: () => void;
+  resetGameState: () => void; // Add reset game state method
 }
 
 interface PhaserGameComponentProps {
@@ -97,6 +98,11 @@ const PhaserGameComponent = React.forwardRef<
       resetQuizState: () => {
         if (battleScene) {
           battleScene.resetQuizState();
+        }
+      },
+      resetGameState: () => {
+        if (battleScene) {
+          battleScene.resetGameState();
         }
       },
     }),

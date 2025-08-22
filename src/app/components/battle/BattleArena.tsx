@@ -15,6 +15,7 @@ export interface BattleArenaRef {
   deployUnit: (unitType: string, isCorrect: boolean) => void;
   castSpell: (spellId: string) => boolean;
   resetQuizState: () => void;
+  resetGameState: () => void; // Add reset game state method
 }
 
 interface BattleArenaProps {
@@ -82,6 +83,11 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         resetQuizState: () => {
           if (gameRef.current) {
             gameRef.current.resetQuizState();
+          }
+        },
+        resetGameState: () => {
+          if (gameRef.current) {
+            gameRef.current.resetGameState();
           }
         },
       }),

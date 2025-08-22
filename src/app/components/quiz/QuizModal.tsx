@@ -90,9 +90,6 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
     setTimeout(() => {
       onAnswer(false);
-      // Don't call onClose if we're handling the answer
-      // onClose();
-      // Reset state after closing
       setHasAnswered(false);
       setShowResult(false);
     }, 1500);

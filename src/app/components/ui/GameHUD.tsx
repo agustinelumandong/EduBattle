@@ -1,6 +1,5 @@
 "use client";
 
-// Removed unused Button, Card, and CardContent imports for NES.css implementation
 import React from "react";
 import {
   GAME_CONFIG
@@ -16,12 +15,20 @@ const GameHUD: React.FC<GameHUDProps> = ({
   gameState,
   onSpellClick,
 }) => {
-  // Removed unused onUnitClick and formatTime for cleaner code
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent"> 
-      
+    <>
+      {/* Sudden Death Banner - Full Screen */}
+      {gameState.isSuddenDeath && (
+        <div className="absolute top-0 left-0 right-0 z-50 bg-red-600 text-white text-center py-3 animate-pulse">
+          <div className="text-3xl font-bold">🔥 SUDDEN DEATH MODE! 🔥</div>
+          <div className="text-lg">
+            First base to take damage loses! Fight to the death!
+          </div>
+        </div>
+      )}
 
+    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent"> 
       {/* Spell Buttons */}
       <div className="flex justify-center">
         <div className="flex gap-2">
@@ -71,6 +78,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
         </p>
       </div>
     </div>
+    </>
   );
 };
 

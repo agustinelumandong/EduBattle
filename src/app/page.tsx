@@ -21,11 +21,12 @@ interface PendingSpellQuiz {
 }
 
 export default function EduBattle(): ReactElement {
-  const [gameState, setGameState] = useState<GameState>({ 
+  const [gameState, setGameState] = useState<GameState>({
     playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
     isGameOver: false,
+    isSuddenDeath: false, // Add sudden death state
   });
 
   const [showTutorial, setShowTutorial] = useState<boolean>(true);
@@ -157,7 +158,15 @@ export default function EduBattle(): ReactElement {
     setIsStarfieldFadingOut(true);
     setTimeout(() => {
       setIsGameFullyLoaded(true);
-    }, 800); 
+    }, 800);  
+  }, []);
+
+  const restartGame = useCallback(() => {
+    if (battleArenaRef.current) {
+      battleArenaRef.current.resetGameState();
+      setGameStarted(true);
+      setShowTutorial(false);
+    }
   }, []);
 
   // const restartGame = useCallback(() => {
@@ -220,6 +229,7 @@ export default function EduBattle(): ReactElement {
                 </ul>
               </div>
             </div>
+
 
             <div className="mt-8 mb-8 text-center">
               <Button
