@@ -287,21 +287,21 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
 
         {/* Game over overlay */}
         {gameState.isGameOver && (
-          <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 text-center">
-              <h1 className="text-6xl font-bold mb-4 game-title">
-                {gameState.winner === "player" ? "🎉 Victory!" : "💥 Defeat!"}
+          <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 text-center max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full mx-2">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 game-title">
+                {gameState.winner === "player" ? "🎉 Victory! 🎉" : "💥 Defeat! 💥"}
               </h1>
-              <p className="text-lg mb-4">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 game-ui-text px-2">
                 {gameState.winner === "player"
                   ? "Congratulations! You destroyed the enemy base!"
                   : "Better luck next time!"}
               </p>
-              <div className="flex justify-center space-x-2">
+              <div className="flex justify-center space-x-1 sm:space-x-2 mb-4 sm:mb-6">
                 {[1, 2, 3].map((star) => (
                   <span
                     key={star}
-                    className={`text-6xl ${
+                    className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl ${
                       star <= (gameState.winner === "player" ? 3 : 1)
                         ? "text-yellow-500"
                         : "text-gray-300"
@@ -311,8 +311,13 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                   </span>
                 ))}
               </div>
-              <Button onClick={restartGame} size="lg" variant="outline" className="game-button nes-btn is-primary">
-               Play Again
+              <Button 
+                onClick={restartGame} 
+                size="lg" 
+                variant="outline" 
+                className="mt-4 sm:mt-6 md:mt-8 game-button nes-btn is-primary text-xs sm:text-sm md:text-base px-4 sm:px-6 py-2 sm:py-3"
+              >
+                Play Again
               </Button>
             </div>
           </div>

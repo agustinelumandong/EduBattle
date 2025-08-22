@@ -179,71 +179,69 @@ export default function EduBattle(): ReactElement {
 
   if (showTutorial) {
     return (
-      <div className="min-h-screen starfield-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-4xl nes-container is-rounded is-dark">
-          <CardHeader className="text-center text-white">
-            <CardTitle className="text-4xl font-bold pt-4 pb-4 mb-2 game-title">
+      <div className="min-h-screen starfield-background flex items-center justify-center p-2 sm:p-4">
+        <Card className="w-full max-w-sm sm:max-w-2xl md:max-w-3xl lg:max-w-4xl nes-container is-rounded is-dark mx-2">
+          <CardHeader className="text-center text-white p-3 sm:p-4 md:p-6">
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
               🎮 Welcome to EduBattle! ⚔️
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="p-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-blue-600">
+          <CardContent className="p-3 sm:p-4 md:p-6 lg:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 game-ui-text">
                   🎯 How to Play
                 </h3>
-                <ul className="space-y-4 text-sm">
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✅</span>
+                <ul className="space-y-2 sm:space-y-3 md:space-y-4">
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-green-500 text-sm sm:text-base">✅</span>
                     Click unit buttons to deploy warriors
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-blue-500">🧠</span>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-blue-500 text-sm sm:text-base">🧠</span>
                     Answer quiz questions to deploy units
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-yellow-500">💪</span>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-yellow-500 text-sm sm:text-base">💪</span>
                     Correct answers = stronger units!
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-red-500">⚡</span>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-red-500 text-sm sm:text-base">⚡</span>
                     Destroy the enemy crystal to win!
                   </li>
                 </ul>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-purple-600">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-purple-600 game-ui-text">
                   🎲 Game Rules
                 </h3>
-                <ul className="space-y-4 text-sm">
-                  <li className="flex items-center gap-2">
-                    <span className="text-blue-500">⏰</span>
+                <ul className="space-y-2 sm:space-y-3 md:space-y-4">
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-blue-500 text-sm sm:text-base">⏰</span>
                     Quizzes appear every 10 seconds - make your choice!
                   </li> 
-                  <li className="flex items-center gap-2">
-                    <span className="text-red-500">💥</span>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-red-500 text-sm sm:text-base">💥</span>
                     Wrong answers deploy weaker units
                   </li>
                 </ul>
               </div>
             </div>
 
-
-            <div className="mt-8 mb-8 text-center">
+            <div className="mt-4 sm:mt-6 md:mt-8 mb-4 sm:mb-6 md:mb-8 text-center">
               <Button
                 onClick={startGame}
                 size="lg"
-                className=" is-primary text-sm px-24 py-8 cursor-pointer mb-8 game-button nes-btn"
+                className="is-primary text-xs sm:text-sm md:text-base px-6 sm:px-12 md:px-16 lg:px-24 py-3 sm:py-4 md:py-6 lg:py-8 cursor-pointer mb-4 sm:mb-6 md:mb-8 game-button nes-btn"
               >
                 Start Battle!
               </Button>
-              
             </div>
-            <p className="text-sm text-gray-500 mt-8 text-center">
-                Get ready for educational warfare! 🎓⚔️
-              </p>
+            <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text">
+              Get ready for educational warfare! 🎓⚔️
+            </p>
           </CardContent>
         </Card>
       </div>
