@@ -42,7 +42,6 @@ const QuizModal: React.FC<QuizModalProps> = ({
         const spellSubjectMap: Record<string, string> = {
           freeze: "science", // Ice/freezing is science
           meteor: "science", // Astronomy/meteors is science
-          double_gold: "math", // Economics/multiplication is math
         };
 
         const subject = spellSubjectMap[spellId] || "math";
@@ -112,9 +111,6 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
     setTimeout(() => {
       onAnswer(false);
-      // Don't call onClose if we're handling the answer
-      // onClose();
-      // Reset state after closing
       setHasAnswered(false);
       setShowResult(false);
     }, 1500);

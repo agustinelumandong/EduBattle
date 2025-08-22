@@ -29,17 +29,10 @@ const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent">
-      {/* Top HUD - Gold, Timer, Health */}
       <div className="flex justify-between items-center mb-4">
         <Card className="bg-yellow-600 text-white">
           <CardContent className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                💰 {gameState.playerGold}
-              </div>
-              <div className="text-xs">
-                Gold (+{GAME_CONFIG.economy.goldPerSecond}/s)
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -99,18 +92,14 @@ const GameHUD: React.FC<GameHUDProps> = ({
       <div className="flex justify-center">
         <div className="flex gap-2">
           {GAME_CONFIG.spells.map((spell) => {
-            const affordable = gameState.playerGold >= spell.cost;
-
+           
             return (
               <Button
                 key={spell.id}
                 onClick={() => onSpellClick(spell.id)}
-                disabled={!affordable || gameState.isGameOver}
-                variant={affordable ? "default" : "outline"}
+                disabled={gameState.isGameOver}           
                 size="sm"
-                className={`${
-                  affordable ? "bg-purple-600 hover:bg-purple-700" : ""
-                }`}
+
               >
                 ✨ {spell.name} (💰{spell.cost})
               </Button>
@@ -122,7 +111,7 @@ const GameHUD: React.FC<GameHUDProps> = ({
       {/* Mobile-specific instructions */}
       <div className="lg:hidden mt-2 text-center">
         <p className="text-xs text-gray-400">
-          Answer quizzes correctly for stronger units! Use gold for spells! ✨
+          Answer quizzes correctly for stronger units!
         </p>
       </div>
     </div>

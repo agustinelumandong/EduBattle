@@ -4,7 +4,7 @@ import { soundManager } from "./helpers/soundManager";
 import { UnitHelpers, type BattleUnit } from "./helpers/unitHelpers";
 
 export interface GameState {
-  playerGold: number;
+
   playerBaseHp: number;
   enemyBaseHp: number;
   matchTimeLeft: number;
@@ -15,7 +15,6 @@ export interface GameState {
 export default class BattleScene extends Phaser.Scene {
   private units: BattleUnit[] = [];
   private gameState: GameState = {
-    playerGold: GAME_CONFIG.economy.startGold,
     playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
@@ -24,7 +23,6 @@ export default class BattleScene extends Phaser.Scene {
 
   private playerBase?: Phaser.GameObjects.Graphics;
   private enemyBase?: Phaser.GameObjects.Graphics;
-  private goldTimer?: Phaser.Time.TimerEvent;
   private matchTimer?: Phaser.Time.TimerEvent;
   private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
   private isQuizActive: boolean = false;
@@ -109,8 +107,6 @@ export default class BattleScene extends Phaser.Scene {
     // Create bases
     this.createBases();
 
-    // Start gold income timer
-    this.startGoldIncome();
 
     // Start match timer
     this.startMatchTimer();
@@ -505,7 +501,14 @@ export default class BattleScene extends Phaser.Scene {
   private createMeteorStrike(backfired: boolean = false): void {
     // Get target units based on whether spell backfired
     const targetTeam = backfired ? "player" : "enemy";
-    const targetUnits = this.units.filter((unit) => unit.team === targetTeam);
+    const targetUnits = this.units.filter(
+      (unit) =>
+        unit.team === targetTeam &&
+        typeof unit.x === "number" &&
+        typeof unit.y === "number" &&
+        Number.isFinite(unit.x) &&
+        Number.isFinite(unit.y)
+    );
 
     console.log(
       `☄️ Meteor strike targeting ${targetTeam} units (${targetUnits.length} targets)`
@@ -515,17 +518,24 @@ export default class BattleScene extends Phaser.Scene {
 
     // Create meteors for each target unit with random delays
     targetUnits.forEach((unit, index) => {
-      const delay = index * 200 + Math.random() * 500; // Stagger meteors
-
-      // Capture unit position to prevent undefined errors if unit is destroyed
+      // Capture unit position up-front
       const targetX = unit.x;
       const targetY = unit.y;
 
+      // Validate captured coordinates; skip if invalid
+      if (
+        typeof targetX !== "number" ||
+        typeof targetY !== "number" ||
+        !Number.isFinite(targetX) ||
+        !Number.isFinite(targetY)
+      ) {
+        return;
+      }
+
+      const delay = index * 200 + Math.random() * 500; // Stagger meteors
+
       this.time.delayedCall(delay, () => {
-        // Use captured coordinates even if unit is destroyed
-        if (targetX !== undefined && targetY !== undefined) {
-          this.createSingleMeteor(targetX, targetY, targetTeam);
-        }
+        this.createSingleMeteor(targetX, targetY, targetTeam);
       });
     });
 
@@ -546,6 +556,15 @@ export default class BattleScene extends Phaser.Scene {
     targetY: number,
     targetTeam: "player" | "enemy" = "enemy"
   ): void {
+    // Guard against invalid coordinates
+    if (
+      typeof targetX !== "number" ||
+      typeof targetY !== "number" ||
+      !Number.isFinite(targetX) ||
+      !Number.isFinite(targetY)
+    ) {
+      return;
+    }
     // Create meteor starting from high above the target
     const startX = targetX + (Math.random() - 0.5) * 100;
     const startY = -100;
@@ -673,10 +692,7 @@ export default class BattleScene extends Phaser.Scene {
 
           // Check if unit died
           if (unit.hp <= 0) {
-            // Only give gold for killing enemy units, not your own
-            if (targetTeam === "enemy") {
-              this.gameState.playerGold += GAME_CONFIG.economy.killGold;
-            }
+     
             UnitHelpers.destroyUnit(unit);
           } else {
             // Update health bar
@@ -711,16 +727,6 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
-  private startGoldIncome(): void {
-    this.goldTimer = this.time.addEvent({
-      delay: 1000, // Every second
-      callback: () => {
-        this.gameState.playerGold += GAME_CONFIG.economy.goldPerSecond;
-        this.updateGameState();
-      },
-      loop: true,
-    });
-  }
 
   private startMatchTimer(): void {
     this.matchTimer = this.time.addEvent({
@@ -987,7 +993,6 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     // Stop timers
-    if (this.goldTimer) this.goldTimer.destroy();
     if (this.matchTimer) this.matchTimer.destroy();
     if (this.quizTimer) this.quizTimer.destroy();
 
@@ -1123,7 +1128,6 @@ export default class BattleScene extends Phaser.Scene {
       return false; // Still on cooldown
     }
 
-    // Instead of checking gold, trigger a quiz!
     if (this.onRequestSpellQuiz) {
       console.log(`🧙‍♂️ Casting spell ${spellConfig.name} - quiz required!`);
 
@@ -1212,41 +1216,6 @@ export default class BattleScene extends Phaser.Scene {
         console.log(`☄️ Meteor spell case - backfired = ${backfired}`);
         this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
-        break;
-
-      case "double_gold":
-        // Double gold doesn't backfire, it just does nothing if wrong
-        if (!backfired) {
-          // Double gold income for 10 seconds
-          if (this.goldTimer) {
-            this.goldTimer.destroy();
-          }
-
-          // Create a new gold timer with double rate
-          this.goldTimer = this.time.addEvent({
-            delay: 1000, // Every second
-            callback: () => {
-              this.gameState.playerGold +=
-                GAME_CONFIG.economy.goldPerSecond * 2;
-              this.updateGameState();
-            },
-            loop: true,
-            repeat: 10, // 10 seconds
-          });
-
-          // After 10 seconds, restore normal gold rate
-          this.time.delayedCall(10000, () => {
-            if (this.goldTimer) {
-              this.goldTimer.destroy();
-            }
-
-            this.startGoldIncome();
-          });
-          soundManager.playSpellCast();
-        } else {
-          console.log("💰 Double Gold backfired - no effect!");
-          soundManager.playSpellCast();
-        }
         break;
 
       default:

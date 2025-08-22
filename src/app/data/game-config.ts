@@ -1,8 +1,5 @@
 export interface GameConfig {
   economy: {
-    startGold: number;
-    goldPerSecond: number;
-    killGold: number;
     correctBonus: number;
     wrongPenalty: number;
   };
@@ -60,9 +57,6 @@ export interface QuizQuestion {
 
 export const GAME_CONFIG: GameConfig = {
   economy: {
-    startGold: 99999,
-    goldPerSecond: 99999,
-    killGold: 20,
     correctBonus: 50,
     wrongPenalty: 10,
   },
@@ -74,7 +68,7 @@ export const GAME_CONFIG: GameConfig = {
       hp: 120,
       dps: 12,
       cost: 200,
-      speed: 60,
+      speed: 70,
       sprite: "knight",
       wrongMod: { hp: 0.67, dps: 0.67 },
       specialAbility: "Shield Block - Reduces incoming damage by 20%",
@@ -87,7 +81,7 @@ export const GAME_CONFIG: GameConfig = {
       dps: 18,
       cost: 220,
       range: 3,
-      speed: 45,
+      speed: 55,
       sprite: "mage",
       wrongMod: { hp: 0.67, dps: 0.67 },
       specialAbility: "Chain Lightning - Hits multiple enemies",
@@ -100,7 +94,7 @@ export const GAME_CONFIG: GameConfig = {
       dps: 14,
       cost: 180,
       range: 4,
-      speed: 55,
+      speed: 65,
       sprite: "archer",
       wrongMod: { hp: 0.67, dps: 0.67 },
       specialAbility: "Piercing Shot - Attacks penetrate armor",
@@ -127,14 +121,6 @@ export const GAME_CONFIG: GameConfig = {
       cooldownSeconds: 45,
       description: "Rains meteors on all enemy units dealing massive damage",
       effect: "meteor_strike",
-    },
-    {
-      id: "double_gold",
-      name: "Double Gold",
-      cost: 200,
-      cooldownSeconds: 60,
-      description: "Double gold income for 10 seconds",
-      effect: "double_gold",
     },
   ],
   battle: {
