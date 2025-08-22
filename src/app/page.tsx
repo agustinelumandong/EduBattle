@@ -26,6 +26,7 @@ export default function EduBattle(): ReactElement {
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
     isGameOver: false,
+    isSuddenDeath: false, // Add sudden death state
   });
 
   const [showTutorial, setShowTutorial] = useState<boolean>(true);
@@ -151,7 +152,11 @@ export default function EduBattle(): ReactElement {
   }, []);
 
   const restartGame = useCallback(() => {
-    window.location.reload(); // Simple restart
+    if (battleArenaRef.current) {
+      battleArenaRef.current.resetGameState();
+      setGameStarted(true);
+      setShowTutorial(false);
+    }
   }, []);
 
   if (showTutorial) {
