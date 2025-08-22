@@ -15,6 +15,7 @@ import {
 interface QuizModalProps {
   isOpen: boolean;
   unitType: string;
+  spellId?: string;
   onAnswer: (correct: boolean) => void;
   onClose: () => void;
 }
@@ -22,6 +23,7 @@ interface QuizModalProps {
 const QuizModal: React.FC<QuizModalProps> = ({
   isOpen,
   unitType,
+  spellId,
   onAnswer,
   onClose,
 }) => {
@@ -34,7 +36,26 @@ const QuizModal: React.FC<QuizModalProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
   const generateQuestion = useCallback(
-    (unitType: string): QuizQuestion | null => {
+    (unitType: string, spellId?: string): QuizQuestion | null => {
+      // If it's a spell quiz, determine subject based on spell
+      if (spellId) {
+        const spellSubjectMap: Record<string, string> = {
+          freeze: "science", // Ice/freezing is science
+          meteor: "science", // Astronomy/meteors is science
+          double_gold: "math", // Economics/multiplication is math
+        };
+
+        const subject = spellSubjectMap[spellId] || "math";
+        const subjectQuestions = QUIZ_BANK.filter((q) => q.subject === subject);
+
+        if (subjectQuestions.length === 0) return null;
+
+        return subjectQuestions[
+          Math.floor(Math.random() * subjectQuestions.length)
+        ];
+      }
+
+      // Otherwise, it's a unit quiz
       const subjectMap: Record<string, string> = {
         knight: "math",
         mage: "science",
@@ -55,7 +76,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
   useEffect(() => {
     if (isOpen && !hasAnswered) {
-      const newQuestion = generateQuestion(unitType);
+      const newQuestion = generateQuestion(unitType, spellId);
       setQuestion(newQuestion);
       setTimeLeft(10);
       setSelectedAnswer("");
@@ -63,7 +84,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
       setShowResult(false);
       setHasAnswered(false);
     }
-  }, [isOpen, unitType, hasAnswered, generateQuestion]);
+  }, [isOpen, unitType, spellId, hasAnswered, generateQuestion]);
 
   useEffect(() => {
     if (!isOpen || hasAnswered) return;
@@ -91,7 +112,8 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
     setTimeout(() => {
       onAnswer(false);
-      onClose();
+      // Don't call onClose if we're handling the answer
+      // onClose();
       // Reset state after closing
       setHasAnswered(false);
       setShowResult(false);
@@ -118,7 +140,8 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
     setTimeout(() => {
       onAnswer(correct);
-      onClose();
+      // Don't call onClose if we're handling the answer
+      // onClose();
       // Reset state after closing
       setHasAnswered(false);
       setShowResult(false);
@@ -145,8 +168,9 @@ const QuizModal: React.FC<QuizModalProps> = ({
           style={{ color: "black", fontFamily: "'Press Start 2P', cursive", width: "100%" }}
         >
           <CardTitle className="text-2xl flex items-center justify-center gap-2">
+            <span className="text-3xl">{subjectIcon}</span>
             <span className="text-lg">{subjectIcon}</span>
-            Quiz Challenge
+            {spellId ? "Spell Quiz" : "Quiz Challenge"}
             <span className="text-lg">{subjectIcon}</span>
           </CardTitle>
           <div className="mt-2">

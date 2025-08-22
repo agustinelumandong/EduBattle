@@ -22,12 +22,16 @@ interface PhaserGameComponentProps {
     callback: (correct: boolean) => void
   ) => void;
   onGameReady?: () => void;
+  onRequestSpellQuiz: (
+    spellId: string,
+    callback: (correct: boolean) => void
+  ) => void;
 }
 
 const PhaserGameComponent = React.forwardRef<
   PhaserGameRef,
   PhaserGameComponentProps
->(({ onGameStateUpdate, onRequestQuiz, onGameReady }, ref) => {
+>(({ onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isSceneReady, setIsSceneReady] = useState(false);
 
@@ -39,6 +43,7 @@ const PhaserGameComponent = React.forwardRef<
       battleScene = new BattleScene();
       battleScene.onGameStateUpdate = onGameStateUpdate;
       battleScene.onRequestQuiz = onRequestQuiz;
+      battleScene.onRequestSpellQuiz = onRequestSpellQuiz;
       
       // Set up scene ready callback
       battleScene.onSceneReady = () => {
@@ -69,7 +74,7 @@ const PhaserGameComponent = React.forwardRef<
       }
       setIsSceneReady(false);
     };
-  }, [onGameStateUpdate, onRequestQuiz, onGameReady]);
+  }, [onGameStateUpdate, onRequestQuiz, onRequestSpellQuiz, onGameReady]);
 
   // Expose methods to parent component
   React.useImperativeHandle(

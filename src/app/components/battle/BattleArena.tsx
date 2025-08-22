@@ -24,10 +24,14 @@ interface BattleArenaProps {
     callback: (correct: boolean) => void
   ) => void;
   onGameReady?: () => void;
+  onRequestSpellQuiz: (
+    spellId: string,
+    callback: (correct: boolean) => void
+  ) => void;
 }
 
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
-  ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady }, ref) => {
+  ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
 
@@ -94,6 +98,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           onGameStateUpdate={handleGameStateUpdate}
           onRequestQuiz={handleRequestQuiz}
           onGameReady={handleGameReady}
+          onRequestSpellQuiz={onRequestSpellQuiz}
         />
 
         {/* Retro Health Bars Overlay */}
