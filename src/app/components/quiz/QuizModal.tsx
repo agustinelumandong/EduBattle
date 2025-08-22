@@ -139,15 +139,15 @@ const QuizModal: React.FC<QuizModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg mx-4 bg-white/95 backdrop-blur-sm border-2 shadow-2xl">
+      <Card className="w-full max-w-xl mx-4 bg-white/95 backdrop-blur-sm border-2 shadow-2xl nes-container is-rounded">
         <CardHeader
-          className="text-center"
-          style={{ backgroundColor: subjectColor, color: "white" }}
+          className="text-center "
+          style={{ color: "black", fontFamily: "'Press Start 2P', cursive", width: "100%" }}
         >
           <CardTitle className="text-2xl flex items-center justify-center gap-2">
-            <span className="text-3xl">{subjectIcon}</span>
+            <span className="text-lg">{subjectIcon}</span>
             Quiz Challenge
-            <span className="text-3xl">{subjectIcon}</span>
+            <span className="text-lg">{subjectIcon}</span>
           </CardTitle>
           <div className="mt-2">
             <Progress value={(timeLeft / 10) * 100} className="w-full h-3" />
@@ -158,9 +158,9 @@ const QuizModal: React.FC<QuizModalProps> = ({
         <CardContent className="p-6">
           {!showResult ? (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-center">
+              <h5 className="text-lg font-semibold text-center">
                 {question.question}
-              </h3>
+              </h5>
 
               {question.options ? (
                 <div className="space-y-2">
