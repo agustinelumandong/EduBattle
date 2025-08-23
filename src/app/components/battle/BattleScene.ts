@@ -69,13 +69,13 @@ export default class BattleScene extends Phaser.Scene {
     // Start camera centered on player base area
     this.cameras.main.setZoom(1);
     this.cameras.main.centerOn(400, 400); // Start view on left side near player base
-    
+
     // Set initial cursor style for camera movement
     // this.game.canvas.style.cursor = "grab";
 
     // Enable camera controls with mouse/touch
     // this.input.on("pointerdown", () => {
-      // Change cursor to grabbing when dragging starts
+    // Change cursor to grabbing when dragging starts
     //   this.game.canvas.style.cursor = "grabbing";
     // });
 
@@ -1403,6 +1403,9 @@ export default class BattleScene extends Phaser.Scene {
     if (this.onRequestSpellQuiz) {
       console.log(`🧙‍♂️ Casting spell ${spellConfig.name} - quiz required!`);
 
+      // Set cooldown IMMEDIATELY when spell is cast, not after quiz completion
+      this.spellCooldowns.set(spellId, this.time.now);
+
       // Set spell quiz as active
       this.isSpellQuizActive = true;
 
@@ -1414,9 +1417,6 @@ export default class BattleScene extends Phaser.Scene {
 
         // Reset spell quiz state
         this.isSpellQuizActive = false;
-
-        // Set cooldown regardless of success/failure
-        this.spellCooldowns.set(spellId, this.time.now);
 
         if (correct) {
           // Cast spell on enemies (normal effect)
@@ -1488,7 +1488,7 @@ export default class BattleScene extends Phaser.Scene {
         console.log(`☄️ Meteor spell case - backfired = ${backfired}`);
         this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
-        break; 
+        break;
 
       default:
         break;
