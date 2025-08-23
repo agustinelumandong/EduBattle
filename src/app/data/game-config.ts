@@ -116,7 +116,7 @@ export const GAME_CONFIG: GameConfig = {
     },
   ],
   battle: {
-    matchDurationMinutes: 1,
+    matchDurationMinutes: 4,
     baseMaxHealth: 100,
     laneWidth: 800,
     unitSpeed: 50,
