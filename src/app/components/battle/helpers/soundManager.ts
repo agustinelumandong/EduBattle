@@ -176,6 +176,35 @@ const soundsConfig: Record<string, SoundConfig> = {
     sample_rate: 44100,
     sample_size: 16,
   },
+  enemySpawn: {
+    oldParams: true,
+    wave_type: 1, // Square wave for more mechanical/threatening sound
+    p_env_attack: 0.1, // Slightly slower attack for ominous feel
+    p_env_sustain: 0.15,
+    p_env_punch: 0.4, // More punch for threatening presence
+    p_env_decay: 0.4,
+    p_base_freq: 0.25, // Lower frequency than player spawn for darker tone
+    p_freq_limit: 0,
+    p_freq_ramp: -0.1, // Slight downward sweep for menacing effect
+    p_freq_dramp: 0,
+    p_vib_strength: 0.1, // Add slight vibration for unsettling feel
+    p_vib_speed: 0.05,
+    p_arp_mod: 0,
+    p_arp_speed: 0,
+    p_duty: 0.3, // Modify duty cycle for harsher sound
+    p_duty_ramp: 0,
+    p_repeat_speed: 0,
+    p_pha_offset: 0,
+    p_pha_ramp: 0,
+    p_lpf_freq: 0.8, // Slightly filter to make it darker
+    p_lpf_ramp: 0,
+    p_lpf_resonance: 0.1,
+    p_hpf_freq: 0.05, // Keep some low-end for menacing rumble
+    p_hpf_ramp: 0,
+    sound_vol: 0.35, // Slightly louder than player spawn for intimidation
+    sample_rate: 44100,
+    sample_size: 16,
+  },
 };
 
 class SoundManager {
@@ -209,6 +238,9 @@ class SoundManager {
 
   playUnitSpawn() {
     this.playSound("unitSpawn");
+  }
+  playEnemySpawn() {
+    this.playSound("enemySpawn"); // Dedicated threatening sound for enemy spawns
   }
   playUnitAttack() {
     this.playSound("unitAttack");

@@ -1003,6 +1003,13 @@ export default class BattleScene extends Phaser.Scene {
             Math.floor(Math.random() * GAME_CONFIG.units.length)
           ];
 
+        // 🚨 IMMEDIATE ENEMY SPAWN - Creates pressure while player is stuck in quiz!
+        console.log("⚔️ Enemy gets head start - spawning units immediately!");
+        this.spawnEnemyUnits();
+
+        // Show visual indicator that enemy got advantage
+        this.showEnemyAdvantageMessage();
+
         if (this.onRequestQuiz) {
           console.log("📝 Quiz triggered:", randomUnit.id);
 
@@ -1062,6 +1069,11 @@ export default class BattleScene extends Phaser.Scene {
 
     // Update game state
     this.updateGameState();
+  }
+
+  private showEnemyAdvantageMessage(): void {
+    // Add screen shake for dramatic effect
+    this.cameras.main.shake(300, 0.01);
   }
 
   private getRandomSpawnCount(): number {
@@ -1312,7 +1324,7 @@ export default class BattleScene extends Phaser.Scene {
     soundManager.playUnitSpawn();
 
     // Spawn enemy units (AI) - also multiple
-    this.spawnEnemyUnits();
+    // this.spawnEnemyUnits();
 
     this.updateGameState();
   }
@@ -1345,6 +1357,7 @@ export default class BattleScene extends Phaser.Scene {
 
       this.units.push(unit);
     }
+    soundManager.playEnemySpawn();
   }
 
   // Keep old method for backward compatibility if needed elsewhere
