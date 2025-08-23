@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCallback, useRef, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import type { BattleArenaRef } from "./components/battle/BattleArena";
 import BattleArena from "./components/battle/BattleArena";
 import type { GameState } from "./components/battle/BattleScene";
@@ -37,12 +37,46 @@ export default function EduBattle(): ReactElement {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [isGameFullyLoaded, setIsGameFullyLoaded] = useState<boolean>(false);
   const [isStarfieldFadingOut, setIsStarfieldFadingOut] = useState<boolean>(false);
+  
+  // ⏰ Spell Cooldown System
+  const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>({});
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
+
+  // ⏰ Helper function to check if spell is on cooldown
+  const isSpellOnCooldown = useCallback((spellId: string): boolean => {
+    const currentTime = Date.now();
+    const cooldownEndTime = spellCooldowns[spellId] || 0;
+    return currentTime < cooldownEndTime;
+  }, [spellCooldowns]);
+
+  // ⏰ Helper function to get remaining cooldown time in seconds
+  const getSpellCooldownRemaining = useCallback((spellId: string): number => {
+    const currentTime = Date.now();
+    const cooldownEndTime = spellCooldowns[spellId] || 0;
+    return Math.max(0, Math.ceil((cooldownEndTime - currentTime) / 1000));
+  }, [spellCooldowns]);
 
   const handleGameStateUpdate = useCallback((state: GameState) => {
     setGameState(state);
   }, []);
+
+  // ⏰ Update cooldown timers every second for smooth UI updates
+  useEffect(() => {
+    if (!gameStarted || gameState.isGameOver) return;
+
+    const interval = setInterval(() => {
+      const currentTime = Date.now();
+      const hasActiveCooldowns = Object.values(spellCooldowns).some(endTime => currentTime < endTime);
+      
+      if (hasActiveCooldowns) {
+        // Force re-render by updating the state
+        setSpellCooldowns(prev => ({ ...prev }));
+      }
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, [gameStarted, gameState.isGameOver, spellCooldowns]);
 
   const handleRequestQuiz = useCallback(
     (unitType: string, callback: (correct: boolean) => void) => {
@@ -140,12 +174,28 @@ export default function EduBattle(): ReactElement {
       const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
       if (!spellConfig) return;
 
+      // ⏰ Check if spell is on cooldown
+      const currentTime = Date.now();
+      const cooldownEndTime = spellCooldowns[spellId] || 0;
+      
+      if (currentTime < cooldownEndTime) {
+        console.log(`🔥 Spell ${spellConfig.name} is on cooldown for ${Math.ceil((cooldownEndTime - currentTime) / 1000)} more seconds`);
+        return; // Spell is still on cooldown
+      }
+
       // Cast spell through BattleArena component
       if (battleArenaRef.current) {
         battleArenaRef.current.castSpell(spellId);
+        
+        // Start cooldown timer
+        const cooldownDuration = spellConfig.cooldownSeconds * 1000; // Convert to milliseconds
+        setSpellCooldowns(prev => ({
+          ...prev,
+          [spellId]: currentTime + cooldownDuration
+        }));
       }
     },
-    [gameStarted, gameState.isGameOver]
+    [gameStarted, gameState.isGameOver, spellCooldowns]
   );
 
   const startGame = useCallback(() => {
@@ -166,6 +216,9 @@ export default function EduBattle(): ReactElement {
       battleArenaRef.current.resetGameState();
       setGameStarted(true);
       setShowTutorial(false);
+      
+      // ⏰ Reset spell cooldowns
+      setSpellCooldowns({});
     }
   }, []);
 
@@ -288,6 +341,8 @@ export default function EduBattle(): ReactElement {
         <GameHUD
           gameState={gameState}
           onSpellClick={handleSpellClick}
+          isSpellOnCooldown={isSpellOnCooldown}
+          getSpellCooldownRemaining={getSpellCooldownRemaining}
         />
       )}
 
