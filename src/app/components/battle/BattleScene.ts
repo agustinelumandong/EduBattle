@@ -8,7 +8,7 @@ export interface GameState {
   enemyBaseHp: number;
   matchTimeLeft: number;
   isGameOver: boolean;
-  isSuddenDeath: boolean; // New: Sudden death mode flag
+  isSuddenDeath: boolean;
   winner?: "player" | "enemy";
 }
 
@@ -19,34 +19,29 @@ export default class BattleScene extends Phaser.Scene {
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
     isGameOver: false,
-    isSuddenDeath: false, // Initialize sudden death as false
+    isSuddenDeath: false,
   };
 
   private playerBase?: Phaser.GameObjects.Graphics;
   private enemyBase?: Phaser.GameObjects.Graphics;
   private matchTimer?: Phaser.Time.TimerEvent;
-  private quizTimer?: Phaser.Time.TimerEvent; // Timer for global quiz interval
+  private quizTimer?: Phaser.Time.TimerEvent;
   private isQuizActive: boolean = false;
   private isFirstQuiz: boolean = true;
-  private isSpellQuizActive: boolean = false; // Track if a quiz is currently active
+  private isSpellQuizActive: boolean = false;
   private lastTime: number = 0;
 
-  // Spell cooldowns
   private spellCooldowns: Map<string, number> = new Map();
 
-  // Prevent double-spawning in development mode
   private lastSpawnTime: number = 0;
 
-  // Freeze effect properties
   private freezeOverlay?: Phaser.GameObjects.Graphics;
   private snowflakes: Phaser.GameObjects.Graphics[] = [];
   private freezeIndicator?: Phaser.GameObjects.Graphics;
 
-  // Sudden death properties
   private suddenDeathOverlay?: Phaser.GameObjects.Graphics;
   private suddenDeathText?: Phaser.GameObjects.Text;
 
-  // Callbacks for React components
   public onGameStateUpdate?: (state: GameState) => void;
   public onRequestQuiz?: (
     unitType: string,
@@ -63,40 +58,13 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private setupCamera(): void {
-    // Set camera bounds to cover the entire world (3200 x 800)
     this.cameras.main.setBounds(0, 0, 3200, 800);
 
-    // Start camera centered on player base area
     this.cameras.main.setZoom(1);
-    this.cameras.main.centerOn(400, 400); // Start view on left side near player base
-
-    // Set initial cursor style for camera movement
-    // this.game.canvas.style.cursor = "grab";
-
-    // Enable camera controls with mouse/touch
-    // this.input.on("pointerdown", () => {
-    // Change cursor to grabbing when dragging starts
-    //   this.game.canvas.style.cursor = "grabbing";
-    // });
-
-    // this.input.on("pointerup", () => {
-    //   // Change cursor back to grab when dragging stops
-    //   this.game.canvas.style.cursor = "grab";
-    // });
-
-    // this.input.on("pointerout", () => {
-    //   // Reset cursor when pointer leaves canvas
-    //   this.game.canvas.style.cursor = "default";
-    // });
-
-    // this.input.on("pointerover", () => {
-    //   // Set grab cursor when pointer enters canvas
-    //   this.game.canvas.style.cursor = "grab";
-    // });
+    this.cameras.main.centerOn(400, 400);
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
-        // Pan camera when dragging
         this.cameras.main.scrollX -=
           (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
         this.cameras.main.scrollY -=
@@ -104,7 +72,6 @@ export default class BattleScene extends Phaser.Scene {
       }
     });
 
-    // Add keyboard controls for camera movement
     this.input.keyboard?.on("keydown-A", () => {
       this.cameras.main.scrollX -= 50;
     });
@@ -121,86 +88,58 @@ export default class BattleScene extends Phaser.Scene {
     });
 
     this.input.keyboard?.on("keydown-SPACE", () => {
-      // Center camera on action (middle of battlefield)
       this.cameras.main.centerOn(1600, 400);
     });
   }
 
   create() {
-    // Initialize sound
     soundManager.init();
 
-    // Load and start background music immediately
-    // Make sure you put your music file at: EduBattle/public/music/background-music.mp3
     soundManager.loadBackgroundMusic("/music/background-music.mp3", true);
 
-    // Set up camera for expanded world
     this.setupCamera();
 
-    // Create battlefield background
     this.createBattlefield();
 
-    // Create bases
     this.createBases();
 
-    // Start match timer
     this.startMatchTimer();
 
-    // Start global quiz timer
     this.startQuizTimer();
 
-    // Add input handling
     this.setupInput();
 
-    // Start game loop
     this.startGameLoop();
 
-    // Notify that scene is ready
     if (this.onSceneReady) {
       this.onSceneReady();
     }
   }
 
   private createBattlefield(): void {
-    // Space background - black with stars (full screen height)
     this.add.rectangle(1600, 400, 3200, 800, 0x000000);
 
-    // Create random stars across the battlefield
     this.createStars();
-
-    // Lane lines - make them more space-like (dim blue/cyan)
-    // this.add.line(1600, 300, 0, 0, 3200, 0, 0x1e40af, 1);
-    // this.add.line(1600, 500, 0, 0, 3200, 0, 0x1e40af, 1);
-
-    // Center line - dim and space-like
-    // this.add.line(1600, 400, 0, 0, 0, 800, 0x374151, 1);
   }
 
   private createStars(): void {
-    // Create random stars of varying sizes across the expanded battlefield
-    const starCount = 500; // More stars for full screen
+    const starCount = 500;
 
     for (let i = 0; i < starCount; i++) {
-      // Random position across the entire 3200x800 battlefield
       const x = Math.random() * 3200;
       const y = Math.random() * 800;
 
-      // Random star size (1-4 pixels)
       const size = Math.random() * 3 + 1;
 
-      // Random star brightness/opacity
-      const brightness = Math.random() * 0.7 + 0.3; // 0.3 to 1.0
+      const brightness = Math.random() * 0.7 + 0.3;
 
-      // Create star as a small circle
       const star = this.add.circle(x, y, size, 0xffffff, brightness);
 
-      // Add subtle twinkling animation to some stars
       if (Math.random() < 0.3) {
-        // 30% of stars twinkle
         this.tweens.add({
           targets: star,
           alpha: 0.2,
-          duration: Math.random() * 2000 + 1000, // 1-3 seconds
+          duration: Math.random() * 2000 + 1000,
           yoyo: true,
           repeat: -1,
           ease: "Sine.easeInOut",
@@ -210,13 +149,11 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private createBases(): void {
-    // Player base (left) - positioned partially off-screen (more visible)
     this.playerBase = this.add.graphics();
-    this.drawBase(this.playerBase, 10, 400, "player"); // More visible on left
+    this.drawBase(this.playerBase, 10, 400, "player");
 
-    // Enemy base (right) - positioned partially off-screen (more visible)
     this.enemyBase = this.add.graphics();
-    this.drawBase(this.enemyBase, 3190, 400, "enemy"); // More visible on right
+    this.drawBase(this.enemyBase, 3190, 400, "enemy");
   }
 
   private drawBase(
@@ -251,13 +188,11 @@ export default class BattleScene extends Phaser.Scene {
     hpPercent: number,
     team: "player" | "enemy"
   ): void {
-    const radius = 120; // Much bigger planets!
+    const radius = 120;
 
-    // Determine planet colors based on team and health
     let baseColor, continentColor, atmosphereColor;
 
     if (team === "player") {
-      // Earth-like colors that get damaged
       baseColor =
         hpPercent > 0.5 ? 0x1e40af : hpPercent > 0.25 ? 0x1e3a8a : 0x7f1d1d;
       continentColor =
@@ -265,7 +200,6 @@ export default class BattleScene extends Phaser.Scene {
       atmosphereColor =
         hpPercent > 0.5 ? 0x3b82f6 : hpPercent > 0.25 ? 0x2563eb : 0xdc2626;
     } else {
-      // Mars-like enemy planet
       baseColor =
         hpPercent > 0.5 ? 0xdc2626 : hpPercent > 0.25 ? 0xb91c1c : 0x450a0a;
       continentColor =
@@ -274,25 +208,19 @@ export default class BattleScene extends Phaser.Scene {
         hpPercent > 0.5 ? 0xff6b6b : hpPercent > 0.25 ? 0xff5252 : 0xff1744;
     }
 
-    // Draw outer atmosphere glow
     graphics.fillStyle(atmosphereColor, 0.3);
-    graphics.fillCircle(0, 0, radius + 20); // Bigger atmosphere for bigger planets
+    graphics.fillCircle(0, 0, radius + 20);
 
-    // Draw main planet body
     graphics.fillStyle(baseColor, 1);
     graphics.fillCircle(0, 0, radius);
 
-    // Draw retro pixel-style continents/land masses
     this.drawRetroLandmasses(graphics, continentColor, radius);
 
-    // Add some retro-style details
     this.drawRetroDetails(graphics, radius, hpPercent, team);
 
-    // Planet outline
     graphics.lineStyle(2, 0xffffff, 0.8);
     graphics.strokeCircle(0, 0, radius);
 
-    // Add orbital ring for enemy Mars planet
     if (team === "enemy") {
       this.drawOrbitalRing(graphics, radius);
     }
@@ -305,23 +233,17 @@ export default class BattleScene extends Phaser.Scene {
   ): void {
     graphics.fillStyle(continentColor, 0.9);
 
-    // Scale factor for bigger planets
-    const scale = radius / 30; // Scale based on radius
+    const scale = radius / 30;
 
-    // Draw chunky, pixel-art style landmasses (scaled up)
-    // Continent 1 (top-left area)
     graphics.fillRect(-20 * scale, -15 * scale, 12 * scale, 8 * scale);
     graphics.fillRect(-15 * scale, -10 * scale, 8 * scale, 6 * scale);
 
-    // Continent 2 (right side)
     graphics.fillRect(5 * scale, -8 * scale, 10 * scale, 12 * scale);
     graphics.fillRect(12 * scale, 0, 6 * scale, 8 * scale);
 
-    // Continent 3 (bottom)
     graphics.fillRect(-8 * scale, 10 * scale, 14 * scale, 6 * scale);
     graphics.fillRect(-5 * scale, 16 * scale, 8 * scale, 4 * scale);
 
-    // Small islands
     graphics.fillRect(-25 * scale, 5 * scale, 4 * scale, 3 * scale);
     graphics.fillRect(18 * scale, -20 * scale, 3 * scale, 4 * scale);
   }
@@ -332,11 +254,9 @@ export default class BattleScene extends Phaser.Scene {
     hpPercent: number,
     team: "player" | "enemy"
   ): void {
-    const scale = radius / 30; // Scale factor for bigger planets
+    const scale = radius / 30;
 
-    // Add some retro-style details based on health
     if (hpPercent < 0.5) {
-      // Damage effects - red pixels scattered around
       graphics.fillStyle(0xff0000, 0.8);
       for (let i = 0; i < 8; i++) {
         const angle = (Math.PI * 2 * i) / 8;
@@ -347,15 +267,12 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     if (hpPercent < 0.25) {
-      // Critical damage - more intense effects
       graphics.fillStyle(0xffff00, 0.6);
-      graphics.fillRect(-4 * scale, -4 * scale, 8 * scale, 8 * scale); // Center explosion effect
+      graphics.fillRect(-4 * scale, -4 * scale, 8 * scale, 8 * scale);
     }
 
-    // Add some retro "city lights" or surface details
     if (team === "player" && hpPercent > 0.5) {
       graphics.fillStyle(0xffff00, 0.7);
-      // Scaled city lights
       graphics.fillRect(-10 * scale, -5 * scale, 2 * scale, 2 * scale);
       graphics.fillRect(8 * scale, 3 * scale, 2 * scale, 2 * scale);
       graphics.fillRect(-3 * scale, 12 * scale, 2 * scale, 2 * scale);
@@ -367,19 +284,16 @@ export default class BattleScene extends Phaser.Scene {
     graphics: Phaser.GameObjects.Graphics,
     planetRadius: number
   ): void {
-    const ringRadius = planetRadius + 25; // Bigger ring for bigger planet
-    const ringThickness = 5; // Thicker ring
+    const ringRadius = planetRadius + 25;
+    const ringThickness = 5;
     const scale = planetRadius / 30;
 
-    // Main orbital ring
     graphics.lineStyle(ringThickness, 0xff6b6b, 0.6);
     graphics.strokeCircle(0, 0, ringRadius);
 
-    // Inner ring detail
     graphics.lineStyle(2, 0xffa726, 0.4);
     graphics.strokeCircle(0, 0, ringRadius - 4);
 
-    // Add some orbital debris/stations as scaled rectangles
     for (let i = 0; i < 12; i++) {
       const angle = (Math.PI * 2 * i) / 12;
       const x = Math.cos(angle) * ringRadius;
@@ -391,18 +305,14 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private createFreezeEffect(): void {
-    // Create freeze overlay
     this.freezeOverlay = this.add.graphics();
-    this.freezeOverlay.fillStyle(0x87ceeb, 0.15); // Light blue overlay
+    this.freezeOverlay.fillStyle(0x87ceeb, 0.15);
     this.freezeOverlay.fillRect(0, 0, 3200, 800);
 
-    // Create corner freeze indicator
     this.createFreezeIndicator();
 
-    // Create snowflakes
     this.createSnowflakes();
 
-    // Remove freeze effect after 3 seconds
     this.time.delayedCall(3000, () => {
       this.removeFreezeEffect();
     });
@@ -539,8 +449,6 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private triggerSuddenDeath(): void {
-    console.log("🔥 SUDDEN DEATH MODE ACTIVATED!");
-
     // Set sudden death state
     this.gameState.isSuddenDeath = true;
 
@@ -600,8 +508,6 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   private spawnMassiveWaves(): void {
-    console.log("⚔️ Spawning massive waves for sudden death!");
-
     // Spawn massive player wave (10-15 units)
     const playerWaveSize = 10 + Math.floor(Math.random() * 6);
     for (let i = 0; i < playerWaveSize; i++) {
@@ -642,9 +548,6 @@ export default class BattleScene extends Phaser.Scene {
       this.units.push(unit);
     }
 
-    console.log(
-      `⚔️ Spawned ${playerWaveSize} player units and ${enemyWaveSize} enemy units!`
-    );
     soundManager.playUnitSpawn();
   }
 
@@ -658,10 +561,6 @@ export default class BattleScene extends Phaser.Scene {
         typeof unit.y === "number" &&
         Number.isFinite(unit.x) &&
         Number.isFinite(unit.y)
-    );
-
-    console.log(
-      `☄️ Meteor strike targeting ${targetTeam} units (${targetUnits.length} targets)`
     );
 
     if (targetUnits.length === 0) return;
@@ -965,24 +864,16 @@ export default class BattleScene extends Phaser.Scene {
       ? 5000
       : GAME_CONFIG.quiz.globalQuizIntervalSeconds * 1000;
 
-    console.log(
-      `⏰ Scheduling ${this.isFirstQuiz ? "FIRST" : "next"} quiz in ${
-        delay / 1000
-      } seconds`
-    );
-
     // Schedule next quiz (one-shot, not looping)
     this.quizTimer = this.time.addEvent({
       delay: delay,
       callback: () => {
         // Double-check conditions before showing quiz
         if (this.gameState.isGameOver) {
-          console.log("❌ Game over - not showing quiz");
           return;
         }
 
         if (this.isQuizActive || this.isSpellQuizActive) {
-          console.log("❌ Quiz already active - rescheduling in 2 seconds");
           // If quiz is still active, try again in 2 seconds
           this.time.delayedCall(2000, () => this.scheduleNextQuiz());
           return;
@@ -990,7 +881,6 @@ export default class BattleScene extends Phaser.Scene {
 
         // Set quiz as active to prevent new ones
         this.isQuizActive = true;
-        console.log("✅ Starting quiz - isQuizActive set to true");
 
         // Mark that we're no longer on the first quiz
         if (this.isFirstQuiz) {
@@ -1004,17 +894,13 @@ export default class BattleScene extends Phaser.Scene {
           ];
 
         // 🚨 IMMEDIATE ENEMY SPAWN - Creates pressure while player is stuck in quiz!
-        console.log("⚔️ Enemy gets head start - spawning units immediately!");
         this.spawnEnemyUnits();
 
         // Show visual indicator that enemy got advantage
         this.showEnemyAdvantageMessage();
 
         if (this.onRequestQuiz) {
-          console.log("📝 Quiz triggered:", randomUnit.id);
-
           this.onRequestQuiz(randomUnit.id, (correct: boolean) => {
-            console.log("✅ Quiz answered:", correct);
             // Reset quiz active flag when quiz is completed
             this.isQuizActive = false;
 
@@ -1022,7 +908,6 @@ export default class BattleScene extends Phaser.Scene {
             this.deployUnit(randomUnit.id, correct);
 
             // Schedule the next quiz only after this one is completed
-            console.log("⏰ Scheduling next quiz in 15 seconds");
             this.scheduleNextQuiz();
           });
         }
@@ -1192,12 +1077,6 @@ export default class BattleScene extends Phaser.Scene {
   private damageBase(team: "player" | "enemy", damage: number): void {
     // In sudden death mode, any base damage means instant defeat for that team
     if (this.gameState.isSuddenDeath) {
-      console.log(
-        `💥 SUDDEN DEATH: ${team} base took damage! ${
-          team === "player" ? "ENEMY" : "PLAYER"
-        } WINS!`
-      );
-
       // Determine winner (opposite of who took damage)
       const winner = team === "player" ? "enemy" : "player";
       this.endGame(winner);
@@ -1401,8 +1280,6 @@ export default class BattleScene extends Phaser.Scene {
 
     // Trigger a quiz!
     if (this.onRequestSpellQuiz) {
-      console.log(`🧙‍♂️ Casting spell ${spellConfig.name} - quiz required!`);
-
       // Set cooldown IMMEDIATELY when spell is cast, not after quiz completion
       this.spellCooldowns.set(spellId, this.time.now);
 
@@ -1410,21 +1287,14 @@ export default class BattleScene extends Phaser.Scene {
       this.isSpellQuizActive = true;
 
       this.onRequestSpellQuiz(spellId, (correct: boolean) => {
-        console.log(`🧙‍♂️ Spell quiz callback received: correct = ${correct}`);
-        console.log(
-          `✨ Spell quiz result: ${correct ? "SUCCESS" : "BACKFIRE"}`
-        );
-
         // Reset spell quiz state
         this.isSpellQuizActive = false;
 
         if (correct) {
           // Cast spell on enemies (normal effect)
-          console.log("✅ Spell SUCCESS - targeting enemies");
           this.executeSpell(spellId, false); // false = not backfired
         } else {
           // BACKFIRE! Cast spell on player instead
-          console.log("💥 SPELL BACKFIRED! Casting on player!");
           this.executeSpell(spellId, true); // true = backfired
         }
 
@@ -1439,21 +1309,16 @@ export default class BattleScene extends Phaser.Scene {
 
   private executeSpell(spellId: string, backfired: boolean): void {
     const targetTeam = backfired ? "player" : "enemy";
-    console.log(`🎯 Executing ${spellId} on ${targetTeam} units`);
 
     // Apply spell effect based on ID
     switch (spellId) {
       case "freeze":
         // Freeze units for 3 seconds
-        console.log(`❄️ Freezing ${targetTeam} units only`);
         let frozenCount = 0;
         this.units.forEach((unit) => {
           if (unit.team === targetTeam) {
             unit.isFrozen = true;
             frozenCount++;
-            console.log(
-              `🧊 Freezing ${unit.team} unit at (${unit.x}, ${unit.y})`
-            );
 
             // Add blue freeze effect to the ship
             UnitHelpers.addFreezeEffect(unit);
@@ -1464,28 +1329,20 @@ export default class BattleScene extends Phaser.Scene {
                 unit.isFrozen = false;
                 // Remove freeze effect from ship
                 UnitHelpers.removeFreezeEffect(unit);
-                console.log(`🔥 Unfrozen ${unit.team} unit`);
               }
             });
           }
         });
-        console.log(
-          `❄️ Total frozen units: ${frozenCount} (${targetTeam} team)`
-        );
 
         // Create freeze visual effect only if targeting enemies
         if (!backfired) {
-          console.log("🌨️ Creating screen freeze effect (targeting enemies)");
           this.createFreezeEffect();
-        } else {
-          console.log("💥 No screen freeze effect (spell backfired)");
         }
         soundManager.playSpellCast();
         break;
 
       case "meteor":
         // Meteor strike on units
-        console.log(`☄️ Meteor spell case - backfired = ${backfired}`);
         this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
         break;

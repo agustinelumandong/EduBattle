@@ -2,7 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
 import type { BattleArenaRef } from "./components/battle/BattleArena";
 import BattleArena from "./components/battle/BattleArena";
 import type { GameState } from "./components/battle/BattleScene";
@@ -26,7 +32,7 @@ export default function EduBattle(): ReactElement {
     enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
     matchTimeLeft: GAME_CONFIG.battle.matchDurationMinutes * 60,
     isGameOver: false,
-    isSuddenDeath: false, // Add sudden death state
+    isSuddenDeath: false,
   });
 
   const [showTutorial, setShowTutorial] = useState<boolean>(true);
@@ -36,44 +42,50 @@ export default function EduBattle(): ReactElement {
     useState<PendingSpellQuiz | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [isGameFullyLoaded, setIsGameFullyLoaded] = useState<boolean>(false);
-  const [isStarfieldFadingOut, setIsStarfieldFadingOut] = useState<boolean>(false);
-  
-  // ⏰ Spell Cooldown System
-  const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>({});
+  const [isStarfieldFadingOut, setIsStarfieldFadingOut] =
+    useState<boolean>(false);
+
+  const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
+    {}
+  );
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
 
-  // ⏰ Helper function to check if spell is on cooldown
-  const isSpellOnCooldown = useCallback((spellId: string): boolean => {
-    const currentTime = Date.now();
-    const cooldownEndTime = spellCooldowns[spellId] || 0;
-    return currentTime < cooldownEndTime;
-  }, [spellCooldowns]);
+  const isSpellOnCooldown = useCallback(
+    (spellId: string): boolean => {
+      const currentTime = Date.now();
+      const cooldownEndTime = spellCooldowns[spellId] || 0;
+      return currentTime < cooldownEndTime;
+    },
+    [spellCooldowns]
+  );
 
-  // ⏰ Helper function to get remaining cooldown time in seconds
-  const getSpellCooldownRemaining = useCallback((spellId: string): number => {
-    const currentTime = Date.now();
-    const cooldownEndTime = spellCooldowns[spellId] || 0;
-    return Math.max(0, Math.ceil((cooldownEndTime - currentTime) / 1000));
-  }, [spellCooldowns]);
+  const getSpellCooldownRemaining = useCallback(
+    (spellId: string): number => {
+      const currentTime = Date.now();
+      const cooldownEndTime = spellCooldowns[spellId] || 0;
+      return Math.max(0, Math.ceil((cooldownEndTime - currentTime) / 1000));
+    },
+    [spellCooldowns]
+  );
 
   const handleGameStateUpdate = useCallback((state: GameState) => {
     setGameState(state);
   }, []);
 
-  // ⏰ Update cooldown timers every second for smooth UI updates
   useEffect(() => {
     if (!gameStarted || gameState.isGameOver) return;
 
     const interval = setInterval(() => {
       const currentTime = Date.now();
-      const hasActiveCooldowns = Object.values(spellCooldowns).some(endTime => currentTime < endTime);
-      
+      const hasActiveCooldowns = Object.values(spellCooldowns).some(
+        (endTime) => currentTime < endTime
+      );
+
       if (hasActiveCooldowns) {
-        // Force re-render by updating the state
-        setSpellCooldowns(prev => ({ ...prev }));
+        setSpellCooldowns((prev) => ({ ...prev }));
       }
-    }, 1000); // Update every second
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [gameStarted, gameState.isGameOver, spellCooldowns]);
@@ -96,33 +108,21 @@ export default function EduBattle(): ReactElement {
 
   const handleQuizAnswer = useCallback(
     (correct: boolean) => {
-      console.log("📝 Quiz answered:", correct);
-      console.log("🔍 pendingQuiz:", pendingQuiz);
-      console.log("🔍 pendingSpellQuiz:", pendingSpellQuiz);
-
       if (pendingSpellQuiz) {
-        console.log("🧙‍♂️ Processing SPELL quiz callback");
-        console.log("🧙‍♂️ About to call spell callback with:", correct);
         pendingSpellQuiz.callback(correct);
-        console.log("🧙‍♂️ Spell callback completed, clearing state");
         setPendingSpellQuiz(null);
         setIsQuizOpen(false);
-        console.log("🧙‍♂️ Spell quiz state cleared, returning early");
-        // Clear spell quiz immediately to prevent double execution
-        return; // Exit early to prevent further processing
+        return;
       } else if (pendingQuiz) {
-        console.log("⚔️ Processing UNIT quiz callback");
         pendingQuiz.callback(correct);
         setPendingQuiz(null);
         setIsQuizOpen(false);
       }
 
-      // Reset quiz state in battle scene to allow new quizzes
       if (battleArenaRef.current) {
         battleArenaRef.current.resetQuizState();
       }
 
-      // Add a small delay before allowing new quizzes
       setTimeout(() => {
         setPendingQuiz(null);
         setPendingSpellQuiz(null);
@@ -132,38 +132,26 @@ export default function EduBattle(): ReactElement {
   );
 
   const handleQuizClose = useCallback(() => {
-    console.log("❌ Quiz closed/skipped");
-    console.log("🔍 pendingQuiz:", pendingQuiz);
-    console.log("🔍 pendingSpellQuiz:", pendingSpellQuiz);
-
     if (pendingSpellQuiz) {
-      console.log("🧙‍♂️ Processing SPELL quiz close (default to incorrect)");
-      console.log("🧙‍♂️ WARNING: Spell quiz should have been cleared already!");
-      pendingSpellQuiz.callback(false); // Default to incorrect if closed
+      pendingSpellQuiz.callback(false);
       setPendingSpellQuiz(null);
     } else if (pendingQuiz) {
-      console.log("⚔️ Processing UNIT quiz close (default to incorrect)");
-      pendingQuiz.callback(false); // Default to incorrect if closed
+      pendingQuiz.callback(false);
       setPendingQuiz(null);
     }
     setIsQuizOpen(false);
 
-    // Reset quiz state in battle scene to allow new quizzes
     if (battleArenaRef.current) {
       battleArenaRef.current.resetQuizState();
     }
 
-    // Add a small delay before allowing new quizzes
     setTimeout(() => {
       setPendingQuiz(null);
       setPendingSpellQuiz(null);
     }, 100);
   }, [pendingQuiz, pendingSpellQuiz]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUnitClick = useCallback((unitType: string) => {
-    // Since units are now only deployed through the quiz system,
-    // We'll ignore direct unit clicks from the UI
     return;
   }, []);
 
@@ -174,24 +162,20 @@ export default function EduBattle(): ReactElement {
       const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
       if (!spellConfig) return;
 
-      // ⏰ Check if spell is on cooldown
       const currentTime = Date.now();
       const cooldownEndTime = spellCooldowns[spellId] || 0;
-      
+
       if (currentTime < cooldownEndTime) {
-        console.log(`🔥 Spell ${spellConfig.name} is on cooldown for ${Math.ceil((cooldownEndTime - currentTime) / 1000)} more seconds`);
-        return; // Spell is still on cooldown
+        return;
       }
 
-      // Cast spell through BattleArena component
       if (battleArenaRef.current) {
         battleArenaRef.current.castSpell(spellId);
-        
-        // Start cooldown timer
-        const cooldownDuration = spellConfig.cooldownSeconds * 1000; // Convert to milliseconds
-        setSpellCooldowns(prev => ({
+
+        const cooldownDuration = spellConfig.cooldownSeconds * 1000;
+        setSpellCooldowns((prev) => ({
           ...prev,
-          [spellId]: currentTime + cooldownDuration
+          [spellId]: currentTime + cooldownDuration,
         }));
       }
     },
@@ -204,11 +188,10 @@ export default function EduBattle(): ReactElement {
   }, []);
 
   const handleGameReady = useCallback(() => {
-    console.log("🎮 Game fully loaded!");
     setIsStarfieldFadingOut(true);
     setTimeout(() => {
       setIsGameFullyLoaded(true);
-    }, 800);  
+    }, 800);
   }, []);
 
   const restartGame = useCallback(() => {
@@ -216,19 +199,10 @@ export default function EduBattle(): ReactElement {
       battleArenaRef.current.resetGameState();
       setGameStarted(true);
       setShowTutorial(false);
-      
-      // ⏰ Reset spell cooldowns
+
       setSpellCooldowns({});
     }
   }, []);
-
-  // const restartGame = useCallback(() => {
-  //   setTimeout(() => {
-  //     setIsGameFullyLoaded(false);
-  //   }, 800);
-  //   setIsStarfieldFadingOut(false);
-  //   window.location.reload(); // Simple restart
-  // }, []);
 
   if (showTutorial) {
     return (
@@ -246,21 +220,29 @@ export default function EduBattle(): ReactElement {
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 game-ui-text">
                   🎯 How to Play
                 </h3>
-                <ul className="space-y-2 sm:space-y-3 md:space-y-4"> 
+                <ul className="space-y-2 sm:space-y-3 md:space-y-4">
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-green-500 text-sm sm:text-base">🧠</span>
+                    <span className="text-green-500 text-sm sm:text-base">
+                      🧠
+                    </span>
                     Answer quiz questions while having fun!
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-green-500 text-sm sm:text-base">🔮</span>
+                    <span className="text-green-500 text-sm sm:text-base">
+                      🔮
+                    </span>
                     Answer spell quiz questions to cast spells
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-yellow-500 text-sm sm:text-base">💪</span>
+                    <span className="text-yellow-500 text-sm sm:text-base">
+                      💪
+                    </span>
                     Correct answers = stronger units!
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-red-500 text-sm sm:text-base">⚡</span>
+                    <span className="text-red-500 text-sm sm:text-base">
+                      ⚡
+                    </span>
                     Destroy the enemy base to win!
                   </li>
                 </ul>
@@ -272,19 +254,27 @@ export default function EduBattle(): ReactElement {
                 </h3>
                 <ul className="space-y-2 sm:space-y-3 md:space-y-4">
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-blue-500 text-sm sm:text-base">⏰</span>
+                    <span className="text-blue-500 text-sm sm:text-base">
+                      ⏰
+                    </span>
                     Quizzes appear every 10 seconds - make your choice!
-                  </li> 
+                  </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-red-500 text-sm sm:text-base">🧑‍🤝‍🧑</span>
+                    <span className="text-red-500 text-sm sm:text-base">
+                      🧑‍🤝‍🧑
+                    </span>
                     Wrong answers deploy weaker units
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-red-500 text-sm sm:text-base">🔥</span>
+                    <span className="text-red-500 text-sm sm:text-base">
+                      🔥
+                    </span>
                     Canceling spells will backfire
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-red-500 text-sm sm:text-base">💥</span>
+                    <span className="text-red-500 text-sm sm:text-base">
+                      💥
+                    </span>
                     Sudden death mode will end the game immediately
                   </li>
                 </ul>
@@ -309,22 +299,24 @@ export default function EduBattle(): ReactElement {
     );
   }
 
-    return (
+  return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
-      {/* Unified Loading Screen With Fade-out Animation */}
       {!isGameFullyLoaded && (
-        <div className={`absolute inset-0 starfield-background flex items-center justify-center z-50 ${
-          isStarfieldFadingOut ? 'fade-out' : ''
-        }`}>
-                      <div className={`text-white text-lg game-ui-text transition-opacity duration-500 ${
-            isStarfieldFadingOut ? 'opacity-0' : 'opacity-100'
-          }`}>
+        <div
+          className={`absolute inset-0 starfield-background flex items-center justify-center z-50 ${
+            isStarfieldFadingOut ? "fade-out" : ""
+          }`}
+        >
+          <div
+            className={`text-white text-lg game-ui-text transition-opacity duration-500 ${
+              isStarfieldFadingOut ? "opacity-0" : "opacity-100"
+            }`}
+          >
             Loading Battle Arena...
           </div>
         </div>
       )}
 
-      {/* Battle Arena - Full Screen */}
       <div className="absolute inset-0">
         <BattleArena
           ref={battleArenaRef}
@@ -336,7 +328,6 @@ export default function EduBattle(): ReactElement {
         />
       </div>
 
-      {/* Game HUD - shows when game is loaded */}
       {isGameFullyLoaded && (
         <GameHUD
           gameState={gameState}
@@ -346,7 +337,6 @@ export default function EduBattle(): ReactElement {
         />
       )}
 
-      {/* Quiz Modal */}
       <QuizModal
         isOpen={isQuizOpen}
         unitType={pendingQuiz?.unitType || ""}
@@ -354,28 +344,6 @@ export default function EduBattle(): ReactElement {
         onAnswer={handleQuizAnswer}
         onClose={handleQuizClose}
       />
-
-      {/* Game Over Actions */}
-      {/* {gameState.isGameOver && isGameFullyLoaded && (
-        <div className="absolute top-4 right-4">
-          <Button onClick={restartGame} size="lg" variant="outline" className="game-button">
-            🔄 Play Again
-          </Button>
-        </div>
-      )} */}
-
-      {/* Instructions (Mobile) */}
-      {/* {isGameFullyLoaded && (
-        <div className="lg:hidden absolute top-4 left-4 right-4">
-          <Card className="bg-black/50 text-white text-center">
-            <CardContent className="p-2">
-              <p className="text-xs">
-                Deploy units by answering quizzes! Correct = stronger units! 🧠⚔️
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )} */}
     </div>
   );
 }

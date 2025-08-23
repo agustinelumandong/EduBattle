@@ -13,7 +13,7 @@ export interface PhaserGameRef {
   castSpell: (spellId: string) => boolean;
   getGameState: () => GameState | null;
   resetQuizState: () => void;
-  resetGameState: () => void; // Add reset game state method
+  resetGameState: () => void;
 }
 
 interface PhaserGameComponentProps {
@@ -32,103 +32,98 @@ interface PhaserGameComponentProps {
 const PhaserGameComponent = React.forwardRef<
   PhaserGameRef,
   PhaserGameComponentProps
->(({ onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
-  const gameContainerRef = useRef<HTMLDivElement>(null);
-  const [isSceneReady, setIsSceneReady] = useState(false);
+>(
+  (
+    { onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz },
+    ref
+  ) => {
+    const gameContainerRef = useRef<HTMLDivElement>(null);
+    const [isSceneReady, setIsSceneReady] = useState(false);
 
-  useEffect(() => {
-    if (!game && typeof window !== "undefined" && gameContainerRef.current) {
-      console.log("🎮 Creating Phaser game...", gameContainerRef.current);
-      
-      // Create battle scene instance
-      battleScene = new BattleScene();
-      battleScene.onGameStateUpdate = onGameStateUpdate;
-      battleScene.onRequestQuiz = onRequestQuiz;
-      battleScene.onRequestSpellQuiz = onRequestSpellQuiz;
-      
-      // Set up scene ready callback
-      battleScene.onSceneReady = () => {
-        console.log("🎯 Scene ready callback fired!");
-        setTimeout(() => {
-          setIsSceneReady(true);
-          if (onGameReady) {
-            onGameReady();
-          }
-        }, 100);
-      };
+    useEffect(() => {
+      if (!game && typeof window !== "undefined" && gameContainerRef.current) {
+        battleScene = new BattleScene();
+        battleScene.onGameStateUpdate = onGameStateUpdate;
+        battleScene.onRequestQuiz = onRequestQuiz;
+        battleScene.onRequestSpellQuiz = onRequestSpellQuiz;
 
-      // Clone config, set scene
-      const config = {
-        ...gameConfig,
-        scene: battleScene,
-        parent: gameContainerRef.current,
-      };
-      game = new Phaser.Game(config);
-      console.log("✅ Phaser game created:", game);
-    }
+        battleScene.onSceneReady = () => {
+          setTimeout(() => {
+            setIsSceneReady(true);
+            if (onGameReady) {
+              onGameReady();
+            }
+          }, 100);
+        };
 
-    return () => {
-      if (game) {
-        game.destroy(true);
-        game = null;
-        battleScene = null;
+        const config = {
+          ...gameConfig,
+          scene: battleScene,
+          parent: gameContainerRef.current,
+        };
+        game = new Phaser.Game(config);
       }
-      setIsSceneReady(false);
-    };
-  }, [onGameStateUpdate, onRequestQuiz, onRequestSpellQuiz, onGameReady]);
 
-  // Expose methods to parent component
-  React.useImperativeHandle(
-    ref,
-    () => ({
-      deployUnit: (unitType: string, isCorrect: boolean) => {
-        if (battleScene) {
-          battleScene.deployUnit(unitType, isCorrect);
+      return () => {
+        if (game) {
+          game.destroy(true);
+          game = null;
+          battleScene = null;
         }
-      },
-      castSpell: (spellId: string) => {
-        if (battleScene) {
-          return battleScene.castSpell(spellId);
-        }
-        return false;
-      },
-      getGameState: () => {
-        return battleScene ? battleScene.getGameState() : null;
-      },
-      resetQuizState: () => {
-        if (battleScene) {
-          battleScene.resetQuizState();
-        }
-      },
-      resetGameState: () => {
-        if (battleScene) {
-          battleScene.resetGameState();
-        }
-      },
-    }),
-    []
-  );
+        setIsSceneReady(false);
+      };
+    }, [onGameStateUpdate, onRequestQuiz, onRequestSpellQuiz, onGameReady]);
 
-  return (
-    <div className="relative w-full h-full">
-      {/* Loading overlay that hides until scene is ready */}
-      {!isSceneReady && (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center z-10">
-          <div className="text-white text-lg">Loading Battle Arena...</div>
-        </div>
-      )}
-      
-      {/* Phaser game container */}
-      <div 
-        ref={gameContainerRef}
-        className={`w-full h-full transition-opacity duration-300 ${
-          isSceneReady ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ width: "100%", height: "100%" }}
-      />
-    </div>
-  );
-});
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        deployUnit: (unitType: string, isCorrect: boolean) => {
+          if (battleScene) {
+            battleScene.deployUnit(unitType, isCorrect);
+          }
+        },
+        castSpell: (spellId: string) => {
+          if (battleScene) {
+            return battleScene.castSpell(spellId);
+          }
+          return false;
+        },
+        getGameState: () => {
+          return battleScene ? battleScene.getGameState() : null;
+        },
+        resetQuizState: () => {
+          if (battleScene) {
+            battleScene.resetQuizState();
+          }
+        },
+        resetGameState: () => {
+          if (battleScene) {
+            battleScene.resetGameState();
+          }
+        },
+      }),
+      []
+    );
+
+    return (
+      <div className="relative w-full h-full">
+        {!isSceneReady && (
+          <div className="absolute inset-0 w-full h-full flex items-center justify-center z-10">
+            <div className="text-white text-lg">Loading Battle Arena...</div>
+          </div>
+        )}
+
+        <div
+          ref={gameContainerRef}
+          className={`w-full h-full transition-opacity duration-300 ${
+            isSceneReady ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
+    );
+  }
+);
 
 PhaserGameComponent.displayName = "PhaserGameComponent";
 
