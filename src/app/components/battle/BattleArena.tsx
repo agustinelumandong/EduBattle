@@ -290,7 +290,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 text-center max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full mx-2">
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 game-title">
-                {gameState.winner === "player" ? "🎉 Victory! 🎉" : "💥 Defeat! 💥"}
+                {gameState.winner === "player" ?  "Victory!" : "Defeat!"}
               </h1>
               <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 game-ui-text px-2">
                 {gameState.winner === "player"

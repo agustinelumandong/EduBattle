@@ -193,14 +193,14 @@ export default function EduBattle(): ReactElement {
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 game-ui-text">
                   🎯 How to Play
                 </h3>
-                <ul className="space-y-2 sm:space-y-3 md:space-y-4">
+                <ul className="space-y-2 sm:space-y-3 md:space-y-4"> 
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-green-500 text-sm sm:text-base">✅</span>
-                    Click unit buttons to deploy warriors
+                    <span className="text-green-500 text-sm sm:text-base">🧠</span>
+                    Answer quiz questions while having fun!
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-blue-500 text-sm sm:text-base">🧠</span>
-                    Answer quiz questions to deploy units
+                    <span className="text-green-500 text-sm sm:text-base">🔮</span>
+                    Answer spell quiz questions to cast spells
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
                     <span className="text-yellow-500 text-sm sm:text-base">💪</span>
@@ -208,7 +208,7 @@ export default function EduBattle(): ReactElement {
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
                     <span className="text-red-500 text-sm sm:text-base">⚡</span>
-                    Destroy the enemy crystal to win!
+                    Destroy the enemy base to win!
                   </li>
                 </ul>
               </div>
@@ -223,8 +223,16 @@ export default function EduBattle(): ReactElement {
                     Quizzes appear every 10 seconds - make your choice!
                   </li> 
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
-                    <span className="text-red-500 text-sm sm:text-base">💥</span>
+                    <span className="text-red-500 text-sm sm:text-base">🧑‍🤝‍🧑</span>
                     Wrong answers deploy weaker units
+                  </li>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-red-500 text-sm sm:text-base">🔥</span>
+                    Canceling spells will backfire
+                  </li>
+                  <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
+                    <span className="text-red-500 text-sm sm:text-base">💥</span>
+                    Sudden death mode will end the game immediately
                   </li>
                 </ul>
               </div>
