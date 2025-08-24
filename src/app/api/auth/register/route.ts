@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { database } from "@/lib/database";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
-import { database } from "@/lib/database";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (username.length < 2) {
+    if (username.length < 3) {
       return NextResponse.json(
-        { success: false, error: "Username must be at least 2 characters" },
+        { success: false, error: "Username must be at least 3 characters" },
         { status: 400 }
       );
     }
@@ -82,8 +82,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    
     return NextResponse.json(
-      { success: false, error: "Registration failed" },
+      { 
+        success: false, 
+        error: "Registration failed",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
