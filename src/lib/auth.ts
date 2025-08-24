@@ -66,6 +66,10 @@ export class Auth {
   public async loginWithWallet(): Promise<AuthResult> {
     try {
       console.log("🔐 Starting blockchain wallet authentication...");
+      
+      // Wait a moment for MiniKit to initialize if needed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       console.log("MiniKit installed:", MiniKit.isInstalled());
 
       // Check if MiniKit is available
