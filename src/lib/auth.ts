@@ -300,6 +300,23 @@ export class Auth {
           };
 
           console.log("👤 User object created from database:", this.user);
+          
+          // CRITICAL: Verify the user was actually saved by querying the database
+          console.log("🔍 Verifying user was saved to database...");
+          try {
+            const verifyResponse = await fetch("/api/debug/schema-test", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                address: finalPayload.address,
+                username: registerResult.user.username,
+              }),
+            });
+            const verifyResult = await verifyResponse.json();
+            console.log("📊 Database verification result:", verifyResult);
+          } catch (verifyError) {
+            console.error("❌ Database verification failed:", verifyError);
+          }
 
           // Clear stored username after successful registration
           if (typeof window !== "undefined") {
