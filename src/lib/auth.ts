@@ -232,7 +232,7 @@ export class Auth {
         address: finalPayload.address.slice(0, 10) + "...",
         username,
         storedUsername: storedUsername ? "yes" : "no",
-        worldAppUsername: MiniKit.user?.username || "none"
+        worldAppUsername: MiniKit.user?.username || "none",
       });
 
       const registerResponse = await fetch("/api/auth/wallet-register", {
@@ -246,12 +246,15 @@ export class Auth {
         }),
       });
 
-      console.log("📡 Database registration response status:", registerResponse.status);
+      console.log(
+        "📡 Database registration response status:",
+        registerResponse.status
+      );
 
       if (registerResponse.ok) {
         const registerResult = await registerResponse.json();
         console.log("✅ Database registration successful:", registerResult);
-        
+
         if (registerResult.success) {
           // Use database user data
           this.user = {
@@ -289,9 +292,9 @@ export class Auth {
         console.error("❌ Database registration failed:", {
           status: registerResponse.status,
           statusText: registerResponse.statusText,
-          error: errorText
+          error: errorText,
         });
-        
+
         // Fallback to local authentication if database registration fails
         this.user = {
           id: finalPayload.address,
@@ -300,7 +303,7 @@ export class Auth {
           isAuthenticated: true,
           address: finalPayload.address,
         };
-        
+
         // Clear stored username after successful authentication
         if (typeof window !== "undefined") {
           localStorage.removeItem("wallet_username");

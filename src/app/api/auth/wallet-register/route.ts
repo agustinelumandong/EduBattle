@@ -22,9 +22,12 @@ interface WalletUserData {
 export async function POST(req: NextRequest) {
   try {
     console.log("🔐 Wallet registration request received");
-    
+
     const { address, username } = (await req.json()) as WalletUserData;
-    console.log("📝 Registration data:", { address: address?.slice(0, 10) + "...", username });
+    console.log("📝 Registration data:", {
+      address: address?.slice(0, 10) + "...",
+      username,
+    });
 
     if (!address) {
       return NextResponse.json(
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("🔍 Checking if user already exists...");
-    
+
     // Check if user already exists
     let user = await prisma.user.findUnique({
       where: { walletAddress: address },
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest) {
       }
 
       console.log("📝 Creating user with username:", finalUsername);
-      
+
       user = await prisma.user.create({
         data: {
           walletAddress: address,
@@ -127,12 +130,12 @@ export async function POST(req: NextRequest) {
           authMethod: "wallet",
         },
       });
-      
+
       console.log("✅ New user created with ID:", user.id);
     }
 
     console.log("🎉 Registration successful, returning user data");
-    
+
     return NextResponse.json({
       success: true,
       user: {
