@@ -567,7 +567,7 @@ export default function EduBattle(): ReactElement {
                       ⏰
                     </span>
                     Quizzes appear every 10 seconds - make your choice!
-                  </li>
+                  </li> 
                   <li className="flex items-center gap-2 text-xs sm:text-sm md:text-base game-ui-text">
                     <span className="text-red-500 text-sm sm:text-base">
                       🧑‍🤝‍🧑
@@ -600,9 +600,9 @@ export default function EduBattle(): ReactElement {
               </Button>
             </div>
             <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text">
-              Get ready for educational warfare! 🎓⚔️
-            </p>
-          </div>
+                Get ready for educational warfare! 🎓⚔️
+              </p>
+            </div>
         </div>
 
         {currentUser && (
@@ -734,8 +734,8 @@ export default function EduBattle(): ReactElement {
                 >
                   🏠 Back to Menu
                 </Button>
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
           </div>
         )}
       </div>
@@ -773,12 +773,12 @@ export default function EduBattle(): ReactElement {
       </div>
 
       {isGameFullyLoaded && (
-        <GameHUD
-          gameState={gameState}
-          onSpellClick={handleSpellClick}
+      <GameHUD
+        gameState={gameState}
+        onSpellClick={handleSpellClick}
           isSpellOnCooldown={isSpellOnCooldown}
           getSpellCooldownRemaining={getSpellCooldownRemaining}
-        />
+      />
       )}
 
       <QuizModal

@@ -609,7 +609,7 @@ export default class BattleScene extends Phaser.Scene {
           Math.random() * (enemySpawnArea.maxY - enemySpawnArea.minY);
         const delay = Math.random() * 1500 + 500; // 0.5 to 2 seconds delay
 
-        this.time.delayedCall(delay, () => {
+      this.time.delayedCall(delay, () => {
           this.createSingleMeteor(randomX, randomY, targetTeam);
         });
       }
@@ -1423,7 +1423,7 @@ export default class BattleScene extends Phaser.Scene {
 
         // Create freeze visual effect only if targeting enemies
         if (!backfired) {
-          this.createFreezeEffect();
+        this.createFreezeEffect();
         }
         soundManager.playSpellCast();
         break;
