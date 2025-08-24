@@ -58,7 +58,7 @@ export default function EduBattle(): ReactElement {
     message: string;
   } | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<string>(""); 
+  const [authError, setAuthError] = useState<string>("");
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -66,7 +66,8 @@ export default function EduBattle(): ReactElement {
 
   // Spell disable state for game start
   const [areSpellsDisabled, setAreSpellsDisabled] = useState<boolean>(false);
-  const [spellDisableTimeRemaining, setSpellDisableTimeRemaining] = useState<number>(0);
+  const [spellDisableTimeRemaining, setSpellDisableTimeRemaining] =
+    useState<number>(0);
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
 
@@ -89,7 +90,7 @@ export default function EduBattle(): ReactElement {
   // Handle spell disable countdown timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (areSpellsDisabled && spellDisableTimeRemaining > 0) {
       interval = setInterval(() => {
         setSpellDisableTimeRemaining((prev) => {
@@ -341,7 +342,7 @@ export default function EduBattle(): ReactElement {
     }
     setShowTutorial(false);
     setGameStarted(true);
-    
+
     // Disable spells for 10 seconds at game start
     setAreSpellsDisabled(true);
     setSpellDisableTimeRemaining(15);
@@ -365,8 +366,9 @@ export default function EduBattle(): ReactElement {
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
-        setShowTutorial(false);
-        setGameStarted(true);
+        // ✅ Show welcome page instead of immediately starting game
+        setShowTutorial(true);
+        setGameStarted(false);
       } else {
         setAuthError(result.error || "Wallet login failed");
       }
@@ -379,20 +381,21 @@ export default function EduBattle(): ReactElement {
 
   const handleLoginWithEmail = async (email: string, password: string) => {
     setAuthLoading(true);
-    setAuthError(""); 
+    setAuthError("");
 
     try {
       const result = await auth.loginWithEmail({ email, password });
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
-        setShowTutorial(false);
-        setGameStarted(true);
+        // ✅ Show welcome page instead of immediately starting game
+        setShowTutorial(true);
+        setGameStarted(false);
       } else {
-        setAuthError(result.error || "Email login failed"); 
+        setAuthError(result.error || "Email login failed");
       }
     } catch (error) {
-      setAuthError("Email authentication error"); 
+      setAuthError("Email authentication error");
     } finally {
       setAuthLoading(false);
     }
@@ -404,7 +407,7 @@ export default function EduBattle(): ReactElement {
     username: string
   ) => {
     setAuthLoading(true);
-    setAuthError("");  
+    setAuthError("");
 
     try {
       const result = await auth.registerWithEmail({
@@ -415,13 +418,14 @@ export default function EduBattle(): ReactElement {
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
-        setShowTutorial(false);
-        setGameStarted(true);
+        // ✅ Show welcome page instead of immediately starting game
+        setShowTutorial(true);
+        setGameStarted(false);
       } else {
-        setAuthError(result.error || "Registration failed"); 
+        setAuthError(result.error || "Registration failed");
       }
     } catch (error) {
-      setAuthError("Registration error"); 
+      setAuthError("Registration error");
     } finally {
       setAuthLoading(false);
     }
@@ -461,16 +465,17 @@ export default function EduBattle(): ReactElement {
       <div className="min-h-screen starfield-background flex items-center flex-col justify-center p-2 sm:p-4">
         {/* Top Right Buttons */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
-
           {currentUser && (
             <div className="flex items-center gap-3">
               <span className="text-white text-sm">
                 Welcome, {currentUser.username}!
               </span>
-              
+
               <button
                 onClick={() => {
-                  const dialog = document.getElementById('logout-dialog') as HTMLDialogElement;
+                  const dialog = document.getElementById(
+                    "logout-dialog"
+                  ) as HTMLDialogElement;
                   if (dialog) dialog.showModal();
                 }}
                 type="button"
@@ -478,7 +483,7 @@ export default function EduBattle(): ReactElement {
               >
                 Logout
               </button>
-              
+
               {/* NES.css Logout Confirmation Dialog */}
               <dialog className="nes-dialog" id="logout-dialog">
                 <form method="dialog">
@@ -487,11 +492,13 @@ export default function EduBattle(): ReactElement {
                   <p>Your progress will be saved!</p>
                   <menu className="dialog-menu">
                     <button className="nes-btn">Continue Playing</button>
-                    <button 
-                      className="nes-btn is-error" 
+                    <button
+                      className="nes-btn is-error"
                       onClick={(e) => {
                         e.preventDefault();
-                        const dialog = document.getElementById('logout-dialog') as HTMLDialogElement;
+                        const dialog = document.getElementById(
+                          "logout-dialog"
+                        ) as HTMLDialogElement;
                         if (dialog) dialog.close();
                         handleLogout();
                       }}
@@ -510,6 +517,24 @@ export default function EduBattle(): ReactElement {
             <div className="text-xl sm:text-lg md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
               🎮 Welcome to EduBattle! ⚔️
             </div>
+
+            {/* Username display and edit for logged-in users */}
+            {currentUser && (
+              <div className="mb-4">
+                <div className="text-lg text-blue-400 mb-2">
+                  Playing as:{" "}
+                  <span className="text-yellow-400">
+                    {currentUser.username}
+                  </span>
+                </div>
+                {currentUser.authMethod === "wallet" && (
+                  <div className="text-sm text-gray-400 mb-2">
+                    Wallet: {currentUser.address?.slice(0, 8)}...
+                    {currentUser.address?.slice(-6)}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="p-2 sm:p-1 md:p-2 lg:p-4">
@@ -595,14 +620,14 @@ export default function EduBattle(): ReactElement {
         </div>
 
         {currentUser && (
-            <button
-              onClick={() => setShowLeaderboard(true)}
-              type="button"
-              className="nes-btn absolute top-4 right-4 z-10 text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
-            >
-              🏆 Leaderboard
-            </button>
-          )}
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            type="button"
+            className="nes-btn absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
+          >
+            🏆 Leaderboard
+          </button>
+        )}
 
         {/* Login Modal */}
         {showLoginModal && (
@@ -640,7 +665,7 @@ export default function EduBattle(): ReactElement {
                 <button
                   onClick={() => {
                     setShowLoginModal(false);
-                    setAuthError(""); 
+                    setAuthError("");
                   }}
                   type="button"
                   className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
@@ -663,7 +688,7 @@ export default function EduBattle(): ReactElement {
                 <LeaderboardView />
                 <button
                   onClick={() => setShowLeaderboard(false)}
-                   type="button"
+                  type="button"
                   className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
                 >
                   Close
