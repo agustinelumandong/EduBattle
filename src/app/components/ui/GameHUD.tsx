@@ -9,6 +9,8 @@ interface GameHUDProps {
   onSpellClick: (spellId: string) => void;
   isSpellOnCooldown: (spellId: string) => boolean;
   getSpellCooldownRemaining: (spellId: string) => number;
+  areSpellsDisabled: boolean;
+  spellDisableTimeRemaining: number;
 }
 
 const GameHUD: React.FC<GameHUDProps> = ({
@@ -16,6 +18,8 @@ const GameHUD: React.FC<GameHUDProps> = ({
   onSpellClick,
   isSpellOnCooldown,
   getSpellCooldownRemaining,
+  areSpellsDisabled,
+  spellDisableTimeRemaining,
 }) => {
   return (
     <>
@@ -36,10 +40,10 @@ const GameHUD: React.FC<GameHUDProps> = ({
         <div className="flex justify-center">
           <div className="flex gap-2">
             {GAME_CONFIG.spells.map((spell) => {
-              // ⏰ Check if spell is on cooldown
+              // ⏰ Check if spell is on cooldown or disabled at game start
               const isOnCooldown = isSpellOnCooldown(spell.id);
               const cooldownRemaining = getSpellCooldownRemaining(spell.id);
-              const isDisabled = gameState.isGameOver || isOnCooldown;
+              const isDisabled = gameState.isGameOver || isOnCooldown || areSpellsDisabled;
 
               return (
                 <button
@@ -58,20 +62,27 @@ const GameHUD: React.FC<GameHUDProps> = ({
                     justifyContent: "center",
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "8px",
-                    // ⏰ Gray out during cooldown, normal colors otherwise
-                    background: isOnCooldown
-                      ? "#4b5563" // gray-600 for cooldown
+                    // Gray out during cooldown or disabled state, normal colors otherwise
+                    background: (isOnCooldown || areSpellsDisabled)
+                      ? "#4b5563" // gray-600 for cooldown/disabled
                       : spell.name.toLowerCase() === "freeze lane"
                       ? "#164e63" // cyan-900
                       : spell.name.toLowerCase() === "meteor strike"
                       ? "#7f1d1d" // red-900
                       : "#854d0e", // yellow-900
-                    opacity: isOnCooldown ? 0.6 : 1,
-                    cursor: isOnCooldown ? "not-allowed" : "pointer",
+                    opacity: (isOnCooldown || areSpellsDisabled) ? 0.6 : 1,
+                    cursor: (isOnCooldown || areSpellsDisabled) ? "not-allowed" : "pointer",
                   }}
                 >
-                  {/* ⏰ Show cooldown timer or normal icon */}
-                  {isOnCooldown ? (
+                  {/* Show appropriate state: disabled at start, cooldown, or normal */}
+                  {areSpellsDisabled ? (
+                    <div className="text-center">
+                      <span className="text-gray-300 text-xl">🚫</span>
+                      <div className="text-yellow-400 text-xs font-bold mt-1">
+                        {spellDisableTimeRemaining}s
+                      </div>
+                    </div>
+                  ) : isOnCooldown ? (
                     <div className="text-center">
                       <span className="text-gray-300 text-xl">⏰</span>
                       <div className="text-red-400 text-xs font-bold mt-1">

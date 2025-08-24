@@ -64,6 +64,10 @@ export default function EduBattle(): ReactElement {
     {}
   );
 
+  // Spell disable state for game start
+  const [areSpellsDisabled, setAreSpellsDisabled] = useState<boolean>(false);
+  const [spellDisableTimeRemaining, setSpellDisableTimeRemaining] = useState<number>(0);
+
   const battleArenaRef = useRef<BattleArenaRef>(null);
 
   // Check auth status on component mount
@@ -81,6 +85,29 @@ export default function EduBattle(): ReactElement {
     };
     checkAuth();
   }, []);
+
+  // Handle spell disable countdown timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (areSpellsDisabled && spellDisableTimeRemaining > 0) {
+      interval = setInterval(() => {
+        setSpellDisableTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setAreSpellsDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [areSpellsDisabled, spellDisableTimeRemaining]);
 
   const isSpellOnCooldown = useCallback(
     (spellId: string): boolean => {
@@ -281,6 +308,9 @@ export default function EduBattle(): ReactElement {
     (spellId: string) => {
       if (!gameStarted || gameState.isGameOver) return;
 
+      // Check if spells are disabled at game start
+      if (areSpellsDisabled) return;
+
       const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
       if (!spellConfig) return;
 
@@ -301,7 +331,7 @@ export default function EduBattle(): ReactElement {
         }));
       }
     },
-    [gameStarted, gameState.isGameOver, spellCooldowns]
+    [gameStarted, gameState.isGameOver, spellCooldowns, areSpellsDisabled]
   );
 
   const startGame = useCallback(() => {
@@ -311,6 +341,10 @@ export default function EduBattle(): ReactElement {
     }
     setShowTutorial(false);
     setGameStarted(true);
+    
+    // Disable spells for 10 seconds at game start
+    setAreSpellsDisabled(true);
+    setSpellDisableTimeRemaining(15);
   }, [currentUser]);
 
   // Handle game completion and record win
@@ -398,6 +432,9 @@ export default function EduBattle(): ReactElement {
     setCurrentUser(null);
     setGameStarted(false);
     setShowTutorial(true);
+    // Reset spell disable state on logout
+    setAreSpellsDisabled(false);
+    setSpellDisableTimeRemaining(0);
   };
 
   const handleGameReady = useCallback(() => {
@@ -727,6 +764,8 @@ export default function EduBattle(): ReactElement {
           onSpellClick={handleSpellClick}
           isSpellOnCooldown={isSpellOnCooldown}
           getSpellCooldownRemaining={getSpellCooldownRemaining}
+          areSpellsDisabled={areSpellsDisabled}
+          spellDisableTimeRemaining={spellDisableTimeRemaining}
         />
       )}
 
