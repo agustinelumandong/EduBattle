@@ -266,9 +266,14 @@ export class Auth {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
+        console.error("Registration API error:", {
+          status: response.status,
+          statusText: response.statusText,
+          result
+        });
         return {
           success: false,
-          error: result.error || "Email registration failed",
+          error: result.error || result.details || "Email registration failed",
         };
       }
 

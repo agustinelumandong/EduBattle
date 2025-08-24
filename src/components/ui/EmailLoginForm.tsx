@@ -7,12 +7,16 @@ interface EmailLoginFormProps {
   onLogin: (email: string, password: string) => void;
   onRegister: (email: string, password: string, username: string) => void;
   loading: boolean;
+  loginError?: string;
+  registerError?: string;
 }
 
 export default function EmailLoginForm({
   onLogin,
   onRegister,
   loading,
+  loginError,
+  registerError,
 }: EmailLoginFormProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
@@ -113,6 +117,18 @@ export default function EmailLoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Display specific errors */}
+      {isRegistering && registerError && (
+        <div className="text-red-400 text-xs text-center bg-red-900/20 p-2 rounded">
+          {registerError}
+        </div>
+      )}
+      {!isRegistering && loginError && (
+        <div className="text-red-400 text-xs text-center bg-red-900/20 p-2 rounded">
+          {loginError}
+        </div>
+      )}
+      
       <div className="flex flex-col gap-2">
         {isRegistering && (
           <div className="flex flex-col gap-1">

@@ -645,6 +645,8 @@ export default function EduBattle(): ReactElement {
                     onLogin={handleLoginWithEmail}
                     onRegister={handleRegisterWithEmail}
                     loading={authLoading}
+                    loginError={loginError}
+                    registerError={registerError}
                   />
                 </div>
 
