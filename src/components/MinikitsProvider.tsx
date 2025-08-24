@@ -1,7 +1,7 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
-import { MiniKit } from '@worldcoin/minikit-js'
+import { MiniKit } from '@worldcoin/minikit-js';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface MiniKitProviderProps {
   children: ReactNode;
@@ -14,8 +14,20 @@ export default function MiniKitProvider({ children }: MiniKitProviderProps) {
     const appId = 'app_quiz_blockchain_challenge';
     
     try {
+      // Initialize MiniKit
       MiniKit.install(appId);
-      setIsInstalled(MiniKit.isInstalled());
+      
+      // Check installation after a brief delay to ensure proper initialization
+      const checkInstallation = () => {
+        const installed = MiniKit.isInstalled();
+        console.log('MiniKit installation check:', installed);
+        setIsInstalled(installed);
+      };
+      
+      // Check immediately and after a delay
+      checkInstallation();
+      setTimeout(checkInstallation, 500);
+      
     } catch (error) {
       console.error('Failed to install MiniKit:', error);
       setIsInstalled(false);
