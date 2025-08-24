@@ -1,5 +1,18 @@
-import { database } from "@/lib/database";
+import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+
+// Create Prisma client with service role for bypassing RLS
+const createServicePrismaClient = () => {
+  const serviceUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+  if (!serviceUrl) {
+    throw new Error("No database URL available");
+  }
+  
+  return new PrismaClient({
+    datasourceUrl: serviceUrl,
+    log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
+  });
+};
 
 interface WalletUserData {
   address: string;
@@ -11,20 +24,20 @@ interface WalletUserData {
  * This handles both new wallet users and username updates for existing users
  */
 export async function POST(req: NextRequest) {
+  let prisma: PrismaClient | null = null;
+  
   try {
-    console.log("🔐 Wallet registration request received");
-    console.log("🌍 Environment:", process.env.NODE_ENV);
-    console.log("🔗 Database URL set:", !!process.env.DATABASE_URL);
-
+    console.log("🔐 Wallet registration with SERVICE ROLE (RLS bypass)");
+    
+    // Create service role Prisma client to bypass RLS
+    prisma = createServicePrismaClient();
+    
     const body = await req.json();
     const { address, username } = body as WalletUserData;
     
-    console.log("📝 Raw request body:", JSON.stringify(body, null, 2));
-    console.log("📝 Parsed registration data:", {
+    console.log("📝 Wallet registration data:", {
       address: address?.slice(0, 10) + "...",
       username,
-      addressLength: address?.length,
-      usernameType: typeof username,
     });
 
     if (!address) {
@@ -67,17 +80,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log("🔍 Checking if user already exists...");
+    console.log("🔍 Checking if wallet user exists...");
 
-    // Check if user already exists
-    let user;
-    try {
-      user = await database.findUserByWallet(address);
-      console.log("✅ Database query successful:", { userFound: !!user });
-    } catch (dbError) {
-      console.error("❌ Database query failed:", dbError);
-      throw new Error(`Database query failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
-    }
+    // Check if user already exists using service role
+    let user = await prisma.user.findUnique({
+      where: { walletAddress: address }
+    });
+    
+    console.log("✅ User lookup completed:", { userFound: !!user });
 
     if (user) {
       console.log("✅ User exists, updating if needed...");
@@ -90,26 +100,39 @@ export async function POST(req: NextRequest) {
         console.log("✅ Username updated to:", user.username);
       }
     } else {
-      console.log("🆕 Creating new user...");
-      // Create new user
+      console.log("🆕 Creating new wallet user with SERVICE ROLE");
       const defaultUsername = username || `Player_${address.slice(0, 6)}`;
 
-      console.log("📝 Creating user with username:", defaultUsername);
+      console.log("📝 Creating user:", { username: defaultUsername, address: address.slice(0, 10) + "..." });
 
-      try {
-        user = await database.createUser({
+      // Direct Prisma creation with service role (bypasses RLS)
+      user = await prisma.user.create({
+        data: {
           walletAddress: address,
           username: defaultUsername,
           authMethod: "wallet",
-        });
-        console.log("✅ New user created with ID:", user.id);
-      } catch (createError) {
-        console.error("❌ User creation failed:", createError);
-        throw new Error(`User creation failed: ${createError instanceof Error ? createError.message : 'Unknown error'}`);
+        },
+      });
+      
+      console.log("✅ WALLET USER CREATED:", {
+        id: user.id,
+        username: user.username,
+        authMethod: user.authMethod
+      });
+      
+      // Verify creation immediately
+      const verifyUser = await prisma.user.findUnique({
+        where: { walletAddress: address }
+      });
+      
+      if (verifyUser) {
+        console.log("✅ VERIFICATION: User successfully saved to database");
+      } else {
+        console.error("❌ VERIFICATION FAILED: User not found after creation");
       }
     }
 
-    console.log("🎉 Registration successful, returning user data");
+    console.log("🎉 Wallet registration successful");
 
     return NextResponse.json({
       success: true,
@@ -117,11 +140,13 @@ export async function POST(req: NextRequest) {
         id: user.id,
         username: user.username,
         authMethod: user.authMethod,
-        walletAddress: user.walletAddress,
+        walletAddress: user.walletAddress, 
       },
     });
+    
   } catch (error: any) {
     console.error("❌ Wallet registration error:", error);
+    
     return NextResponse.json(
       {
         success: false,
@@ -129,5 +154,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    // Clean up Prisma connection
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
