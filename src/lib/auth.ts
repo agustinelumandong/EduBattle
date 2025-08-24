@@ -237,16 +237,45 @@ export class Auth {
       
       console.log("🌐 Making request to wallet-register endpoint...");
 
-      const registerResponse = await fetch("/api/auth/wallet-register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          address: finalPayload.address,
-          username: username,
-        }),
-      });
+      // Add retry logic for Mini App environment
+      let registerResponse;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries) {
+        try {
+          registerResponse = await fetch("/api/auth/wallet-register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              address: finalPayload.address,
+              username: username,
+            }),
+          });
+          
+          console.log(`📡 Registration attempt ${retryCount + 1} - Status: ${registerResponse.status}`);
+          
+          // If successful or client error (4xx), don't retry
+          if (registerResponse.ok || (registerResponse.status >= 400 && registerResponse.status < 500)) {
+            break;
+          }
+        } catch (fetchError) {
+          console.error(`❌ Registration attempt ${retryCount + 1} failed:`, fetchError);
+        }
+        
+        retryCount++;
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Retrying registration in ${retryCount}s...`);
+          await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+        }
+      }
+
+      if (!registerResponse) {
+        console.error("❌ Failed to get response from wallet-register after all retries");
+        throw new Error("Wallet registration failed - no response");
+      }
 
       console.log(
         "📡 Database registration response status:",

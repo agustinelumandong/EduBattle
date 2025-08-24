@@ -13,11 +13,18 @@ interface WalletUserData {
 export async function POST(req: NextRequest) {
   try {
     console.log("🔐 Wallet registration request received");
+    console.log("🌍 Environment:", process.env.NODE_ENV);
+    console.log("🔗 Database URL set:", !!process.env.DATABASE_URL);
 
-    const { address, username } = (await req.json()) as WalletUserData;
-    console.log("📝 Registration data:", {
+    const body = await req.json();
+    const { address, username } = body as WalletUserData;
+    
+    console.log("📝 Raw request body:", JSON.stringify(body, null, 2));
+    console.log("📝 Parsed registration data:", {
       address: address?.slice(0, 10) + "...",
       username,
+      addressLength: address?.length,
+      usernameType: typeof username,
     });
 
     if (!address) {
@@ -63,7 +70,14 @@ export async function POST(req: NextRequest) {
     console.log("🔍 Checking if user already exists...");
 
     // Check if user already exists
-    let user = await database.findUserByWallet(address);
+    let user;
+    try {
+      user = await database.findUserByWallet(address);
+      console.log("✅ Database query successful:", { userFound: !!user });
+    } catch (dbError) {
+      console.error("❌ Database query failed:", dbError);
+      throw new Error(`Database query failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
+    }
 
     if (user) {
       console.log("✅ User exists, updating if needed...");
@@ -82,13 +96,17 @@ export async function POST(req: NextRequest) {
 
       console.log("📝 Creating user with username:", defaultUsername);
 
-      user = await database.createUser({
-        walletAddress: address,
-        username: defaultUsername,
-        authMethod: "wallet",
-      });
-
-      console.log("✅ New user created with ID:", user.id);
+      try {
+        user = await database.createUser({
+          walletAddress: address,
+          username: defaultUsername,
+          authMethod: "wallet",
+        });
+        console.log("✅ New user created with ID:", user.id);
+      } catch (createError) {
+        console.error("❌ User creation failed:", createError);
+        throw new Error(`User creation failed: ${createError instanceof Error ? createError.message : 'Unknown error'}`);
+      }
     }
 
     console.log("🎉 Registration successful, returning user data");
