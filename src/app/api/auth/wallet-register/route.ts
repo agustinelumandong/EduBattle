@@ -12,10 +12,15 @@ interface WalletUserData {
  */
 export async function POST(req: NextRequest) {
   try {
-    console.log("🔐 Simple wallet user save for leaderboard");
+    console.log("🔐 Wallet registration from frontend");
     
     const { address, username } = await req.json();
-    console.log("📝 Saving wallet user:", { address: address?.slice(0, 10) + "...", username });
+    console.log("📝 Frontend data:", { 
+      address: address?.slice(0, 10) + "...", 
+      username,
+      addressLength: address?.length,
+      usernameLength: username?.length
+    });
 
     if (!address || !username) {
       return NextResponse.json(
@@ -24,16 +29,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // DIRECT SQL INSERT to bypass any RLS issues
+    // Validate wallet address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid wallet address format" },
+        { status: 400 }
+      );
+    }
+
+    // Try to save using database service first
     try {
-      // First try with our database service
+      console.log("💾 Attempting to save with database service...");
+      
       const user = await database.createUser({
-        walletAddress: address,
+        email: "",
         username: username,
         authMethod: "wallet",
+        walletAddress: address,
+        passwordHash:  "",
       });
       
-      console.log("✅ SUCCESS: Wallet user saved for leaderboard:", user.username);
+      console.log("✅ SUCCESS: User saved via database service:", {
+        id: user.id,
+        username: user.username,
+        authMethod: user.authMethod
+      });
       
       return NextResponse.json({
         success: true,
@@ -46,21 +66,30 @@ export async function POST(req: NextRequest) {
       });
       
     } catch (dbError: any) {
-      console.error("❌ Database service failed, trying direct approach:", dbError.message);
+      console.error("❌ Database service failed:", dbError.message);
+      console.error("🔍 Error details:", {
+        name: dbError.name,
+        code: dbError.code,
+        meta: dbError.meta
+      });
       
-      // If database service fails, try direct Prisma with raw SQL
+      // Fallback: Try direct Prisma with raw SQL
+      console.log("🔄 Trying direct SQL approach...");
       const { PrismaClient } = await import("@prisma/client");
       const prisma = new PrismaClient();
       
       try {
-        // Try raw SQL to bypass everything
+        // Use upsert to handle both insert and update
         const result = await prisma.$executeRaw`
           INSERT INTO users (id, username, "authMethod", "walletAddress", "createdAt", "updatedAt")
           VALUES (gen_random_uuid(), ${username}, 'wallet', ${address}, NOW(), NOW())
-          ON CONFLICT ("walletAddress") DO UPDATE SET username = ${username}
+          ON CONFLICT ("walletAddress") 
+          DO UPDATE SET 
+            username = EXCLUDED.username,
+            "updatedAt" = NOW()
         `;
         
-        console.log("✅ RAW SQL SUCCESS: User saved for leaderboard");
+        console.log("✅ RAW SQL SUCCESS: User saved via direct SQL");
         
         return NextResponse.json({
           success: true,
@@ -72,7 +101,7 @@ export async function POST(req: NextRequest) {
         });
         
       } catch (rawError: any) {
-        console.error("❌ Even raw SQL failed:", rawError.message);
+        console.error("❌ Raw SQL also failed:", rawError.message);
         throw rawError;
       } finally {
         await prisma.$disconnect();
