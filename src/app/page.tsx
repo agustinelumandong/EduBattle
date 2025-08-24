@@ -71,13 +71,20 @@ export default function EduBattle(): ReactElement {
   // Check auth status on component mount
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("🔐 Checking authentication status...");
       if (auth.isAuthenticated()) {
-        setCurrentUser(auth.getCurrentUser());
+        const user = auth.getCurrentUser();
+        console.log("✅ User already authenticated:", user?.username);
+        setCurrentUser(user);
       } else {
         // Try to restore session for email users
+        console.log("🔄 Attempting to restore session...");
         const result = await auth.restoreSession();
         if (result.success && result.user) {
+          console.log("✅ Session restored for user:", result.user.username);
           setCurrentUser(result.user);
+        } else {
+          console.log("ℹ️ No active session found");
         }
       }
     };
@@ -308,9 +315,13 @@ export default function EduBattle(): ReactElement {
 
   const startGame = useCallback(() => {
     if (!currentUser) {
+      console.log("⚠️ No user logged in - showing login modal");
       setShowLoginModal(true);
       return;
     }
+    
+    console.log("🚀 Starting game for user:", currentUser.username);
+    // Ensure we navigate to the game
     setShowTutorial(false);
     setGameStarted(true);
   }, [currentUser]);
@@ -333,8 +344,11 @@ export default function EduBattle(): ReactElement {
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
+        
+        // Ensure we navigate to the game after successful wallet login
         setShowTutorial(false);
-        setGameStarted(true);
+        setGameStarted(false);
+        console.log("✅ Wallet login successful - Starting game...");
       } else {
         setAuthError(result.error || "Wallet login failed");
       }
@@ -356,8 +370,11 @@ export default function EduBattle(): ReactElement {
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
-        setShowTutorial(false);
-        setGameStarted(true);
+        
+        // Ensure we navigate to the game after successful login
+        setShowTutorial(true);
+        setGameStarted(false);
+        console.log("✅ Login successful - Starting game...");
       } else {
         setAuthError(result.error || "Email login failed");
         setLoginError(result.error || "Invalid email or password");
@@ -389,8 +406,11 @@ export default function EduBattle(): ReactElement {
       if (result.success && result.user) {
         setCurrentUser(result.user);
         setShowLoginModal(false);
-        setShowTutorial(false);
-        setGameStarted(true);
+        
+        // Ensure we navigate to the game after successful registration
+        setShowTutorial(true);
+        setGameStarted(false);
+        console.log("✅ Registration successful - Starting game...");
       } else {
         setAuthError(result.error || "Registration failed");
         setRegisterError(result.error || "Registration failed. Email may already be in use.");
@@ -429,7 +449,25 @@ export default function EduBattle(): ReactElement {
     }
   }, []);
 
+  // Debug logging for state transitions
+  useEffect(() => {
+    console.log("🔄 App state changed:", { 
+      showTutorial, 
+      gameStarted, 
+      isAuthenticated: !!currentUser,
+      username: currentUser?.username
+    });
+    
+    // If user is logged in but still on tutorial screen, automatically start the game
+    if (currentUser && showTutorial) {
+      console.log("🔄 User is authenticated but still on tutorial - starting game automatically");
+      setShowTutorial(true);
+      setGameStarted(false);
+    }
+  }, [showTutorial, gameStarted, currentUser]);
+
   if (showTutorial) {
+    console.log("📝 Rendering tutorial screen");
     return (
       <div className="min-h-screen starfield-background flex items-center flex-col justify-center p-2 sm:p-4">
         {/* Top Right Buttons */}
@@ -704,6 +742,7 @@ export default function EduBattle(): ReactElement {
     );
   }
 
+  console.log("🎮 Rendering game screen");
   return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
       {!isGameFullyLoaded && (
