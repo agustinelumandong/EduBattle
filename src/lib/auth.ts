@@ -234,6 +234,8 @@ export class Auth {
         storedUsername: storedUsername ? "yes" : "no",
         worldAppUsername: MiniKit.user?.username || "none",
       });
+      
+      console.log("🌐 Making request to wallet-register endpoint...");
 
       const registerResponse = await fetch("/api/auth/wallet-register", {
         method: "POST",
@@ -254,6 +256,9 @@ export class Auth {
       if (registerResponse.ok) {
         const registerResult = await registerResponse.json();
         console.log("✅ Database registration successful:", registerResult);
+        
+        // Log the full response for debugging
+        console.log("📊 Full registration response:", JSON.stringify(registerResult, null, 2));
 
         if (registerResult.success) {
           // Use database user data
@@ -294,6 +299,9 @@ export class Auth {
           statusText: registerResponse.statusText,
           error: errorText,
         });
+        
+        console.error("🚨 This means the wallet user won't be saved to the database!");
+        console.error("🔍 Check the wallet-register endpoint logs for details.");
 
         // Fallback to local authentication if database registration fails
         this.user = {
