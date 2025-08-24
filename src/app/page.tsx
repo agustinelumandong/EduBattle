@@ -1,7 +1,10 @@
 "use client";
 
+import EmailLoginForm from "@/components/ui/EmailLoginForm";
+import LeaderboardView from "@/components/ui/LeaderboardView";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth, type User } from "@/lib/auth";
 import {
   useCallback,
   useEffect,
@@ -15,10 +18,6 @@ import type { GameState } from "./components/battle/BattleScene";
 import QuizModal from "./components/quiz/QuizModal";
 import GameHUD from "./components/ui/GameHUD";
 import { GAME_CONFIG } from "./data/game-config";
-import { auth, type User } from "@/lib/auth";
-import { database } from "@/lib/database";
-import EmailLoginForm from "@/components/ui/EmailLoginForm";
-import LeaderboardView from "@/components/ui/LeaderboardView";
 
 interface PendingQuiz {
   unitType: string;
@@ -60,6 +59,8 @@ export default function EduBattle(): ReactElement {
   } | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>("");
+  const [loginError, setLoginError] = useState<string>("");
+  const [registerError, setRegisterError] = useState<string>("");
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -347,6 +348,8 @@ export default function EduBattle(): ReactElement {
   const handleLoginWithEmail = async (email: string, password: string) => {
     setAuthLoading(true);
     setAuthError("");
+    setLoginError("");
+    setRegisterError("");
 
     try {
       const result = await auth.loginWithEmail({ email, password });
@@ -357,9 +360,11 @@ export default function EduBattle(): ReactElement {
         setGameStarted(true);
       } else {
         setAuthError(result.error || "Email login failed");
+        setLoginError(result.error || "Invalid email or password");
       }
     } catch (error) {
       setAuthError("Email authentication error");
+      setLoginError("Authentication failed. Please try again.");
     } finally {
       setAuthLoading(false);
     }
@@ -372,6 +377,8 @@ export default function EduBattle(): ReactElement {
   ) => {
     setAuthLoading(true);
     setAuthError("");
+    setLoginError("");
+    setRegisterError("");
 
     try {
       const result = await auth.registerWithEmail({
@@ -386,9 +393,11 @@ export default function EduBattle(): ReactElement {
         setGameStarted(true);
       } else {
         setAuthError(result.error || "Registration failed");
+        setRegisterError(result.error || "Registration failed. Email may already be in use.");
       }
     } catch (error) {
       setAuthError("Registration error");
+      setRegisterError("Registration failed. Please try again with different credentials.");
     } finally {
       setAuthLoading(false);
     }
@@ -422,55 +431,62 @@ export default function EduBattle(): ReactElement {
 
   if (showTutorial) {
     return (
-      <div className="min-h-screen starfield-background flex items-center justify-center p-2 sm:p-4">
+      <div className="min-h-screen starfield-background flex items-center flex-col justify-center p-2 sm:p-4">
         {/* Top Right Buttons */}
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
-          {currentUser && (
-            <Button
-              onClick={() => setShowLeaderboard(true)}
-              variant="outline"
-              size="sm"
-              className="text-white border-white hover:bg-white hover:text-black"
-            >
-              🏆 Leaderboard
-            </Button>
-          )}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
 
-          {currentUser ? (
+          {currentUser && (
             <div className="flex items-center gap-3">
               <span className="text-white text-sm">
                 Welcome, {currentUser.username}!
               </span>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="text-white border-white hover:bg-white hover:text-black"
+              
+              <button
+                onClick={() => {
+                  const dialog = document.getElementById('logout-dialog') as HTMLDialogElement;
+                  if (dialog) dialog.showModal();
+                }}
+                type="button"
+                className="nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
               >
                 Logout
-              </Button>
+              </button>
+              
+              {/* NES.css Logout Confirmation Dialog */}
+              <dialog className="nes-dialog" id="logout-dialog">
+                <form method="dialog">
+                  <p className="title">⚠️ Confirm Logout ⚠️</p>
+                  <p>Are you sure you want to exit EduBattle?</p>
+                  <p>Your progress will be saved!</p>
+                  <menu className="dialog-menu">
+                    <button className="nes-btn">Continue Playing</button>
+                    <button 
+                      className="nes-btn is-error" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const dialog = document.getElementById('logout-dialog') as HTMLDialogElement;
+                        if (dialog) dialog.close();
+                        handleLogout();
+                      }}
+                    >
+                      Exit Game
+                    </button>
+                  </menu>
+                </form>
+              </dialog>
             </div>
-          ) : (
-            <Button
-              onClick={() => setShowLoginModal(true)}
-              variant="outline"
-              size="sm"
-              className="text-white border-white hover:bg-white hover:text-black"
-            >
-              Login
-            </Button>
           )}
         </div>
 
-        <Card className="w-full max-w-sm sm:max-w-2xl md:max-w-3xl lg:max-w-4xl nes-container is-rounded is-dark mx-2">
-          <CardHeader className="text-center text-white p-3 sm:p-4 md:p-6">
-            <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-4xl nes-container is-rounded is-dark mx-2">
+          <div className="text-center text-white p-3 sm:p-2 md:p-6">
+            <div className="text-xl sm:text-lg md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
               🎮 Welcome to EduBattle! ⚔️
-            </CardTitle>
-          </CardHeader>
+            </div>
+          </div>
 
-          <CardContent className="p-3 sm:p-4 md:p-6 lg:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          <div className="p-2 sm:p-1 md:p-2 lg:p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-1 md:gap-8">
               <div className="space-y-3 sm:space-y-4">
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 game-ui-text">
                   🎯 How to Play
@@ -548,15 +564,25 @@ export default function EduBattle(): ReactElement {
             <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text">
               Get ready for educational warfare! 🎓⚔️
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {currentUser && (
+            <button
+              onClick={() => setShowLeaderboard(true)}
+              type="button"
+              className="nes-btn absolute top-4 right-4 z-10 text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
+            >
+              🏆 Leaderboard
+            </button>
+          )}
 
         {/* Login Modal */}
         {showLoginModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 login-modal">
             <Card className="w-full max-w-md nes-container is-rounded is-dark">
               <CardHeader className="text-center text-white">
-                <CardTitle className="text-xl">🔐 Login to Play</CardTitle>
+                <CardTitle className="text-xl">Login to Play</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {authError && (
@@ -566,13 +592,14 @@ export default function EduBattle(): ReactElement {
                 )}
 
                 <div className="space-y-3">
-                  <Button
+                  <button
                     onClick={handleLoginWithWallet}
                     disabled={authLoading}
-                    className="w-full is-primary"
+                    type="button"
+                    className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
                   >
                     {authLoading ? "Connecting..." : "🔗 Connect Wallet"}
-                  </Button>
+                  </button>
 
                   <div className="text-center text-white text-sm">or</div>
 
@@ -583,13 +610,18 @@ export default function EduBattle(): ReactElement {
                   />
                 </div>
 
-                <Button
-                  onClick={() => setShowLoginModal(false)}
-                  variant="outline"
-                  className="w-full text-white border-white hover:bg-white hover:text-black"
+                <button
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    setAuthError("");
+                    setLoginError("");
+                    setRegisterError("");
+                  }}
+                  type="button"
+                  className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
                 >
                   Cancel
-                </Button>
+                </button>
               </CardContent>
             </Card>
           </div>
@@ -597,20 +629,20 @@ export default function EduBattle(): ReactElement {
 
         {/* Leaderboard Modal */}
         {showLeaderboard && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 leaderboard-modal">
             <Card className="w-full max-w-2xl nes-container is-rounded is-dark">
               <CardHeader className="text-center text-white">
                 <CardTitle className="text-xl">🏆 Leaderboard</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <LeaderboardView />
-                <Button
+                <button
                   onClick={() => setShowLeaderboard(false)}
-                  variant="outline"
-                  className="w-full text-white border-white hover:bg-white hover:text-black"
+                   type="button"
+                  className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
                 >
                   Close
-                </Button>
+                </button>
               </CardContent>
             </Card>
           </div>
