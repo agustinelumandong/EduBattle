@@ -18,11 +18,11 @@ model User {
   id          String   @id @default(cuid())
   email       String?  @unique
   username    String
-  authMethod  String   // "wallet" or "email"
-  walletAddress String? @unique
-  passwordHash String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  authMethod  String   @map("authMethod") // "wallet" or "email"
+  walletAddress String? @unique @map("walletAddress")
+  passwordHash String? @map("passwordHash")
+  createdAt   DateTime @default(now()) @map("createdAt")
+  updatedAt   DateTime @updatedAt @map("updatedAt")
   
   // Relations
   games       Game[]
