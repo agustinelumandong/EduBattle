@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { database } from "@/lib/database";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
-import { database } from "@/lib/database";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -26,6 +26,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Find user by email
     const user = await database.findUserByEmail(email);
     if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has a password hash (email auth users should have one)
+    if (!user.passwordHash) {
       return NextResponse.json(
         { success: false, error: "Invalid email or password" },
         { status: 401 }
