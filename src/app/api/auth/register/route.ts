@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { database } from "@/lib/database";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
-import { database } from "@/lib/database";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -82,8 +82,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Provide more specific error messages for debugging
+    let errorMessage = "Registration failed";
+    if (error instanceof Error) {
+      // Database connection errors
+      if (error.message.includes('connect')) {
+        errorMessage = "Database connection failed. Please check your DATABASE_URL environment variable.";
+      } 
+      // Prisma client errors
+      else if (error.message.includes('Prisma')) {
+        errorMessage = "Database query failed. Please ensure your database is properly set up.";
+      }
+      // Unique constraint errors
+      else if (error.message.includes('Unique constraint')) {
+        errorMessage = "Email address already exists. Please use a different email.";
+      }
+      // JWT errors
+      else if (error.message.includes('JWT') || error.message.includes('token')) {
+        errorMessage = "Authentication token error. Please check your JWT_SECRET environment variable.";
+      }
+      
+      // In development, show full error
+      if (process.env.NODE_ENV === 'development') {
+        errorMessage = `${errorMessage} Details: ${error.message}`;
+      }
+    }
+    
     return NextResponse.json(
-      { success: false, error: "Registration failed" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

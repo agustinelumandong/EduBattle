@@ -74,8 +74,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     console.error("Login error:", error);
+    
+    // Provide more specific error messages for debugging
+    let errorMessage = "Login failed";
+    if (error instanceof Error) {
+      // Database connection errors
+      if (error.message.includes('connect')) {
+        errorMessage = "Database connection failed. Please check your DATABASE_URL environment variable.";
+      } 
+      // Prisma client errors
+      else if (error.message.includes('Prisma')) {
+        errorMessage = "Database query failed. Please ensure your database is properly set up.";
+      }
+      // JWT errors
+      else if (error.message.includes('JWT') || error.message.includes('token')) {
+        errorMessage = "Authentication token error. Please check your JWT_SECRET environment variable.";
+      }
+      
+      // In development, show full error
+      if (process.env.NODE_ENV === 'development') {
+        errorMessage = `${errorMessage} Details: ${error.message}`;
+      }
+    }
+    
     return NextResponse.json(
-      { success: false, error: "Login failed" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

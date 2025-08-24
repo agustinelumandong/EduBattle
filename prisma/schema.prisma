@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -39,8 +40,9 @@ model Game {
   playedAt    DateTime @default(now())
   
   // Relations
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  @@index([userId])
   @@map("games")
 }
 
@@ -53,7 +55,8 @@ model LeaderboardEntry {
   updatedAt   DateTime @updatedAt
   
   // Relations
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  @@index([totalWins])
   @@map("leaderboard")
 }

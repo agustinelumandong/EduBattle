@@ -1,6 +1,29 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Validate environment variables
+function validateEnvironment() {
+  const requiredEnvVars = ['DATABASE_URL'];
+  const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+  
+  if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables:', missingVars);
+    console.error('📝 Please check ENVIRONMENT_SETUP.md for setup instructions');
+    throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
+  }
+  
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'fallback-secret-key-for-demo') {
+    console.warn('⚠️ JWT_SECRET not set or using fallback. Please set a secure JWT_SECRET in production.');
+  }
+}
+
+// Validate environment on import
+validateEnvironment();
+
+// Create Prisma client with better error handling
+const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  errorFormat: 'pretty',
+});
 
 export interface CreateUserData {
   email?: string;
