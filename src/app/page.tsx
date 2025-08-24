@@ -15,6 +15,10 @@ import type { GameState } from "./components/battle/BattleScene";
 import QuizModal from "./components/quiz/QuizModal";
 import GameHUD from "./components/ui/GameHUD";
 import { GAME_CONFIG } from "./data/game-config";
+import { auth, type User } from "@/lib/auth";
+import { database } from "@/lib/database";
+import EmailLoginForm from "@/components/ui/EmailLoginForm";
+import LeaderboardView from "@/components/ui/LeaderboardView";
 
 interface PendingQuiz {
   unitType: string;
@@ -45,11 +49,39 @@ export default function EduBattle(): ReactElement {
   const [isStarfieldFadingOut, setIsStarfieldFadingOut] =
     useState<boolean>(false);
 
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
+  const [showGameResult, setShowGameResult] = useState<boolean>(false);
+  const [gameResult, setGameResult] = useState<{
+    won: boolean;
+    message: string;
+  } | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string>("");
+
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
   );
 
   const battleArenaRef = useRef<BattleArenaRef>(null);
+
+  // Check auth status on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (auth.isAuthenticated()) {
+        setCurrentUser(auth.getCurrentUser());
+      } else {
+        // Try to restore session for email users
+        const result = await auth.restoreSession();
+        if (result.success && result.user) {
+          setCurrentUser(result.user);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   const isSpellOnCooldown = useCallback(
     (spellId: string): boolean => {
@@ -69,9 +101,100 @@ export default function EduBattle(): ReactElement {
     [spellCooldowns]
   );
 
-  const handleGameStateUpdate = useCallback((state: GameState) => {
-    setGameState(state);
-  }, []);
+  const handleGameStateUpdate = useCallback(
+    (state: GameState) => {
+      setGameState(state);
+
+      // Check if game is over and record win/loss
+      if (state.isGameOver && currentUser) {
+        // Check actual game result
+        let playerWon = false;
+        let playerLost = false;
+
+        // Now that we fixed the HP update in sudden death mode, we can use simple HP checks
+        playerWon = state.enemyBaseHp <= 0;
+        playerLost = state.playerBaseHp <= 0;
+
+        if (state.isSuddenDeath) {
+          console.log(
+            "🎯 Sudden Death Mode - Base HP should now be 0 for loser"
+          );
+        }
+
+        // Log the actual game state for debugging
+        console.log("🎮 Game State Details:", {
+          playerBaseHp: state.playerBaseHp,
+          enemyBaseHp: state.enemyBaseHp,
+          isGameOver: state.isGameOver,
+          isSuddenDeath: state.isSuddenDeath,
+          playerWon,
+          playerLost,
+        });
+
+        // If neither condition is met, something is wrong with the game logic
+        if (!playerWon && !playerLost) {
+          console.warn("⚠️ Game ended but no clear winner/loser:", {
+            playerBaseHp: state.playerBaseHp,
+            enemyBaseHp: state.enemyBaseHp,
+            isGameOver: state.isGameOver,
+            isSuddenDeath: state.isSuddenDeath,
+          });
+        }
+
+        console.log("🎮 Game Over! Recording result:", {
+          userId: currentUser.id,
+          username: currentUser.username,
+          won: playerWon,
+          playerBaseHp: state.playerBaseHp,
+          enemyBaseHp: state.enemyBaseHp,
+          isGameOver: state.isGameOver,
+        });
+
+        // Record game result via API
+        fetch("/api/game/record", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            won: playerWon,
+            score: playerWon ? 100 : 0,
+            gameData: {
+              playerBaseHp: state.playerBaseHp,
+              enemyBaseHp: state.enemyBaseHp,
+              matchTimeLeft: state.matchTimeLeft,
+            },
+          }),
+        })
+          .then((response) => response.json())
+          .then((result) => {
+            if (result.success) {
+              console.log("✅ Game result recorded successfully!");
+            } else {
+              console.error("❌ Failed to record game:", result.error);
+            }
+          })
+          .catch((error) => {
+            console.error("❌ Failed to record game result:", error);
+          });
+
+        if (playerWon) {
+          setGameResult({
+            won: true,
+            message: "🎉 Victory! You destroyed the enemy base!",
+          });
+        } else {
+          setGameResult({
+            won: false,
+            message: "💀 Defeat! Your base was destroyed!",
+          });
+        }
+        setShowGameResult(true);
+      }
+    },
+    [currentUser]
+  );
 
   useEffect(() => {
     if (!gameStarted || gameState.isGameOver) return;
@@ -183,9 +306,100 @@ export default function EduBattle(): ReactElement {
   );
 
   const startGame = useCallback(() => {
+    if (!currentUser) {
+      setShowLoginModal(true);
+      return;
+    }
     setShowTutorial(false);
     setGameStarted(true);
-  }, []);
+  }, [currentUser]);
+
+  // Handle game completion and record win
+  const handleGameComplete = useCallback(
+    (playerWon: boolean) => {
+      // Game completion is now handled in handleGameStateUpdate
+    },
+    [currentUser]
+  );
+
+  // Auth handlers
+  const handleLoginWithWallet = async () => {
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const result = await auth.loginWithWallet();
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
+        setShowLoginModal(false);
+        setShowTutorial(false);
+        setGameStarted(true);
+      } else {
+        setAuthError(result.error || "Wallet login failed");
+      }
+    } catch (error) {
+      setAuthError("Wallet authentication error");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLoginWithEmail = async (email: string, password: string) => {
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const result = await auth.loginWithEmail({ email, password });
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
+        setShowLoginModal(false);
+        setShowTutorial(false);
+        setGameStarted(true);
+      } else {
+        setAuthError(result.error || "Email login failed");
+      }
+    } catch (error) {
+      setAuthError("Email authentication error");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegisterWithEmail = async (
+    email: string,
+    password: string,
+    username: string
+  ) => {
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const result = await auth.registerWithEmail({
+        email,
+        password,
+        username,
+      });
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
+        setShowLoginModal(false);
+        setShowTutorial(false);
+        setGameStarted(true);
+      } else {
+        setAuthError(result.error || "Registration failed");
+      }
+    } catch (error) {
+      setAuthError("Registration error");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    auth.logout();
+    setCurrentUser(null);
+    setGameStarted(false);
+    setShowTutorial(true);
+  };
 
   const handleGameReady = useCallback(() => {
     setIsStarfieldFadingOut(true);
@@ -199,6 +413,8 @@ export default function EduBattle(): ReactElement {
       battleArenaRef.current.resetGameState();
       setGameStarted(true);
       setShowTutorial(false);
+      setShowGameResult(false);
+      setGameResult(null);
 
       setSpellCooldowns({});
     }
@@ -207,6 +423,45 @@ export default function EduBattle(): ReactElement {
   if (showTutorial) {
     return (
       <div className="min-h-screen starfield-background flex items-center justify-center p-2 sm:p-4">
+        {/* Top Right Buttons */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+          {currentUser && (
+            <Button
+              onClick={() => setShowLeaderboard(true)}
+              variant="outline"
+              size="sm"
+              className="text-white border-white hover:bg-white hover:text-black"
+            >
+              🏆 Leaderboard
+            </Button>
+          )}
+
+          {currentUser ? (
+            <div className="flex items-center gap-3">
+              <span className="text-white text-sm">
+                Welcome, {currentUser.username}!
+              </span>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="text-white border-white hover:bg-white hover:text-black"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setShowLoginModal(true)}
+              variant="outline"
+              size="sm"
+              className="text-white border-white hover:bg-white hover:text-black"
+            >
+              Login
+            </Button>
+          )}
+        </div>
+
         <Card className="w-full max-w-sm sm:max-w-2xl md:max-w-3xl lg:max-w-4xl nes-container is-rounded is-dark mx-2">
           <CardHeader className="text-center text-white p-3 sm:p-4 md:p-6">
             <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
@@ -287,7 +542,7 @@ export default function EduBattle(): ReactElement {
                 size="lg"
                 className="is-primary text-xs sm:text-sm md:text-base px-6 sm:px-12 md:px-16 lg:px-24 py-3 sm:py-4 md:py-6 lg:py-8 cursor-pointer mb-4 sm:mb-6 md:mb-8 game-button nes-btn"
               >
-                Start Battle!
+                {currentUser ? "Start Battle!" : "Login to Play!"}
               </Button>
             </div>
             <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text">
@@ -295,6 +550,124 @@ export default function EduBattle(): ReactElement {
             </p>
           </CardContent>
         </Card>
+
+        {/* Login Modal */}
+        {showLoginModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md nes-container is-rounded is-dark">
+              <CardHeader className="text-center text-white">
+                <CardTitle className="text-xl">🔐 Login to Play</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {authError && (
+                  <div className="text-red-400 text-sm text-center">
+                    {authError}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleLoginWithWallet}
+                    disabled={authLoading}
+                    className="w-full is-primary"
+                  >
+                    {authLoading ? "Connecting..." : "🔗 Connect Wallet"}
+                  </Button>
+
+                  <div className="text-center text-white text-sm">or</div>
+
+                  <EmailLoginForm
+                    onLogin={handleLoginWithEmail}
+                    onRegister={handleRegisterWithEmail}
+                    loading={authLoading}
+                  />
+                </div>
+
+                <Button
+                  onClick={() => setShowLoginModal(false)}
+                  variant="outline"
+                  className="w-full text-white border-white hover:bg-white hover:text-black"
+                >
+                  Cancel
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Leaderboard Modal */}
+        {showLeaderboard && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl nes-container is-rounded is-dark">
+              <CardHeader className="text-center text-white">
+                <CardTitle className="text-xl">🏆 Leaderboard</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <LeaderboardView />
+                <Button
+                  onClick={() => setShowLeaderboard(false)}
+                  variant="outline"
+                  className="w-full text-white border-white hover:bg-white hover:text-black"
+                >
+                  Close
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Game Result Modal */}
+        {showGameResult && gameResult && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md nes-container is-rounded is-dark">
+              <CardHeader className="text-center text-white">
+                <CardTitle
+                  className={`text-xl ${
+                    gameResult.won ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {gameResult.won ? "🎉 Victory!" : "💀 Defeat!"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-center">
+                <p className="text-white">{gameResult.message}</p>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => {
+                      setShowGameResult(false);
+                      setShowLeaderboard(true);
+                    }}
+                    className="flex-1 is-primary"
+                  >
+                    🏆 View Leaderboard
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowGameResult(false);
+                      restartGame();
+                    }}
+                    variant="outline"
+                    className="flex-1 text-white border-white hover:bg-white hover:text-black"
+                  >
+                    🔄 Play Again
+                  </Button>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setShowGameResult(false);
+                    setShowTutorial(true);
+                  }}
+                  variant="outline"
+                  className="w-full text-white border-white hover:bg-white hover:text-black"
+                >
+                  🏠 Back to Menu
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     );
   }

@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  username    String
+  authMethod  String   // "wallet" or "email"
+  walletAddress String? @unique
+  passwordHash String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  games       Game[]
+  leaderboard LeaderboardEntry?
+  
+  @@map("users")
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  userId      String
+  won         Boolean
+  score       Int?
+  gameData    String?  // JSON string for additional game data
+  playedAt    DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  
+  @@map("games")
+}
+
+model LeaderboardEntry {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  totalWins   Int      @default(0)
+  totalGames  Int      @default(0)
+  rank        Int?
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  
+  @@map("leaderboard")
+}

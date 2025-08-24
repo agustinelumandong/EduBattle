@@ -32,9 +32,17 @@ interface BattleArenaProps {
   ) => void;
 }
 
-
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
-  ({ gameState, onGameStateUpdate, onRequestQuiz, onGameReady, onRequestSpellQuiz }, ref) => {
+  (
+    {
+      gameState,
+      onGameStateUpdate,
+      onRequestQuiz,
+      onGameReady,
+      onRequestSpellQuiz,
+    },
+    ref
+  ) => {
     const [isClient, setIsClient] = useState<boolean>(false);
     const gameRef = React.useRef<PhaserGameRef>(null);
     React.useEffect(() => {
@@ -101,7 +109,6 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
         </div>
       );
     }
-  
 
     return (
       <div className="relative w-full h-full">
@@ -115,25 +122,24 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
 
         {/* Responsive Retro Health Bars & Timer Overlay */}
         <div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 pointer-events-none">
-          
           {/* Mobile Layout: Stacked Design */}
           <div className="block sm:hidden">
             {/* Mobile Timer - Top Center */}
             <div className="flex justify-center ">
-              <div 
+              <div
                 className="nes-container is-rounded is-dark mobile-timer"
-                style={{ 
-                  padding: "0.5rem", 
+                style={{
+                  padding: "0.5rem",
                   background: "rgba(0,0,0,0.9)",
-                  minWidth: "120px"
+                  minWidth: "120px",
                 }}
               >
-                <div 
+                <div
                   className="nes-text is-white text-center"
-                  style={{ 
-                    fontSize: "10px", 
+                  style={{
+                    fontSize: "10px",
                     fontFamily: "'Press Start 2P', cursive",
-                    lineHeight: "1.2"
+                    lineHeight: "1.2",
                   }}
                 >
                   ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
@@ -141,7 +147,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 </div>
               </div>
             </div>
-            
+
             {/* Mobile Health Bars - Side by Side */}
             <div className="flex justify-between items-center gap-2">
               <div className="flex-1">
@@ -181,30 +187,30 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 />
               </div>
 
-              <div 
+              <div
                 className="nes-container is-rounded is-dark tablet-timer"
-                style={{ 
-                  padding: "0.75rem", 
-                  background: "rgba(0,0,0,0.8)" 
+                style={{
+                  padding: "0.75rem",
+                  background: "rgba(0,0,0,0.8)",
                 }}
               >
-                <div 
+                <div
                   className="nes-text is-white text-center"
-                  style={{ 
-                    fontSize: "14px", 
+                  style={{
+                    fontSize: "14px",
                     fontFamily: "'Press Start 2P', cursive",
-                    marginBottom: "0.25rem"
+                    marginBottom: "0.25rem",
                   }}
                 >
                   ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
                   {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
                 </div>
-                <div 
+                <div
                   className="nes-text is-white text-center"
-                  style={{ 
-                    fontSize: "7px", 
+                  style={{
+                    fontSize: "7px",
                     fontFamily: "'Press Start 2P', cursive",
-                    opacity: 0.8
+                    opacity: 0.8,
                   }}
                 >
                   TIME REMAINING
@@ -235,32 +241,32 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 size="large"
                 className="desktop-healthbar responsive-healthbar"
               />
-          </div>
+            </div>
 
-            <div 
+            <div
               className="nes-container is-rounded is-dark desktop-timer"
-              style={{ 
-                padding: "1rem", 
-                background: "rgba(0,0,0,0.8)" 
+              style={{
+                padding: "1rem",
+                background: "rgba(0,0,0,0.8)",
               }}
             >
-              <div 
+              <div
                 className="nes-text is-white text-center"
-                style={{ 
-                  fontSize: "16px", 
+                style={{
+                  fontSize: "16px",
                   fontFamily: "'Press Start 2P', cursive",
-                  marginBottom: "0.5rem"
+                  marginBottom: "0.5rem",
                 }}
               >
-          ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
-            {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
+                ⏰{Math.floor(gameState.matchTimeLeft / 60)}:
+                {String(gameState.matchTimeLeft % 60).padStart(2, "0")}
               </div>
-              <div 
+              <div
                 className="nes-text is-white text-center"
-                style={{ 
-                  fontSize: "8px", 
+                style={{
+                  fontSize: "8px",
                   fontFamily: "'Press Start 2P', cursive",
-                  opacity: 0.8
+                  opacity: 0.8,
                 }}
               >
                 TIME REMAINING
@@ -276,7 +282,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                 size="large"
                 className="desktop-healthbar responsive-healthbar"
               />
-          </div>
+            </div>
           </div>
         </div>
 
@@ -290,7 +296,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 text-center max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full mx-2">
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 game-title">
-                {gameState.winner === "player" ?  "Victory!" : "Defeat!"}
+                {gameState.winner === "player" ? "Victory!" : "Defeat!"}
               </h1>
               <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 game-ui-text px-2">
                 {gameState.winner === "player"
@@ -311,10 +317,10 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
                   </span>
                 ))}
               </div>
-              <Button 
-                onClick={restartGame} 
-                size="lg" 
-                variant="outline" 
+              <Button
+                onClick={restartGame}
+                size="lg"
+                variant="outline"
                 className="mt-4 sm:mt-6 md:mt-8 game-button nes-btn is-primary text-xs sm:text-sm md:text-base px-4 sm:px-6 py-2 sm:py-3"
               >
                 Play Again
