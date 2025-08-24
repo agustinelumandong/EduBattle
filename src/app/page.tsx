@@ -531,6 +531,7 @@ export default function EduBattle(): ReactElement {
                   <div className="text-sm text-gray-400 mb-2">
                     Wallet: {currentUser.address?.slice(0, 8)}...
                     {currentUser.address?.slice(-6)}
+                    Wallet transparent: {currentUser.address}
                   </div>
                 )}
               </div>
