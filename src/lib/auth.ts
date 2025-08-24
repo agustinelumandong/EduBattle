@@ -66,10 +66,10 @@ export class Auth {
   public async loginWithWallet(): Promise<AuthResult> {
     try {
       console.log("🔐 Starting blockchain wallet authentication...");
-      
+
       // Wait a moment for MiniKit to initialize if needed
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       console.log("MiniKit installed:", MiniKit.isInstalled());
 
       // Check if MiniKit is available
@@ -218,14 +218,97 @@ export class Auth {
         };
       }
 
-      // Create authenticated user object
-      this.user = {
-        id: finalPayload.address,
-        username: MiniKit.user?.username || finalPayload.address.slice(0, 8),
-        authMethod: "wallet",
-        isAuthenticated: true,
-        address: finalPayload.address,
-      };
+      // Step 4: Register/update user in database
+      const storedUsername =
+        typeof window !== "undefined"
+          ? localStorage.getItem("wallet_username")
+          : null;
+      const username =
+        storedUsername ||
+        MiniKit.user?.username ||
+        `Player_${finalPayload.address.slice(0, 6)}`;
+
+      console.log("🔐 Attempting to register wallet user in database:", {
+        address: finalPayload.address.slice(0, 10) + "...",
+        username,
+        storedUsername: storedUsername ? "yes" : "no",
+        worldAppUsername: MiniKit.user?.username || "none",
+      });
+
+      const registerResponse = await fetch("/api/auth/wallet-register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: finalPayload.address,
+          username: username,
+        }),
+      });
+
+      console.log(
+        "📡 Database registration response status:",
+        registerResponse.status
+      );
+
+      if (registerResponse.ok) {
+        const registerResult = await registerResponse.json();
+        console.log("✅ Database registration successful:", registerResult);
+
+        if (registerResult.success) {
+          // Use database user data
+          this.user = {
+            id: registerResult.user.id,
+            username: registerResult.user.username,
+            authMethod: "wallet",
+            isAuthenticated: true,
+            address: finalPayload.address,
+          };
+
+          console.log("👤 User object created from database:", this.user);
+
+          // Clear stored username after successful registration
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("wallet_username");
+          }
+        } else {
+          console.warn("⚠️ Database registration returned success: false");
+          // Fallback to local authentication
+          this.user = {
+            id: finalPayload.address,
+            username: username,
+            authMethod: "wallet",
+            isAuthenticated: true,
+            address: finalPayload.address,
+          };
+
+          // Clear stored username after successful authentication
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("wallet_username");
+          }
+        }
+      } else {
+        const errorText = await registerResponse.text();
+        console.error("❌ Database registration failed:", {
+          status: registerResponse.status,
+          statusText: registerResponse.statusText,
+          error: errorText,
+        });
+
+        // Fallback to local authentication if database registration fails
+        this.user = {
+          id: finalPayload.address,
+          username: username,
+          authMethod: "wallet",
+          isAuthenticated: true,
+          address: finalPayload.address,
+        };
+
+        // Clear stored username after successful authentication
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("wallet_username");
+        }
+      }
 
       return {
         success: true,
