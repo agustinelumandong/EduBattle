@@ -58,9 +58,7 @@ export default function EduBattle(): ReactElement {
     message: string;
   } | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<string>("");
-  const [loginError, setLoginError] = useState<string>("");
-  const [registerError, setRegisterError] = useState<string>("");
+  const [authError, setAuthError] = useState<string>(""); 
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -347,9 +345,7 @@ export default function EduBattle(): ReactElement {
 
   const handleLoginWithEmail = async (email: string, password: string) => {
     setAuthLoading(true);
-    setAuthError("");
-    setLoginError("");
-    setRegisterError("");
+    setAuthError(""); 
 
     try {
       const result = await auth.loginWithEmail({ email, password });
@@ -359,12 +355,10 @@ export default function EduBattle(): ReactElement {
         setShowTutorial(false);
         setGameStarted(true);
       } else {
-        setAuthError(result.error || "Email login failed");
-        setLoginError(result.error || "Invalid email or password");
+        setAuthError(result.error || "Email login failed"); 
       }
     } catch (error) {
-      setAuthError("Email authentication error");
-      setLoginError("Authentication failed. Please try again.");
+      setAuthError("Email authentication error"); 
     } finally {
       setAuthLoading(false);
     }
@@ -376,9 +370,7 @@ export default function EduBattle(): ReactElement {
     username: string
   ) => {
     setAuthLoading(true);
-    setAuthError("");
-    setLoginError("");
-    setRegisterError("");
+    setAuthError("");  
 
     try {
       const result = await auth.registerWithEmail({
@@ -392,12 +384,10 @@ export default function EduBattle(): ReactElement {
         setShowTutorial(false);
         setGameStarted(true);
       } else {
-        setAuthError(result.error || "Registration failed");
-        setRegisterError(result.error || "Registration failed. Email may already be in use.");
+        setAuthError(result.error || "Registration failed"); 
       }
     } catch (error) {
-      setAuthError("Registration error");
-      setRegisterError("Registration failed. Please try again with different credentials.");
+      setAuthError("Registration error"); 
     } finally {
       setAuthLoading(false);
     }
@@ -613,9 +603,7 @@ export default function EduBattle(): ReactElement {
                 <button
                   onClick={() => {
                     setShowLoginModal(false);
-                    setAuthError("");
-                    setLoginError("");
-                    setRegisterError("");
+                    setAuthError(""); 
                   }}
                   type="button"
                   className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
