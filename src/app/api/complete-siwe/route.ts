@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
         );
 
         // Generate username from wallet address if not provided
-        const username = MiniKit.user?.username || "Anonymous";
-
+        const userService = await MiniKit.getUserByUsername(payload.address);
+        const username = userService.username || `Player_${payload.address.slice(0, 6)}`;
 
         // Check if user already exists
         const existingUser = await database.findUserByWallet(payload.address);
