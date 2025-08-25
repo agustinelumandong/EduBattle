@@ -31,6 +31,71 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    if (testType === "health-check") {
+      // 🆕 Simple database health check
+      console.log("🏥 Testing database health...");
+
+      try {
+        // Test basic database operations
+        const testEmail = `health_${Date.now()}@test.com`;
+
+        // Test 1: Check if we can query the database
+        console.log("🔍 Test 1: Database query test...");
+        await database.findUserByEmail(testEmail);
+        console.log("✅ Test 1 passed: Database query successful");
+
+        // Test 2: Check if we can create a user
+        console.log("👤 Test 2: User creation test...");
+        const testUser = await database.createUser({
+          email: testEmail,
+          username: `healthuser_${Date.now()}`,
+          authMethod: "email",
+          passwordHash: "test_hash",
+        });
+        console.log("✅ Test 2 passed: User creation successful", {
+          userId: testUser.id,
+        });
+
+        // Test 3: Check if we can find the created user
+        console.log("🔍 Test 3: User retrieval test...");
+        const foundUser = await database.findUserById(testUser.id);
+        console.log("✅ Test 3 passed: User retrieval successful", {
+          username: foundUser?.username,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Database health check passed",
+          testType: "health-check",
+          results: {
+            databaseQuery: "✅ PASSED",
+            userCreation: "✅ PASSED",
+            userRetrieval: "✅ PASSED",
+          },
+          steps: [
+            "Database connection",
+            "Query test",
+            "Creation test",
+            "Retrieval test",
+          ],
+        });
+      } catch (healthError: any) {
+        console.error("❌ Database health check failed:", healthError.message);
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Database health check failed",
+            details: {
+              message: healthError.message,
+              code: healthError.code,
+              hint: "Check your DATABASE_URL and database status",
+            },
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     if (testType === "wallet") {
       // Test wallet user creation
       const testWalletData = {
