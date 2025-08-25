@@ -1,29 +1,28 @@
-import { database } from "@/lib/database";
 import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-interface UpdateUsernameRequest {
+const prisma = new PrismaClient();
+
+interface UpdateUsernameData {
   userId: string;
-  username: string;
+  newUsername: string;
 }
 
 /**
- * API route to update username for existing users
+ * API route to update user username
  */
 export async function POST(req: NextRequest) {
   try {
-    console.log("🔄 Username update request received");
+    const { userId, newUsername } = (await req.json()) as UpdateUsernameData;
 
-    const { userId, username } = (await req.json()) as UpdateUsernameRequest;
-
-    if (!userId || !username) {
+    if (!userId || !newUsername) {
       return NextResponse.json(
-        { success: false, error: "User ID and username are required" },
+        { success: false, error: "User ID and new username are required" },
         { status: 400 }
       );
     }
 
-    // Validate username
-    if (username.length < 3 || username.length > 20) {
+    if (newUsername.length < 3 || newUsername.length > 20) {
       return NextResponse.json(
         {
           success: false,
@@ -33,39 +32,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if username is already taken by another user
-    const existingUser = await database.findUserByUsername(username);
-    if (existingUser && existingUser.id !== userId) {
+    // Check if username is already taken
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        username: newUsername,
+        id: { not: userId },
+      },
+    });
+
+    if (existingUser) {
       return NextResponse.json(
-        { success: false, error: "Username is already taken by another user" },
-        { status: 409 }
+        { success: false, error: "Username is already taken" },
+        { status: 400 }
       );
     }
 
-    // Update the user
-    const updatedUser = await database.updateUser(userId, { username });
-
-    console.log("✅ Username updated successfully:", {
-      userId: updatedUser.id,
-      newUsername: updatedUser.username,
+    // Update username
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { username: newUsername },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Username updated successfully",
       user: {
         id: updatedUser.id,
         username: updatedUser.username,
         authMethod: updatedUser.authMethod,
+        walletAddress: updatedUser.walletAddress,
       },
     });
   } catch (error: any) {
-    console.error("❌ Username update failed:", error.message);
-
+    console.error("Username update error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update username: " + error.message,
+        error: error.message || "Username update failed",
       },
       { status: 500 }
     );

@@ -54,6 +54,13 @@ export async function POST(req: NextRequest) {
           allFields: Object.keys(payload),
         });
 
+        // 🆕 Additional Apple device debugging
+        if (payload.address && payload.address.startsWith("0x")) {
+          console.log("✅ Valid Ethereum address format detected");
+        } else {
+          console.warn("⚠️ Unexpected address format:", payload.address);
+        }
+
         // Try to get username from multiple sources (iOS vs Android compatibility)
         let username = "";
 
@@ -155,6 +162,15 @@ export async function POST(req: NextRequest) {
           "❌ Database registration failed during SIWE completion:",
           dbError.message
         );
+
+        // 🆕 Enhanced error logging for Apple device debugging
+        console.error("🔍 Apple device debugging info:", {
+          errorType: dbError.constructor.name,
+          errorCode: dbError.code,
+          errorMeta: dbError.meta,
+          payloadAddress: payload.address,
+          payloadFields: Object.keys(payload),
+        });
 
         // Still return success for authentication, but log the database issue
         return NextResponse.json({

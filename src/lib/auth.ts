@@ -285,7 +285,7 @@ export class Auth {
         address: finalPayload.address,
       };
 
-      console.log("👤 Frontend: User object created:", this.user);
+      console.log("👤 User object created:", this.user);
 
       // Clear stored username after successful authentication
       if (typeof window !== "undefined") {
