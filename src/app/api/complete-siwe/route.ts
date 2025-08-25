@@ -4,6 +4,7 @@ import {
   MiniAppWalletAuthSuccessPayload,
   verifySiweMessage,
 } from "@worldcoin/minikit-js";
+import { database } from "@/lib/database";
 
 interface IRequestPayload {
   payload: MiniAppWalletAuthSuccessPayload;
@@ -40,12 +41,69 @@ export async function POST(req: NextRequest) {
       // Clear the used nonce
       cookieStore.delete("siwe");
 
-      return NextResponse.json({
-        status: "success",
-        isValid: true,
-        address: payload.address,
-        message: "Authentication successful",
-      });
+      // 🆕 CRITICAL FIX: Automatically register user in database after successful verification
+      try {
+        console.log(
+          "🔐 SIWE verification successful, registering user in database..."
+        );
+
+        // Generate username from wallet address if not provided
+        const username = `Player_${payload.address.slice(0, 6)}`;
+
+        // Check if user already exists
+        const existingUser = await database.findUserByWallet(payload.address);
+
+        if (existingUser) {
+          console.log(
+            "✅ User already exists in database:",
+            existingUser.username
+          );
+          return NextResponse.json({
+            status: "success",
+            isValid: true,
+            address: payload.address,
+            message: "Authentication successful - user already registered",
+            user: existingUser,
+          });
+        }
+
+        // Create new user in database
+        const newUser = await database.createUser({
+          email: "",
+          username: username,
+          authMethod: "wallet",
+          walletAddress: payload.address,
+          passwordHash: "",
+        });
+
+        console.log("✅ New wallet user registered in database:", {
+          id: newUser.id,
+          username: newUser.username,
+          address: newUser.walletAddress,
+        });
+
+        return NextResponse.json({
+          status: "success",
+          isValid: true,
+          address: payload.address,
+          message: "Authentication successful - new user registered",
+          user: newUser,
+        });
+      } catch (dbError: any) {
+        console.error(
+          "❌ Database registration failed during SIWE completion:",
+          dbError.message
+        );
+
+        // Still return success for authentication, but log the database issue
+        return NextResponse.json({
+          status: "success",
+          isValid: true,
+          address: payload.address,
+          message: "Authentication successful but database registration failed",
+          warning: "User not saved to database - check logs for details",
+        });
+      }
     } else {
       return NextResponse.json(
         {

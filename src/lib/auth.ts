@@ -193,7 +193,7 @@ export class Auth {
         };
       }
 
-      // Step 3: Verify the signature on backend
+      // Step 3: Verify the signature on backend (now also registers user in database)
       const verifyResponse = await fetch("/api/complete-siwe", {
         method: "POST",
         headers: {
@@ -218,7 +218,14 @@ export class Auth {
         };
       }
 
-      // Step 4: Register/update user in database
+      // 🆕 CRITICAL FIX: User is now automatically registered in database by complete-siwe endpoint
+      // No need for separate wallet registration call
+      console.log(
+        "✅ SIWE verification successful, user should be in database:",
+        verifyResult
+      );
+
+      // Get username from response or generate fallback
       const storedUsername =
         typeof window !== "undefined"
           ? localStorage.getItem("wallet_username")
@@ -226,142 +233,23 @@ export class Auth {
       const username =
         storedUsername ||
         MiniKit.user?.username ||
+        verifyResult.user?.username ||
         `Player_${finalPayload.address.slice(0, 6)}`;
 
-      console.log("🔐 Attempting to register wallet user in database:", {
-        address: finalPayload.address.slice(0, 10) + "...",
-        username,
-        storedUsername: storedUsername ? "yes" : "no",
-        worldAppUsername: MiniKit.user?.username || "none",
-      });
-      
-      console.log("🌐 Making request to wallet-register endpoint...");
+      // Create authenticated user object
+      this.user = {
+        id: verifyResult.user?.id || finalPayload.address, // Use database ID if available
+        username: username,
+        authMethod: "wallet",
+        isAuthenticated: true,
+        address: finalPayload.address,
+      };
 
-      // Add retry logic for Mini App environment
-      let registerResponse;
-      let retryCount = 0;
-      const maxRetries = 3;
+      console.log("👤 User object created:", this.user);
 
-      while (retryCount < maxRetries) {
-        try {
-          registerResponse = await fetch("/api/auth/wallet-register", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              address: finalPayload.address,
-              username: username,
-            }),
-          });
-          
-          console.log(`📡 Registration attempt ${retryCount + 1} - Status: ${registerResponse.status}`);
-          
-          // If successful or client error (4xx), don't retry
-          if (registerResponse.ok || (registerResponse.status >= 400 && registerResponse.status < 500)) {
-            break;
-          }
-        } catch (fetchError) {
-          console.error(`❌ Registration attempt ${retryCount + 1} failed:`, fetchError);
-        }
-        
-        retryCount++;
-        if (retryCount < maxRetries) {
-          console.log(`🔄 Retrying registration in ${retryCount}s...`);
-          await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
-        }
-      }
-
-      if (!registerResponse) {
-        console.error("❌ Failed to get response from wallet-register after all retries");
-        throw new Error("Wallet registration failed - no response");
-      }
-
-      console.log(
-        "📡 Database registration response status:",
-        registerResponse.status
-      );
-
-      if (registerResponse.ok) {
-        const registerResult = await registerResponse.json();
-        console.log("✅ Database registration successful:", registerResult);
-        
-        // Log the full response for debugging
-        console.log("📊 Full registration response:", JSON.stringify(registerResult, null, 2));
-
-        if (registerResult.success) {
-          // Use database user data
-          this.user = {
-            id: registerResult.user.id,
-            username: registerResult.user.username,
-            authMethod: "wallet",
-            isAuthenticated: true,
-            address: finalPayload.address,
-          };
-
-          console.log("👤 User object created from database:", this.user);
-          
-          // CRITICAL: Verify the user was actually saved by querying the database
-          console.log("🔍 Verifying user was saved to database...");
-          try {
-            const verifyResponse = await fetch("/api/debug/schema-test", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                address: finalPayload.address,
-                username: registerResult.user.username,
-              }),
-            });
-            const verifyResult = await verifyResponse.json();
-            console.log("📊 Database verification result:", verifyResult);
-          } catch (verifyError) {
-            console.error("❌ Database verification failed:", verifyError);
-          }
-
-          // Clear stored username after successful registration
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("wallet_username");
-          }
-        } else {
-          console.warn("⚠️ Database registration returned success: false");
-          // Fallback to local authentication
-          this.user = {
-            id: finalPayload.address,
-            username: username,
-            authMethod: "wallet",
-            isAuthenticated: true,
-            address: finalPayload.address,
-          };
-
-          // Clear stored username after successful authentication
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("wallet_username");
-          }
-        }
-      } else {
-        const errorText = await registerResponse.text();
-        console.error("❌ Database registration failed:", {
-          status: registerResponse.status,
-          statusText: registerResponse.statusText,
-          error: errorText,
-        });
-        
-        console.error("🚨 This means the wallet user won't be saved to the database!");
-        console.error("🔍 Check the wallet-register endpoint logs for details.");
-
-        // Fallback to local authentication if database registration fails
-        this.user = {
-          id: finalPayload.address,
-          username: username,
-          authMethod: "wallet",
-          isAuthenticated: true,
-          address: finalPayload.address,
-        };
-
-        // Clear stored username after successful authentication
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("wallet_username");
-        }
+      // Clear stored username after successful authentication
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("wallet_username");
       }
 
       return {

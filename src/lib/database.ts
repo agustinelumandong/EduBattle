@@ -2,17 +2,31 @@ import { PrismaClient } from "@prisma/client";
 
 // Validate environment variables
 function validateEnvironment() {
-  const requiredEnvVars = ['DATABASE_URL'];
-  const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-  
+  const requiredEnvVars = ["DATABASE_URL"];
+  const missingVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
   if (missingVars.length > 0) {
-    console.error('❌ Missing required environment variables:', missingVars);
-    console.error('📝 Please check ENVIRONMENT_SETUP.md for setup instructions');
-    throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
+    console.error("❌ Missing required environment variables:", missingVars);
+    console.error(
+      "📝 Please check ENVIRONMENT_SETUP.md for setup instructions"
+    );
+    throw new Error(`Missing environment variables: ${missingVars.join(", ")}`);
   }
-  
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'fallback-secret-key-for-demo') {
-    console.warn('⚠️ JWT_SECRET not set or using fallback. Please set a secure JWT_SECRET in production.');
+
+  // Log database URL for debugging (masked for security)
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (dbUrl) {
+    const maskedUrl = dbUrl.replace(/(:\/\/)([^:]+):([^@]+)@/, "$1***:***@");
+    console.log("🔗 Database URL configured:", maskedUrl);
+  }
+
+  if (
+    !process.env.JWT_SECRET ||
+    process.env.JWT_SECRET === "fallback-secret-key-for-demo"
+  ) {
+    console.warn(
+      "⚠️ JWT_SECRET not set or using fallback. Please set a secure JWT_SECRET in production."
+    );
   }
 }
 
@@ -25,12 +39,17 @@ declare global {
 }
 
 // Create Prisma client with better error handling
-const prisma = globalThis.__prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  errorFormat: 'pretty',
-});
+const prisma =
+  globalThis.__prisma ||
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+    errorFormat: "pretty",
+  });
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   globalThis.__prisma = prisma;
 }
 
@@ -52,15 +71,49 @@ export interface GameResult {
 export class DatabaseService {
   // User management
   async createUser(data: CreateUserData) {
-    return await prisma.user.create({
-      data: {
-        email: data.email,
+    try {
+      console.log("💾 Database: Creating user with data:", {
         username: data.username,
         authMethod: data.authMethod,
-        walletAddress: data.walletAddress,
-        passwordHash: data.passwordHash,
-      },
-    });
+        walletAddress: data.walletAddress
+          ? data.walletAddress.slice(0, 10) + "..."
+          : "none",
+        hasEmail: !!data.email,
+        hasPasswordHash: !!data.passwordHash,
+      });
+
+      const user = await prisma.user.create({
+        data: {
+          email: data.email,
+          username: data.username,
+          authMethod: data.authMethod,
+          walletAddress: data.walletAddress,
+          passwordHash: data.passwordHash,
+        },
+      });
+
+      console.log("✅ Database: User created successfully:", {
+        id: user.id,
+        username: user.username,
+        authMethod: user.authMethod,
+      });
+
+      return user;
+    } catch (error: any) {
+      console.error("❌ Database: Failed to create user:", {
+        error: error.message,
+        code: error.code,
+        meta: error.meta,
+        data: {
+          username: data.username,
+          authMethod: data.authMethod,
+          walletAddress: data.walletAddress
+            ? data.walletAddress.slice(0, 10) + "..."
+            : "none",
+        },
+      });
+      throw error;
+    }
   }
 
   async findUserByEmail(email: string) {
@@ -70,9 +123,35 @@ export class DatabaseService {
   }
 
   async findUserByWallet(walletAddress: string) {
-    return await prisma.user.findUnique({
-      where: { walletAddress },
-    });
+    try {
+      console.log(
+        "🔍 Database: Searching for user by wallet:",
+        walletAddress.slice(0, 10) + "..."
+      );
+
+      const user = await prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (user) {
+        console.log("✅ Database: Found existing user:", {
+          id: user.id,
+          username: user.username,
+          authMethod: user.authMethod,
+        });
+      } else {
+        console.log("ℹ️ Database: No existing user found for wallet address");
+      }
+
+      return user;
+    } catch (error: any) {
+      console.error("❌ Database: Failed to find user by wallet:", {
+        error: error.message,
+        code: error.code,
+        walletAddress: walletAddress.slice(0, 10) + "...",
+      });
+      throw error;
+    }
   }
 
   async findUserById(id: string) {
