@@ -17,7 +17,7 @@ function validateEnvironment() {
   const dbUrl = process.env.DATABASE_URL || "";
   if (dbUrl) {
     const maskedUrl = dbUrl.replace(/(:\/\/)([^:]+):([^@]+)@/, "$1***:***@");
-    console.log("🔗 Database URL configured:", maskedUrl);
+     
   }
 }
 
@@ -58,13 +58,7 @@ export class DatabaseService {
   // User management
   async createUser(data: CreateUserData) {
     try {
-      console.log("💾 Database: Creating user with data:", {
-        username: data.username,
-        walletAddress: data.walletAddress
-          ? data.walletAddress.slice(0, 10) + "..."
-          : "none",
-        isGuest: data.isGuest || false,
-      });
+      
 
       const user = await prisma.user.create({
         data: {
@@ -74,57 +68,32 @@ export class DatabaseService {
         },
       });
 
-      console.log("✅ Database: User created successfully:", {
-        id: user.id,
-        username: user.username,
-        isGuest: user.isGuest,
-      });
+      
 
       return user;
     } catch (error: any) {
-      console.error("❌ Database: Failed to create user:", {
-        error: error.message,
-        code: error.code,
-        meta: error.meta,
-        data: {
-          username: data.username,
-          walletAddress: data.walletAddress
-            ? data.walletAddress.slice(0, 10) + "..."
-            : "none",
-        },
-      });
+      
       throw error;
     }
   }
 
   async findUserByWallet(walletAddress: string) {
     try {
-      console.log(
-        "🔍 Database: Searching for user by wallet:",
-        walletAddress.slice(0, 10) + "..."
-      );
+      
 
       const user = await prisma.user.findUnique({
         where: { walletAddress },
       });
 
       if (user) {
-        console.log("✅ Database: Found existing user:", {
-          id: user.id,
-          username: user.username,
-          isGuest: user.isGuest,
-        });
+
       } else {
-        console.log("ℹ️ Database: No existing user found for wallet address");
+        
       }
 
       return user;
     } catch (error: any) {
-      console.error("❌ Database: Failed to find user by wallet:", {
-        error: error.message,
-        code: error.code,
-        walletAddress: walletAddress.slice(0, 10) + "...",
-      });
+      
       throw error;
     }
   }
@@ -137,7 +106,7 @@ export class DatabaseService {
 
   async createGuestUser(username: string) {
     try {
-      console.log("👻 Database: Creating guest user:", username);
+      
 
       const user = await prisma.user.create({
         data: {
@@ -146,15 +115,11 @@ export class DatabaseService {
         },
       });
 
-      console.log("✅ Database: Guest user created:", {
-        id: user.id,
-        username: user.username,
-        isGuest: user.isGuest,
-      });
+      
 
       return user;
     } catch (error: any) {
-      console.error("❌ Database: Failed to create guest user:", error);
+      
       throw error;
     }
   }

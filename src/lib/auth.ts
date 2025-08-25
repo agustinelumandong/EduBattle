@@ -57,7 +57,6 @@ export class Auth {
    */
   public async createGuestUser(username: string): Promise<AuthResult> {
     try {
-      console.log("👻 Creating guest user:", username);
 
       const response = await fetch("/api/auth/guest", {
         method: "POST",
@@ -84,7 +83,6 @@ export class Auth {
         isAuthenticated: true,
       };
 
-      console.log("✅ Guest user created successfully");
       return { success: true, user: this.user };
     } catch (error) {
       console.error("Guest user creation error:", error);
@@ -103,7 +101,6 @@ export class Auth {
     username?: string
   ): Promise<AuthResult> {
     try {
-      console.log("🔗 Starting enhanced wallet connection...");
 
       let walletAddress: string | null = address || null;
 
@@ -114,27 +111,22 @@ export class Auth {
           const accounts = await this.getOnchainkitAccounts();
           if (accounts && accounts.length > 0) {
             walletAddress = accounts[0];
-            console.log(
-              "✅ Wallet detected via onchainkit:",
-              walletAddress.slice(0, 10) + "..."
-            );
+             
           }
         } catch (onchainkitError) {
-          console.log(
-            "Onchainkit not available, falling back to basic wallet detection"
-          );
+         
         }
       }
 
       // Fallback to basic wallet detection if onchainkit didn't work
       if (!walletAddress) {
-        console.log("🔍 Trying basic wallet detection...");
+         
         walletAddress = await this.detectBasicWallet();
       }
 
       // If still no address, try to request connection
       if (!walletAddress) {
-        console.log("🔌 Requesting wallet connection...");
+        
         walletAddress = await this.requestWalletConnection();
       }
 
@@ -154,7 +146,7 @@ export class Auth {
 
       if (result.success && result.user) {
         this.user = result.user;
-        console.log("✅ Wallet connected successfully via API");
+
         return { success: true, user: this.user };
       } else {
         return result;
@@ -239,7 +231,7 @@ export class Auth {
     try {
       // Check if MetaMask or similar is available
       if (typeof window !== "undefined" && (window as any).ethereum) {
-        console.log("🔍 Detecting wallet extensions...");
+        
 
         try {
           // Try to get accounts
@@ -248,25 +240,22 @@ export class Auth {
           });
 
           if (accounts && accounts.length > 0) {
-            console.log(
-              "✅ Wallet detected:",
-              accounts[0].slice(0, 10) + "..."
-            );
+            
             return accounts[0];
           }
 
-          console.log("📱 Wallet extension found but no accounts connected");
+          
           return null;
         } catch (requestError) {
-          console.log("⚠️ Wallet request failed:", requestError);
+          
           return null;
         }
       }
 
-      console.log("❌ No wallet extension detected");
+      
       return null;
     } catch (error) {
-      console.log("⚠️ Wallet detection error:", error);
+      
       return null;
     }
   }
@@ -276,7 +265,7 @@ export class Auth {
    */
   public async requestWalletConnection(): Promise<string | null> {
     try {
-      console.log("🔗 Requesting wallet connection...");
+      
 
       // Try onchainkit first
       try {
@@ -285,12 +274,12 @@ export class Auth {
           return accounts[0];
         }
       } catch (onchainkitError) {
-        console.log("Onchainkit not available, using fallback");
+         
       }
 
       // Fallback to basic wallet connection
       if (typeof window !== "undefined" && (window as any).ethereum) {
-        console.log("🔌 Requesting accounts from wallet extension...");
+        
 
         try {
           const accounts = await (window as any).ethereum.request({
@@ -298,22 +287,19 @@ export class Auth {
           });
 
           if (accounts && accounts.length > 0) {
-            console.log(
-              "✅ Wallet connected:",
-              accounts[0].slice(0, 10) + "..."
-            );
+            
             return accounts[0];
           }
         } catch (requestError) {
-          console.log("🚫 User rejected wallet connection");
+          
           return null;
         }
       }
 
-      console.log("❌ No wallet connection available");
+      
       return null;
     } catch (error) {
-      console.log("🚫 Wallet connection rejected:", error);
+      
       return null;
     }
   }
@@ -353,7 +339,7 @@ export class Auth {
         }
       }
     } catch (error) {
-      console.log("Error checking wallet extensions:", error);
+      
     }
 
     return wallets;
@@ -364,7 +350,7 @@ export class Auth {
    */
   public logout(): void {
     this.user = null;
-    console.log("🚪 User logged out successfully");
+    
   }
 }
 

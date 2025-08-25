@@ -1077,13 +1077,10 @@ export default class BattleScene extends Phaser.Scene {
   private damageBase(team: "player" | "enemy", damage: number): void {
     // Prevent multiple damage calls if game is already over
     if (this.gameState.isGameOver) {
-      console.log(`🚫 damageBase blocked - game already over (${team} team)`);
       return;
     }
 
-    console.log(
-      `💥 damageBase called for ${team} team, damage: ${damage}, sudden death: ${this.gameState.isSuddenDeath}`
-    );
+
 
     // In sudden death mode, any base damage means instant defeat for that team
     if (this.gameState.isSuddenDeath) {
@@ -1097,7 +1094,7 @@ export default class BattleScene extends Phaser.Scene {
       // Determine winner (opposite of who took damage)
       const winner = team === "player" ? "enemy" : "player";
 
-      console.log(`🎯 Sudden Death: ${team} base destroyed, ${winner} wins!`);
+
 
       // Update game state to reflect the HP change
       this.updateGameState();
@@ -1150,11 +1147,11 @@ export default class BattleScene extends Phaser.Scene {
   private endGame(winner: "player" | "enemy" | "time"): void {
     // Prevent multiple endGame calls
     if (this.gameState.isGameOver) {
-      console.log(`🚫 endGame blocked - game already over (winner: ${winner})`);
+     
       return;
     }
 
-    console.log(`🏁 endGame called with winner: ${winner}`);
+   
     this.gameState.isGameOver = true;
 
     if (winner === "time") {
@@ -1307,13 +1304,13 @@ export default class BattleScene extends Phaser.Scene {
   public castSpell(spellId: string): boolean {
     // Don't allow if game is over
     if (this.gameState.isGameOver) {
-      console.log(`🚫 Spell ${spellId} blocked - game is over`);
+     
       return false;
     }
 
     const spellConfig = GAME_CONFIG.spells.find((s) => s.id === spellId);
     if (!spellConfig) {
-      console.log(`❌ Spell ${spellId} not found in config`);
+     
       return false;
     }
 
@@ -1326,34 +1323,23 @@ export default class BattleScene extends Phaser.Scene {
       const remainingCooldown = Math.ceil(
         (cooldownTime - (currentTime - lastCast)) / 1000
       );
-      console.log(
-        `⏰ Spell ${spellId} on cooldown - ${remainingCooldown}s remaining`
-      );
+      
       return false; // Still on cooldown
     }
 
     // Check if spell quiz callback is available
     if (!this.onRequestSpellQuiz) {
-      console.log(
-        `❌ Spell ${spellId} failed - onRequestSpellQuiz callback not set`
-      );
-      console.log(`🔍 Debug info:`, {
-        gameState: this.gameState,
-        isSpellQuizActive: this.isSpellQuizActive,
-        onRequestSpellQuiz: !!this.onRequestSpellQuiz,
-      });
+      
       return false;
     }
 
     // Check if another quiz is already active
     if (this.isSpellQuizActive || this.isQuizActive) {
-      console.log(
-        `🚫 Spell ${spellId} blocked - quiz already active (spell: ${this.isSpellQuizActive}, unit: ${this.isQuizActive})`
-      );
+      
       return false;
     }
 
-    console.log(`🔮 Casting spell: ${spellId}`);
+    
 
     // Set cooldown IMMEDIATELY when spell is cast, not after quiz completion
     this.spellCooldowns.set(spellId, this.time.now);
@@ -1363,20 +1349,18 @@ export default class BattleScene extends Phaser.Scene {
 
     // Trigger the spell quiz
     this.onRequestSpellQuiz(spellId, (correct: boolean) => {
-      console.log(
-        `🎯 Spell quiz completed for ${spellId} - correct: ${correct}`
-      );
+      
 
       // Reset spell quiz state
       this.isSpellQuizActive = false;
 
       if (correct) {
         // Cast spell on enemies (normal effect)
-        console.log(`✨ Spell ${spellId} cast successfully on enemies`);
+        
         this.executeSpell(spellId, false); // false = not backfired
       } else {
         // BACKFIRE! Cast spell on player instead
-        console.log(`💥 Spell ${spellId} backfired on player!`);
+        
         this.executeSpell(spellId, true); // true = backfired
       }
 
@@ -1389,9 +1373,7 @@ export default class BattleScene extends Phaser.Scene {
   private executeSpell(spellId: string, backfired: boolean): void {
     const targetTeam = backfired ? "player" : "enemy";
 
-    console.log(
-      `⚡ Executing spell ${spellId} on ${targetTeam} team (backfired: ${backfired})`
-    );
+    
 
     // Apply spell effect based on ID
     switch (spellId) {
@@ -1417,9 +1399,7 @@ export default class BattleScene extends Phaser.Scene {
           }
         });
 
-        console.log(
-          `❄️ Freeze spell affected ${frozenCount} ${targetTeam} units`
-        );
+        
 
         // Create freeze visual effect only if targeting enemies
         if (!backfired) {
@@ -1430,13 +1410,13 @@ export default class BattleScene extends Phaser.Scene {
 
       case "meteor":
         // Meteor strike on units
-        console.log(`☄️ Meteor spell targeting ${targetTeam} team`);
+        
         this.createMeteorStrike(backfired);
         soundManager.playSpellCast();
         break;
 
       default:
-        console.log(`❓ Unknown spell ID: ${spellId}`);
+          
         break;
     }
   }

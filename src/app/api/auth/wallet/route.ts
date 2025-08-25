@@ -5,13 +5,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  console.log("🔗 Wallet authentication attempt started");
+   
   try {
     const { address, username } = await request.json();
-    console.log("📝 Wallet data received:", {
-      address: address?.slice(0, 10) + "...",
-      username,
-    });
+    
 
     // Validate inputs
     if (!address || !username) {
@@ -37,10 +34,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Check if user already exists with this wallet
-    console.log("🔍 Checking for existing wallet user...");
+    
     const existingUser = await database.findUserByWallet(address);
     if (existingUser) {
-      console.log("✅ Existing wallet user found:", existingUser.username);
+      
       return NextResponse.json({
         success: true,
         user: {
@@ -53,18 +50,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Create new wallet user
-    console.log("👤 Creating new wallet user...");
+    
     const user = await database.createUser({
       username: username.trim(),
       walletAddress: address,
       isGuest: false,
     });
 
-    console.log("✅ Wallet user created successfully:", {
-      id: user.id,
-      username: user.username,
-      walletAddress: user.walletAddress,
-    });
+    
 
     return NextResponse.json({
       success: true,
@@ -76,7 +69,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error("Wallet authentication error:", error);
+    
 
     let errorMessage = "Wallet authentication failed";
     if (error instanceof Error) {

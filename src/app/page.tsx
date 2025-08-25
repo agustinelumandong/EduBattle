@@ -133,20 +133,11 @@ export default function EduBattle(): ReactElement {
         playerLost = state.playerBaseHp <= 0;
 
         if (state.isSuddenDeath) {
-          console.log(
-            "🎯 Sudden Death Mode - Base HP should now be 0 for loser"
-          );
+           
         }
 
         // Log the actual game state for debugging
-        console.log("🎮 Game State Details:", {
-          playerBaseHp: state.playerBaseHp,
-          enemyBaseHp: state.enemyBaseHp,
-          isGameOver: state.isGameOver,
-          isSuddenDeath: state.isSuddenDeath,
-          playerWon,
-          playerLost,
-        });
+         
 
         // If neither condition is met, something is wrong with the game logic
         if (!playerWon && !playerLost) {
@@ -158,14 +149,7 @@ export default function EduBattle(): ReactElement {
           });
         }
 
-        console.log("🎮 Game Over! Recording result:", {
-          userId: currentUser.id,
-          username: currentUser.username,
-          won: playerWon,
-          playerBaseHp: state.playerBaseHp,
-          enemyBaseHp: state.enemyBaseHp,
-          isGameOver: state.isGameOver,
-        });
+        
 
         // Only record game result if user is not a guest (has wallet)
         if (!currentUser.isGuest) {
@@ -189,18 +173,16 @@ export default function EduBattle(): ReactElement {
             .then((response) => response.json())
             .then((result) => {
               if (result.success) {
-                console.log("✅ Game result recorded successfully!");
+                
               } else {
-                console.error("❌ Failed to record game:", result.error);
+                
               }
             })
             .catch((error) => {
-              console.error("❌ Failed to record game result:", error);
+              
             });
         } else {
-          console.log(
-            "👻 Guest user - game result not recorded to leaderboard"
-          );
+          
         }
 
         if (playerWon) {

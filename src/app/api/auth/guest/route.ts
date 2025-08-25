@@ -5,10 +5,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  console.log("👻 Guest user creation attempt started");
   try {
     const { username } = await request.json();
-    console.log("📝 Guest data received:", { username });
+    
 
     // Validate inputs
     if (!username || username.trim().length < 2) {
@@ -19,12 +18,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Create guest user in database
-    console.log("👤 Creating guest user in database...");
+    
     const user = await database.createGuestUser(username.trim());
-    console.log("✅ Guest user created successfully:", {
-      userId: user.id,
-      username: user.username,
-    });
+    
 
     return NextResponse.json({
       success: true,
@@ -35,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error("Guest user creation error:", error);
+    
 
     let errorMessage = "Guest user creation failed";
     if (error instanceof Error) {
