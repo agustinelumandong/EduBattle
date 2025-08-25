@@ -26,8 +26,8 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "EduBattle",
-  description: "EduBattle is a platform for learning and competing in quizzes",
+  title: "QuizBlaster",
+  description: "QuizBlaster is a platform for learning and competing in quizzes", 
 };
 
 export default function RootLayout({
