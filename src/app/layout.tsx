@@ -1,4 +1,3 @@
-import MiniKitProvider from "@/components/MinikitsProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Orbitron, Press_Start_2P } from "next/font/google";
 import "./globals.css";
@@ -26,23 +25,21 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "EduBattle",
-  description: "EduBattle is a platform for learning and competing in quizzes",
+  title: "EduBattle - Quiz Challenge Game",
+  description: "Educational quiz game with blockchain integration",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${pressStart2P.variable} antialiased`}
       >
-        <MiniKitProvider>
-          {children}
-        </MiniKitProvider>
+        {children}
       </body>
     </html>
   );
