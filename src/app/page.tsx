@@ -376,7 +376,7 @@ export default function EduBattle(): ReactElement {
 
     // Disable spells for 10 seconds at game start
     setAreSpellsDisabled(true);
-    setSpellDisableTimeRemaining(25);
+    setSpellDisableTimeRemaining(30); // spell cooldown
   }, [currentUser]);
 
   const resetGameState = useCallback(() => {
@@ -714,7 +714,6 @@ export default function EduBattle(): ReactElement {
                       if (availableWallets.length > 0) {
                         return (
                           <div className="text-xs text-green-400 text-center">
-                            🎯 Detected: {availableWallets.join(", ")}
                           </div>
                         );
                       }
