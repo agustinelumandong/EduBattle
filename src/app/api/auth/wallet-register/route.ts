@@ -23,10 +23,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!address || !username) {
-      console.error("❌ Missing required fields:", {
-        address: !!address,
-        username: !!username,
-      });
       return NextResponse.json(
         { success: false, error: "Wallet address and username required" },
         { status: 400 }
@@ -35,7 +31,6 @@ export async function POST(req: NextRequest) {
 
     // Validate wallet address format
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      console.error("❌ Invalid wallet address format:", address);
       return NextResponse.json(
         { success: false, error: "Invalid wallet address format" },
         { status: 400 }
@@ -75,7 +70,6 @@ export async function POST(req: NextRequest) {
         name: dbError.name,
         code: dbError.code,
         meta: dbError.meta,
-        stack: dbError.stack,
       });
 
       // Fallback: Try direct Prisma with raw SQL
@@ -106,11 +100,6 @@ export async function POST(req: NextRequest) {
         });
       } catch (rawError: any) {
         console.error("❌ Raw SQL also failed:", rawError.message);
-        console.error("🔍 Raw SQL error details:", {
-          name: rawError.name,
-          code: rawError.code,
-          meta: rawError.meta,
-        });
         throw rawError;
       } finally {
         await prisma.$disconnect();
@@ -119,7 +108,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("❌ ALL ATTEMPTS FAILED to save wallet user for leaderboard");
     console.error("🔍 Final error:", error.message);
-    console.error("🔍 Error stack:", error.stack);
 
     return NextResponse.json(
       {

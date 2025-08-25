@@ -8,7 +8,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log("🧪 Debug registration test started");
 
     const body = await request.json();
-    const testType = body.testType || "email"; // "email" or "wallet"
+    const testType = body.testType || "email"; // "email", "wallet", or "connection"
 
     // Test database connection first
     try {
@@ -31,69 +31,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (testType === "health-check") {
-      // 🆕 Simple database health check
-      console.log("🏥 Testing database health...");
-
-      try {
-        // Test basic database operations
-        const testEmail = `health_${Date.now()}@test.com`;
-
-        // Test 1: Check if we can query the database
-        console.log("🔍 Test 1: Database query test...");
-        await database.findUserByEmail(testEmail);
-        console.log("✅ Test 1 passed: Database query successful");
-
-        // Test 2: Check if we can create a user
-        console.log("👤 Test 2: User creation test...");
-        const testUser = await database.createUser({
-          email: testEmail,
-          username: `healthuser_${Date.now()}`,
-          authMethod: "email",
-          passwordHash: "test_hash",
-        });
-        console.log("✅ Test 2 passed: User creation successful", {
-          userId: testUser.id,
-        });
-
-        // Test 3: Check if we can find the created user
-        console.log("🔍 Test 3: User retrieval test...");
-        const foundUser = await database.findUserById(testUser.id);
-        console.log("✅ Test 3 passed: User retrieval successful", {
-          username: foundUser?.username,
-        });
-
-        return NextResponse.json({
-          success: true,
-          message: "Database health check passed",
-          testType: "health-check",
-          results: {
-            databaseQuery: "✅ PASSED",
-            userCreation: "✅ PASSED",
-            userRetrieval: "✅ PASSED",
-          },
-          steps: [
-            "Database connection",
-            "Query test",
-            "Creation test",
-            "Retrieval test",
-          ],
-        });
-      } catch (healthError: any) {
-        console.error("❌ Database health check failed:", healthError.message);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Database health check failed",
-            details: {
-              message: healthError.message,
-              code: healthError.code,
-              hint: "Check your DATABASE_URL and database status",
-            },
-          },
-          { status: 500 }
-        );
-      }
+    if (testType === "connection") {
+      // Simple connection test
+      return NextResponse.json({
+        success: true,
+        message: "Database connection test successful",
+        testType: "connection",
+        steps: ["Database connection"],
+      });
     }
 
     if (testType === "wallet") {
@@ -128,7 +73,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.log("✅ Wallet user created successfully:", {
         id: walletUser.id,
         username: walletUser.username,
-        walletAddress: walletUser.walletAddress?.slice(0, 10) + "...",
+        walletAddress: walletUser.walletAddress,
+      });
+
+      // Verify the user was actually saved by querying again
+      const verifyUser = await database.findUserByWallet(
+        testWalletData.address
+      );
+      console.log("🔍 Verification query result:", {
+        found: !!verifyUser,
+        username: verifyUser?.username,
+        id: verifyUser?.id,
       });
 
       return NextResponse.json({
@@ -140,69 +95,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           username: walletUser.username,
           walletAddress: walletUser.walletAddress,
         },
+        verification: {
+          found: !!verifyUser,
+          username: verifyUser?.username,
+          id: verifyUser?.id,
+        },
         steps: [
           "Database connection",
           "Wallet user check",
           "Wallet user creation",
-        ],
-      });
-    }
-
-    if (testType === "device-compatibility") {
-      // 🆕 Test device compatibility for Apple vs Android
-      console.log("📱 Testing device compatibility...");
-
-      // Simulate different payload structures
-      const androidPayload = {
-        address: "0x1234567890abcdef1234567890abcdef12345678",
-        user: { username: "android_user" },
-      };
-
-      const iosPayload = {
-        address: "0xabcdef1234567890abcdef1234567890abcdef12",
-        username: "ios_user",
-      };
-
-      console.log("🤖 Android-style payload:", androidPayload);
-      console.log("🍎 iOS-style payload:", iosPayload);
-
-      // Test username extraction logic
-      const extractUsername = (payload: any) => {
-        let username = "";
-
-        if (payload.user?.username) {
-          username = payload.user.username;
-          console.log("✅ Got username from MiniKit user data:", username);
-        } else if (payload.username) {
-          username = payload.username;
-          console.log("✅ Got username from payload directly:", username);
-        } else {
-          const shortAddress = payload.address.slice(2, 8);
-          username = `Player_${shortAddress}`;
-          console.log("⚠️ No username found, generated fallback:", username);
-        }
-
-        return username;
-      };
-
-      const androidUsername = extractUsername(androidPayload);
-      const iosUsername = extractUsername(iosPayload);
-
-      return NextResponse.json({
-        success: true,
-        message: "Device compatibility test successful",
-        testType: "device-compatibility",
-        results: {
-          android: {
-            payload: androidPayload,
-            extractedUsername: androidUsername,
-          },
-          ios: { payload: iosPayload, extractedUsername: iosUsername },
-        },
-        steps: [
-          "Database connection",
-          "Payload simulation",
-          "Username extraction",
+          "Verification query",
         ],
       });
     }

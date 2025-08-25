@@ -59,7 +59,6 @@ export default function EduBattle(): ReactElement {
   } | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>("");
-  const [walletUsername, setWalletUsername] = useState<string>(""); // 🆕 For Apple device username input
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -363,28 +362,27 @@ export default function EduBattle(): ReactElement {
     setAuthError("");
 
     try {
-      // 🆕 Store username for Apple devices if provided
-      if (walletUsername.trim()) {
-        localStorage.setItem("wallet_username", walletUsername.trim());
-        console.log(
-          "📱 Stored username for Apple device:",
-          walletUsername.trim()
-        );
-      }
-
+      console.log("🔐 Frontend: Starting wallet login...");
       const result = await auth.loginWithWallet();
+
+      console.log("📊 Frontend: Wallet login result:", result);
+
       if (result.success && result.user) {
+        console.log(
+          "✅ Frontend: Wallet login successful, setting user:",
+          result.user
+        );
         setCurrentUser(result.user);
         setShowLoginModal(false);
         // ✅ Show welcome page instead of immediately starting game
         setShowTutorial(true);
         setGameStarted(false);
-        // Clear the username input after successful login
-        setWalletUsername("");
       } else {
+        console.error("❌ Frontend: Wallet login failed:", result.error);
         setAuthError(result.error || "Wallet login failed");
       }
     } catch (error) {
+      console.error("❌ Frontend: Wallet login error:", error);
       setAuthError("Wallet authentication error");
     } finally {
       setAuthLoading(false);
@@ -543,9 +541,14 @@ export default function EduBattle(): ReactElement {
                   <div className="text-sm text-gray-400 mb-2">
                     Wallet: {currentUser.address?.slice(0, 8)}...
                     {currentUser.address?.slice(-6)}
-                    Wallet transparent: {currentUser.address}
                   </div>
                 )}
+                {/* 🆕 DEBUG INFO: Show current user state */}
+                <div className="text-xs text-gray-500 mb-2">
+                  Debug: ID={currentUser.id}, Auth={currentUser.authMethod},
+                  Username="{currentUser.username}", Address=
+                  {currentUser.address?.slice(0, 10)}...
+                </div>
               </div>
             )}
           </div>
@@ -665,25 +668,6 @@ export default function EduBattle(): ReactElement {
                   >
                     {authLoading ? "Connecting..." : "🔗 Connect Wallet"}
                   </button>
-
-                  {/* 🆕 Username input for Apple devices */}
-                  <div className="space-y-2">
-                    <label className="text-white text-sm">
-                      Username (optional - for Apple devices):
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter your username"
-                      value={walletUsername}
-                      onChange={(e) => setWalletUsername(e.target.value)}
-                      className="w-full nes-input text-black px-3 py-2 rounded"
-                      disabled={authLoading}
-                    />
-                    <p className="text-xs text-gray-400">
-                      💡 Apple users: Set a username before connecting to avoid
-                      placeholder names
-                    </p>
-                  </div>
 
                   <div className="text-center text-white text-sm">or</div>
 
