@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         );
 
         // Generate username from wallet address if not provided
-        const userService = await MiniKit.getUserByUsername(payload.address);
+        const userService = await MiniKit.getUserByAddress(payload.address);
         const username = userService.username || `Player_${payload.address.slice(0, 6)}`;
 
         // Check if user already exists
