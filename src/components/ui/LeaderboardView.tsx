@@ -1,24 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function LeaderboardView() {
   const [players, setPlayers] = useState<any[]>([]);
 
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      try {
-        const response = await fetch("/api/leaderboard");
-        const result = await response.json();
-        if (result.success) {
-          setPlayers(result.data);
-        }
-      } catch (error) {
-        console.error("Failed to load leaderboard:", error);
+  const loadLeaderboard = useCallback(async () => {
+    try {
+      const response = await fetch("/api/leaderboard");
+      const result = await response.json();
+      if (result.success) {
+        setPlayers(result.data);
       }
-    };
-    loadLeaderboard();
+    } catch (error) {
+      console.error("Failed to load leaderboard:", error);
+    }
   }, []);
+
+  useEffect(() => {
+    loadLeaderboard();
+    
+    // Set up periodic refresh every 30 seconds to keep leaderboard updated
+    const interval = setInterval(loadLeaderboard, 30000);
+    
+    return () => clearInterval(interval);
+  }, [loadLeaderboard]);
 
   if (players.length === 0) {
     return (
@@ -33,6 +39,16 @@ export default function LeaderboardView() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-white">Leaderboard</h2>
+        <button
+          onClick={loadLeaderboard}
+          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+        >
+          Refresh
+        </button>
+      </div>
+      
       <div className="grid grid-cols-4 gap-4 text-sm font-semibold text-white border-b border-gray-600 pb-2">
         <div className="col-span-1 text-center">Rank</div>
         <div className="col-span-1 text-center">Player</div>

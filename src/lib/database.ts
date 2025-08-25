@@ -196,11 +196,13 @@ export class DatabaseService {
       update: {
         totalWins,
         totalGames,
+        updatedAt: new Date(), // Ensure updatedAt is set on every update
       },
       create: {
         userId,
         totalWins,
         totalGames,
+        updatedAt: new Date(), // Ensure updatedAt is set on creation
       },
     });
   }
@@ -217,7 +219,10 @@ export class DatabaseService {
           },
         },
       },
-      orderBy: { totalWins: "desc" },
+      orderBy: [
+        { totalWins: "desc" },
+        { updatedAt: "asc" } // Earlier entries (older players) rank higher when tied
+      ],
     });
 
     // Add rank numbers
@@ -244,8 +249,8 @@ export class DatabaseService {
 
     if (!entry) return null;
 
-    const leaderboard = await this.getLeaderboard();
-    const rank = leaderboard.findIndex((e: any) => e.userId === userId) + 1;
+    const leaderboardEntries = await this.getLeaderboard();
+    const rank = leaderboardEntries.findIndex((e: any) => e.userId === userId) + 1;
 
     return {
       ...entry,

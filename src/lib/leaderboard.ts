@@ -15,6 +15,7 @@ export interface LeaderboardPlayer {
       totalWins: number;
       authMethod: 'wallet' | 'email';
       displayId: string;
+      lastUpdated: number; // Timestamp for ranking purposes
     }>;
   }
   
@@ -53,12 +54,28 @@ export interface LeaderboardPlayer {
       try {
         const stored = localStorage.getItem(this.storageKey);
         if (stored) {
-          return JSON.parse(stored);
+          const data = JSON.parse(stored);
+          // Migrate existing data to include lastUpdated field
+          this.migrateData(data);
+          return data;
         }
       } catch (error) {
         console.error('Failed to load leaderboard data:', error);
       }
       return this.getDefaultData();
+    }
+
+    /**
+     * Migrate existing data to include lastUpdated field
+     */
+    private migrateData(data: any): void {
+      if (data.players) {
+        Object.keys(data.players).forEach(playerId => {
+          if (!data.players[playerId].lastUpdated) {
+            data.players[playerId].lastUpdated = Date.now();
+          }
+        });
+      }
     }
   
     /**
@@ -95,13 +112,16 @@ export interface LeaderboardPlayer {
         data.players[playerId].username = username;
         data.players[playerId].authMethod = authMethod;
         data.players[playerId].displayId = displayId;
+        // Update timestamp for ranking purposes
+        data.players[playerId].lastUpdated = Date.now();
       } else {
         // New player, initialize with first win
         data.players[playerId] = {
           username: username,
           totalWins: 1,
           authMethod: authMethod,
-          displayId: displayId
+          displayId: displayId,
+          lastUpdated: Date.now() // Track when player was added
         };
       }
   
@@ -115,16 +135,24 @@ export interface LeaderboardPlayer {
     public getLeaderboard(): LeaderboardPlayer[] {
       const data = this.getLeaderboardData();
       
-      // Convert to array and sort by total wins (descending)
+      // Convert to array and sort by total wins (descending), then by join time (earlier players rank higher when tied)
       const sortedPlayers = Object.entries(data.players)
         .map(([id, playerData]) => ({
           id,
           username: playerData.username,
           totalWins: playerData.totalWins,
           authMethod: playerData.authMethod,
-          displayId: playerData.displayId
+          displayId: playerData.displayId,
+          lastUpdated: playerData.lastUpdated
         }))
-        .sort((a, b) => b.totalWins - a.totalWins);
+        .sort((a, b) => {
+          // First sort by total wins (descending)
+          if (b.totalWins !== a.totalWins) {
+            return b.totalWins - a.totalWins;
+          }
+          // If wins are tied, sort by join time (earlier players rank higher)
+          return a.lastUpdated - b.lastUpdated;
+        });
   
       // Add rank numbers
       return sortedPlayers.map((player, index) => ({
