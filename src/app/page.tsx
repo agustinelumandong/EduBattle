@@ -516,7 +516,7 @@ export default function EduBattle(): ReactElement {
           <div className="text-center text-white p-3 sm:p-2 md:p-6">
             <div className="text-lg sm:text-lg md:text-xl lg:text-3xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
               🎮Welcome to QuizBlaster!🚀
-            </div> 
+            </div>
           </div>
 
           <div className="p-2 sm:p-1 md:p-2 lg:p-4">
@@ -580,7 +580,8 @@ export default function EduBattle(): ReactElement {
                     <span className="text-red-500 text-sm sm:text-base">
                       💥
                     </span>
-                    Sudden death starts when time runs out—first base breach wins the game!
+                    Sudden death starts when time runs out—first base breach
+                    wins the game!
                   </li>
                 </ul>
               </div>
@@ -595,24 +596,21 @@ export default function EduBattle(): ReactElement {
                 {currentUser ? "Start Battle!" : "Login to Play!"}
               </Button>
               {currentUser && (
-              <Button
-                onClick={() => setShowLeaderboard(true)}
-              size="lg"
-                className="nes-btn text-xs sm:text-sm md:text-base  game-button nes-btn cursor-pointer"
-              >
-                🏆 Leaderboard
-              </Button>
-            )}
+                <Button
+                  onClick={() => setShowLeaderboard(true)}
+                  size="lg"
+                  className="nes-btn text-xs sm:text-sm md:text-base  game-button nes-btn cursor-pointer"
+                >
+                  🏆 Leaderboard
+                </Button>
+              )}
             </div>
-           
           </div>
-         
-         <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text mb-4">
-              Get ready for educational warfare! 🎓⚔️
-            </p>
-        </div>
 
-        
+          <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text mb-4">
+            Get ready for educational warfare! 🎓⚔️
+          </p>
+        </div>
 
         {/* Login Modal */}
         {showLoginModal && (
@@ -703,16 +701,8 @@ export default function EduBattle(): ReactElement {
                   <Button
                     onClick={() => {
                       setShowGameResult(false);
-                      setShowLeaderboard(true);
-                    }}
-                    className="flex-1 is-primary"
-                  >
-                    🏆 View Leaderboard
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowGameResult(false);
-                      restartGame();
+                      setShowTutorial(true);
+                      setGameStarted(false);
                     }}
                     variant="outline"
                     className="flex-1 text-white border-white hover:bg-white hover:text-black"
