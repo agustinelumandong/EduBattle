@@ -1,33 +1,17 @@
-import { auth, type User } from "@/lib/auth";
 import { database } from "@/lib/database";
 import {
   MiniAppWalletAuthSuccessPayload,
-  verifySiweMessage,
+  MiniKit,
+  verifySiweMessage
 } from "@worldcoin/minikit-js";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { useEffect, useState } from "react";
 
 interface IRequestPayload {
   payload: MiniAppWalletAuthSuccessPayload;
   nonce: string;
 }
-const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-useEffect(() => {
-  const checkAuth = async () => {
-    if (auth.isAuthenticated()) {
-      setCurrentUser(auth.getCurrentUser());
-    } else {
-      // Try to restore session for email users
-      const result = await auth.restoreSession();
-      if (result.success && result.user) {
-        setCurrentUser(result.user);
-      }
-    }
-  };
-  checkAuth();
-}, []);
 /**
  * API route to complete and verify Sign in with Ethereum (SIWE) authentication
  * This verifies the blockchain signature and completes the login process
@@ -35,7 +19,7 @@ useEffect(() => {
 export async function POST(req: NextRequest) {
   try {
     const { payload, nonce } = (await req.json()) as IRequestPayload;
-    
+
 
     // Verify nonce matches what we stored earlier
     const cookieStore = await cookies();
@@ -66,8 +50,8 @@ export async function POST(req: NextRequest) {
         );
 
         // Generate username from wallet address if not provided
-        // const username = `Player_${payload.address.slice(0, 6)}`;
-        const username = `${payload.user.username}`;
+        const username = MiniKit.user?.username || "Anonymous";
+
 
         // Check if user already exists
         const existingUser = await database.findUserByWallet(payload.address);
