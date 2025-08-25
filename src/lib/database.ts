@@ -33,14 +33,12 @@ function validateEnvironment() {
 // Validate environment on import
 validateEnvironment();
 
-// Singleton pattern for Prisma Client to prevent connection issues in Vercel
-declare global {
-  var __prisma: PrismaClient | undefined;
-}
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 // Create Prisma client with better error handling
 const prisma =
-  globalThis.__prisma ||
+globalForPrisma.prisma ||
   new PrismaClient({
     log:
       process.env.NODE_ENV === "development"
@@ -50,7 +48,7 @@ const prisma =
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.__prisma = prisma;
+  globalForPrisma.prisma = prisma;
 }
 
 export interface CreateUserData {

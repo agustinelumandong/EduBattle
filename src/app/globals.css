@@ -728,6 +728,11 @@
 }
 
 /* Custom NES.css Input Validation */
+.nes-input {
+  border: 4px solid var(--primary-foreground) !important;
+  border-radius: 8px !important;
+}
+
 .nes-input.is-error {
   border: 4px solid #ff0000 !important;
   border-radius: 8px !important;
