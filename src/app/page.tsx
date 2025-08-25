@@ -132,33 +132,22 @@ export default function EduBattle(): ReactElement {
     (state: GameState) => {
       setGameState(state);
 
-      // Check if game is over and record win/loss
+      
       if (state.isGameOver && currentUser) {
-        // Check actual game result
+        
         let playerWon = false;
         let playerLost = false;
 
-        // Now that we fixed the HP update in sudden death mode, we can use simple HP checks
+        
         playerWon = state.enemyBaseHp <= 0;
         playerLost = state.playerBaseHp <= 0;
 
         if (state.isSuddenDeath) {
-          console.log(
-            "🎯 Sudden Death Mode - Base HP should now be 0 for loser"
-          );
         }
 
-        // Log the actual game state for debugging
-        console.log("🎮 Game State Details:", {
-          playerBaseHp: state.playerBaseHp,
-          enemyBaseHp: state.enemyBaseHp,
-          isGameOver: state.isGameOver,
-          isSuddenDeath: state.isSuddenDeath,
-          playerWon,
-          playerLost,
-        });
+        
 
-        // If neither condition is met, something is wrong with the game logic
+        
         if (!playerWon && !playerLost) {
           console.warn("⚠️ Game ended but no clear winner/loser:", {
             playerBaseHp: state.playerBaseHp,
@@ -168,14 +157,7 @@ export default function EduBattle(): ReactElement {
           });
         }
 
-        console.log("🎮 Game Over! Recording result:", {
-          userId: currentUser.id,
-          username: currentUser.username,
-          won: playerWon,
-          playerBaseHp: state.playerBaseHp,
-          enemyBaseHp: state.enemyBaseHp,
-          isGameOver: state.isGameOver,
-        });
+        
 
         // Record game result via API
         fetch("/api/game/record", {
@@ -196,9 +178,7 @@ export default function EduBattle(): ReactElement {
         })
           .then((response) => response.json())
           .then((result) => {
-            if (result.success) {
-              console.log("✅ Game result recorded successfully!");
-            } else {
+            if (!result.success) {
               console.error("❌ Failed to record game:", result.error);
             }
           })

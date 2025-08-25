@@ -5,16 +5,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log("🧪 Debug registration test started");
+     
 
     const body = await request.json();
     const testType = body.testType || "email"; // "email" or "wallet"
 
     // Test database connection first
     try {
-      console.log("🔌 Testing database connection...");
+     
       await database.findUserByEmail("connection_test@test.com");
-      console.log("✅ Database connection successful");
+      
     } catch (dbError: any) {
       console.error("❌ Database connection failed:", dbError.message);
       return NextResponse.json(
@@ -38,18 +38,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         username: `testwallet_${Date.now()}`,
       };
 
-      console.log("🔐 Testing wallet user creation:", {
-        address: testWalletData.address.slice(0, 10) + "...",
-        username: testWalletData.username,
-      });
+     
 
       // Check if wallet user exists
       const existingWalletUser = await database.findUserByWallet(
         testWalletData.address
       );
-      console.log("🔍 Existing wallet user check:", {
-        exists: !!existingWalletUser,
-      });
+     
 
       // Create wallet user
       const walletUser = await database.createUser({
@@ -60,11 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         passwordHash: "",
       });
 
-      console.log("✅ Wallet user created successfully:", {
-        id: walletUser.id,
-        username: walletUser.username,
-        walletAddress: walletUser.walletAddress?.slice(0, 10) + "...",
-      });
+     
 
       return NextResponse.json({
         success: true,
@@ -90,33 +81,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       password: "testpass123",
     };
 
-    console.log("📧 Test data:", {
-      email: testData.email,
-      username: testData.username,
-    });
+     
 
     // Step 1: Check if user exists
-    console.log("🔍 Step 1: Checking existing user...");
+     
     const existingUser = await database.findUserByEmail(testData.email);
-    console.log("✅ Step 1 completed:", { userExists: !!existingUser });
+     
 
     // Step 2: Hash password
-    console.log("🔐 Step 2: Hashing password...");
+     
     const passwordHash = await bcrypt.hash(testData.password, 12);
-    console.log("✅ Step 2 completed: Password hashed");
+     
 
     // Step 3: Create user
-    console.log("👤 Step 3: Creating user...");
+     
     const user = await database.createUser({
       email: testData.email,
       username: testData.username,
       authMethod: "email",
       passwordHash,
     });
-    console.log("✅ Step 3 completed:", { userId: user.id });
+     
 
     // Step 4: Generate JWT
-    console.log("🎫 Step 4: Generating JWT...");
+     
     const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key-for-demo";
     const token = jwt.sign(
       {
@@ -128,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
-    console.log("✅ Step 4 completed: JWT generated");
+     
 
     return NextResponse.json({
       success: true,

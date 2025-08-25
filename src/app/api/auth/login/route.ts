@@ -5,10 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  console.log("🔐 Login attempt started");
   try {
     const { email, password } = await request.json();
-    console.log("📧 Login data received:", { email: email?.substring(0, 3) + "***" });
+    
 
     // Validate inputs
     if (!email || !password) {
@@ -26,16 +25,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Find user by email
-    console.log("🔍 Looking up user by email...");
     const user = await database.findUserByEmail(email);
     if (!user) {
-      console.log("❌ User not found");
       return NextResponse.json(
         { success: false, error: "Invalid email or password" },
         { status: 401 }
       );
     }
-    console.log("✅ User found:", { userId: user.id, username: user.username });
+    
 
     // Check if user has a password hash (email auth users should have one)
     if (!user.passwordHash) {

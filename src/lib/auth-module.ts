@@ -64,7 +64,7 @@ export class ModularAuth {
    */
   public async authenticateWithWallet(): Promise<AuthResult> {
     try {
-      console.log("🔐 Starting MiniKit authentication...");
+       
 
       if (!MiniKit.isInstalled()) {
         return {
@@ -141,9 +141,7 @@ export class ModularAuth {
     isRegister = false
   ): Promise<AuthResult> {
     try {
-      console.log(
-        `📧 ${isRegister ? "Registering" : "Logging in"} with email...`
-      );
+       
 
       const response = await fetch(
         `/api/auth/${isRegister ? "register" : "login"}`,
@@ -231,7 +229,7 @@ export class ModularAuth {
   public logout(): void {
     this.user = null;
     localStorage.removeItem("auth_token");
-    console.log("🚪 User logged out");
+     
   }
 }
 

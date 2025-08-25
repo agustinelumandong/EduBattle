@@ -12,15 +12,10 @@ interface WalletUserData {
  */
 export async function POST(req: NextRequest) {
   try {
-    console.log("🔐 Wallet registration from frontend");
+     
     
     const { address, username } = await req.json();
-    console.log("📝 Frontend data:", { 
-      address: address?.slice(0, 10) + "...", 
-      username,
-      addressLength: address?.length,
-      usernameLength: username?.length
-    });
+     
 
     if (!address || !username) {
       return NextResponse.json(
@@ -39,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     // Try to save using database service first
     try {
-      console.log("💾 Attempting to save with database service...");
+     
       
       const user = await database.createUser({
         email: "",
@@ -49,11 +44,7 @@ export async function POST(req: NextRequest) {
         passwordHash:  "",
       });
       
-      console.log("✅ SUCCESS: User saved via database service:", {
-        id: user.id,
-        username: user.username,
-        authMethod: user.authMethod
-      });
+     
       
       return NextResponse.json({
         success: true,
@@ -74,7 +65,7 @@ export async function POST(req: NextRequest) {
       });
       
       // Fallback: Try direct Prisma with raw SQL
-      console.log("🔄 Trying direct SQL approach...");
+      
       const { PrismaClient } = await import("@prisma/client");
       const prisma = new PrismaClient();
       
@@ -89,7 +80,7 @@ export async function POST(req: NextRequest) {
             "updatedAt" = NOW()
         `;
         
-        console.log("✅ RAW SQL SUCCESS: User saved via direct SQL");
+       
         
         return NextResponse.json({
           success: true,

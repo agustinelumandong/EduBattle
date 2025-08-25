@@ -107,18 +107,14 @@ export class Auth {
     return this.user;
   }
 
-  /**
-   * Wallet login - performs REAL blockchain authentication
-   * This requires MiniKit to be available (World App or compatible environment)
-   */
   public async loginWithWallet(): Promise<AuthResult> {
     try {
-      console.log("🔐 Starting blockchain wallet authentication...");
+      
 
       // Wait a moment for MiniKit to initialize if needed
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      console.log("MiniKit installed:", MiniKit.isInstalled());
+      
 
       // Check if MiniKit is available
       if (!MiniKit.isInstalled()) {
@@ -129,7 +125,7 @@ export class Auth {
         };
       }
 
-      console.log("✅ Using MiniKit blockchain authentication");
+      
       return await this.performBlockchainAuth();
     } catch (error) {
       console.error("Wallet authentication error:", error);
@@ -148,7 +144,7 @@ export class Auth {
    */
   public async loginWithEmail(authData: EmailAuthData): Promise<AuthResult> {
     try {
-      console.log("📧 Starting email authentication for:", authData.email);
+       
 
       const { response, json: result } = await this.fetchJsonWithRetry(
         "/api/auth/login",
@@ -170,7 +166,7 @@ export class Auth {
         };
       }
 
-      // Store JWT token for session management
+      
       localStorage.setItem("auth_token", result.token);
 
       // Create authenticated user object
@@ -182,7 +178,7 @@ export class Auth {
         email: result.user.email,
       };
 
-      console.log("✅ Email authentication successful");
+      
       return {
         success: true,
         user: this.user,
@@ -218,7 +214,7 @@ export class Auth {
       }
       const { nonce } = await nonceResponse.json();
 
-      // Step 2: Perform wallet authentication using SIWE
+      
       const walletAuthInput: WalletAuthInput = {
         nonce: nonce,
         requestId: crypto.randomUUID(),
@@ -241,7 +237,7 @@ export class Auth {
         };
       }
 
-      // Step 3: Verify the signature on backend (now also registers user in database)
+      
       const verifyResponse = await fetch("/api/complete-siwe", {
         method: "POST",
         headers: {
@@ -266,14 +262,9 @@ export class Auth {
         };
       }
 
-      // 🆕 CRITICAL FIX: User is now automatically registered in database by complete-siwe endpoint
-      // No need for separate wallet registration call
-      console.log(
-        "✅ SIWE verification successful, user should be in database:",
-        verifyResult
-      );
+      
 
-      // Get username from response or generate fallback
+      
       const storedUsername =
         typeof window !== "undefined"
           ? localStorage.getItem("wallet_username")
@@ -284,7 +275,7 @@ export class Auth {
         verifyResult.user?.username ||
         `Player_${finalPayload.address.slice(0, 6)}`;
 
-      // Create authenticated user object
+      
       this.user = {
         id: verifyResult.user?.id || finalPayload.address, // Use database ID if available
         username: username,
@@ -293,9 +284,9 @@ export class Auth {
         address: finalPayload.address,
       };
 
-      console.log("👤 User object created:", this.user);
+      
 
-      // Clear stored username after successful authentication
+      
       if (typeof window !== "undefined") {
         localStorage.removeItem("wallet_username");
       }
@@ -315,7 +306,7 @@ export class Auth {
    */
   public async registerWithEmail(authData: EmailAuthData): Promise<AuthResult> {
     try {
-      console.log("📝 Starting email registration for:", authData.email);
+      
 
       if (!authData.username) {
         return {
@@ -345,10 +336,10 @@ export class Auth {
         };
       }
 
-      // Store JWT token for session management
+      
       localStorage.setItem("auth_token", result.token);
 
-      // Create authenticated user object
+      
       this.user = {
         id: result.user.id,
         username: result.user.username,
@@ -357,7 +348,7 @@ export class Auth {
         email: result.user.email,
       };
 
-      console.log("✅ Email registration successful");
+      
       return {
         success: true,
         user: this.user,
@@ -377,8 +368,6 @@ export class Auth {
    * Since wallet addresses are self-sovereign identities
    */
   public async registerWithWallet(): Promise<AuthResult> {
-    // In blockchain authentication, register and login are equivalent
-    // The wallet address serves as both username and authentication
     return this.loginWithWallet();
   }
 
@@ -410,12 +399,12 @@ export class Auth {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        // Clear invalid token
+        
         localStorage.removeItem("auth_token");
         return { success: false, error: "Invalid session" };
       }
 
-      // Restore user state
+      
       this.user = {
         id: result.user.id,
         username: result.user.username,
@@ -440,9 +429,9 @@ export class Auth {
    */
   public logout(): void {
     this.user = null;
-    // Clear email auth token if it exists
+    
     localStorage.removeItem("auth_token");
-    console.log("🚪 User logged out successfully");
+    
   }
 }
 

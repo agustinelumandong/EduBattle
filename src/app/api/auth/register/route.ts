@@ -5,10 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  console.log("📝 Registration attempt started");
   try {
     const { email, password, username } = await request.json();
-    console.log("📧 Registration data received:", { email: email?.substring(0, 3) + "***", usernameLength: username?.length });
+    
 
     // Validate inputs
     if (!email || !password || !username) {
@@ -40,29 +39,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Check if user already exists
-    console.log("🔍 Checking for existing user...");
     const existingUser = await database.findUserByEmail(email);
     if (existingUser) {
-      console.log("❌ User already exists with this email");
       return NextResponse.json(
         { success: false, error: "User with this email already exists" },
         { status: 409 }
       );
     }
-    console.log("✅ Email available for registration");
+    
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user in database
-    console.log("👤 Creating user in database...");
     const user = await database.createUser({
       email,
       username,
       authMethod: "email",
       passwordHash,
     });
-    console.log("✅ User created successfully:", { userId: user.id, username: user.username });
+    
 
     // Generate JWT token
     const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key-for-demo";

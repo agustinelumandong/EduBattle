@@ -20,7 +20,7 @@ export default function MiniKitProvider({ children }: MiniKitProviderProps) {
       // Check installation after a brief delay to ensure proper initialization
       const checkInstallation = () => {
         const installed = MiniKit.isInstalled();
-        console.log('MiniKit installation check:', installed);
+         
         setIsInstalled(installed);
       };
       

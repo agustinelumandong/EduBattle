@@ -45,10 +45,7 @@ export async function POST(req: NextRequest) {
 
       // 🆕 CRITICAL FIX: Automatically register user in database after successful verification
       try {
-        console.log(
-          "🔐 SIWE verification successful, registering user in database..."
-        );
-
+        
         // Generate username from wallet address if not provided
         const userService = await MiniKit.getUserByAddress(payload.address);
         const username = userService.username || `Player_${payload.address.slice(0, 6)}`;
@@ -57,10 +54,7 @@ export async function POST(req: NextRequest) {
         const existingUser = await database.findUserByWallet(payload.address);
 
         if (existingUser) {
-          console.log(
-            "✅ User already exists in database:",
-            existingUser.username
-          );
+          
           return NextResponse.json({
             status: "success",
             isValid: true,
@@ -79,11 +73,7 @@ export async function POST(req: NextRequest) {
           passwordHash: "",
         });
 
-        console.log("✅ New wallet user registered in database:", {
-          id: newUser.id,
-          username: newUser.username,
-          address: newUser.walletAddress,
-        });
+        
 
         return NextResponse.json({
           status: "success",

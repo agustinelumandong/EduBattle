@@ -13,11 +13,11 @@ function validateEnvironment() {
     throw new Error(`Missing environment variables: ${missingVars.join(", ")}`);
   }
 
-  // Log database URL for debugging (masked for security)
+  
   const dbUrl = process.env.DATABASE_URL || "";
   if (dbUrl) {
     const maskedUrl = dbUrl.replace(/(:\/\/)([^:]+):([^@]+)@/, "$1***:***@");
-    console.log("🔗 Database URL configured:", maskedUrl);
+    
   }
 
   if (
@@ -70,15 +70,7 @@ export class DatabaseService {
   // User management
   async createUser(data: CreateUserData) {
     try {
-      console.log("💾 Database: Creating user with data:", {
-        username: data.username,
-        authMethod: data.authMethod,
-        walletAddress: data.walletAddress
-          ? data.walletAddress.slice(0, 10) + "..."
-          : "none",
-        hasEmail: !!data.email,
-        hasPasswordHash: !!data.passwordHash,
-      });
+       
 
       const user = await prisma.user.create({
         data: {
@@ -90,11 +82,7 @@ export class DatabaseService {
         },
       });
 
-      console.log("✅ Database: User created successfully:", {
-        id: user.id,
-        username: user.username,
-        authMethod: user.authMethod,
-      });
+       
 
       return user;
     } catch (error: any) {
@@ -122,24 +110,13 @@ export class DatabaseService {
 
   async findUserByWallet(walletAddress: string) {
     try {
-      console.log(
-        "🔍 Database: Searching for user by wallet:",
-        walletAddress.slice(0, 10) + "..."
-      );
+       
 
       const user = await prisma.user.findUnique({
         where: { walletAddress },
       });
 
-      if (user) {
-        console.log("✅ Database: Found existing user:", {
-          id: user.id,
-          username: user.username,
-          authMethod: user.authMethod,
-        });
-      } else {
-        console.log("ℹ️ Database: No existing user found for wallet address");
-      }
+       
 
       return user;
     } catch (error: any) {
