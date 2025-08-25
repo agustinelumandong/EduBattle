@@ -1,4 +1,4 @@
-import BaseMiniKitProvider from "@/components/MinikitsProvider";
+import { MiniKitContextProvider } from "@/providers/MiniKitProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Orbitron, Press_Start_2P } from "next/font/google";
 import "./globals.css";
@@ -43,9 +43,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${pressStart2P.variable} antialiased`}
       >
-        <BaseMiniKitProvider>
+        <MiniKitContextProvider>
           {children}
-        </BaseMiniKitProvider>
+        </MiniKitContextProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 'use client'
 
-// TODO: Replace with Base MiniKit imports
+// TODO: Replace with Base MiniKit imports once package is properly installed
 // import { useMiniKit, useAuthenticate, AuthenticateProvider } from '@coinbase/onchainkit/minikit';
 import { ReactNode, useEffect, useState } from 'react';
 
@@ -16,10 +16,7 @@ export default function BaseMiniKitProvider({ children }: BaseMiniKitProviderPro
     const appId = process.env.NEXT_PUBLIC_BASE_APP_ID || 'base_app_quiz_blaster';
     
     try {
-      // TODO: Initialize Base MiniKit
-      // const { context } = useMiniKit();
-      // const { user } = useAuthenticate();
-      
+      // TODO: Initialize Base MiniKit once package is installed
       // For now, simulate that Base MiniKit is available
       setIsInstalled(true);
       
@@ -31,7 +28,7 @@ export default function BaseMiniKitProvider({ children }: BaseMiniKitProviderPro
   
   return (
     <div data-base-minikit-installed={isInstalled}>
-      {/* TODO: Wrap with AuthenticateProvider when Base MiniKit is implemented */}
+      {/* TODO: Wrap with AuthenticateProvider when Base MiniKit package is properly installed */}
       {children}
     </div>
   );

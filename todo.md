@@ -40,15 +40,15 @@ Environment
 
 Deliverable: code compiled without World App MiniKit references ✅
 
-### 2) Install and configure Base MiniKit provider
+### 2) Install and configure Base MiniKit provider ✅ COMPLETED
 
-- [ ] Add dependency: `@coinbase/onchainkit` (or `@base-org/minikit` if we switch; default: OCK).
-- [ ] Wrap app with MiniKit provider in `src/app/layout.tsx`:
-  - Import `{ useMiniKit, useAuthenticate, AuthenticateProvider }` per OCK docs.
-  - Initialize provider with `NEXT_PUBLIC_BASE_APP_ID`.
-- [ ] Expose context via lightweight local provider if needed by existing components.
+- [x] Add dependency: `@coinbase/onchainkit`.
+- [x] Wrap app with MiniKit provider in `src/app/layout.tsx`:
+  - Use `MiniKitProvider` from `@coinbase/onchainkit/minikit`.
+  - Initialize with `NEXT_PUBLIC_CDP_CLIENT_API_KEY` and Base chain.
+- [x] Create `src/providers/MiniKitProvider.tsx` to encapsulate provider.
 
-Deliverable: provider mounted; `useMiniKit` returns `context`, `useAuthenticate` returns `user`.
+Deliverable: provider mounted; ready to use `useMiniKit`/`useAuthenticate` in Step 3.
 
 ### 3) Client auth: Quick Auth + context
 

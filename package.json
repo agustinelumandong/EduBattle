@@ -13,12 +13,12 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "^0.38.19",
     "@excaliburjs/plugin-jsfxr": "^0.30.1",
     "@prisma/client": "^6.14.0",
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@types/matter-js": "^0.20.0",
-    "@worldcoin/minikit-js": "^1.9.6",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
