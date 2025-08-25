@@ -211,6 +211,7 @@ class SoundManager {
   private isInitialized: boolean = false;
   private backgroundMusic: HTMLAudioElement | null = null;
   private isMusicPlaying: boolean = false;
+  private currentMusicPath: string | null = null;
 
   async init(): Promise<void> {
     if (this.isInitialized) return;
@@ -260,13 +261,23 @@ class SoundManager {
   // Background Music Methods
   loadBackgroundMusic(musicPath: string, autoplay: boolean = true): void {
     try {
+      // If the same music is already loaded, don't reload it
+      if (this.currentMusicPath === musicPath) {
+        return;
+      }
+
+      // Stop any currently playing music before loading new music
+      this.stopBackgroundMusic();
+
       this.backgroundMusic = new Audio(musicPath);
       this.backgroundMusic.loop = true;
       this.backgroundMusic.volume = 0.3;
       this.backgroundMusic.preload = "auto";
+      this.currentMusicPath = musicPath;
 
       this.backgroundMusic.onerror = () => {
         console.warn(`Failed to load background music: ${musicPath}`);
+        this.currentMusicPath = null;
       };
 
       if (autoplay) {
@@ -276,6 +287,7 @@ class SoundManager {
       }
     } catch (error) {
       console.warn("Failed to load background music:", error);
+      this.currentMusicPath = null;
     }
   }
 
@@ -336,6 +348,18 @@ class SoundManager {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
       this.isMusicPlaying = false;
+      this.currentMusicPath = null;
+    }
+  }
+
+  // Simple method to completely clear background music
+  clearBackgroundMusic(): void {
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.src = "";
+      this.backgroundMusic = null;
+      this.isMusicPlaying = false;
+      this.currentMusicPath = null;
     }
   }
 

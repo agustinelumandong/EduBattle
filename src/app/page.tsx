@@ -17,6 +17,7 @@ import type { GameState } from "./components/battle/BattleScene";
 import QuizModal from "./components/quiz/QuizModal";
 import GameHUD from "./components/ui/GameHUD";
 import { GAME_CONFIG } from "./data/game-config";
+import { soundManager } from "./components/battle/helpers/soundManager";
 
 interface PendingQuiz {
   unitType: string;
@@ -59,6 +60,7 @@ export default function EduBattle(): ReactElement {
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>("");
   const [guestUsername, setGuestUsername] = useState<string>("");
+  const [walletUsername, setWalletUsername] = useState<string>("");
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -75,6 +77,35 @@ export default function EduBattle(): ReactElement {
   useEffect(() => {
     // For now, no session restoration - users start fresh each time
     // This can be enhanced later with localStorage if needed
+  }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      soundManager.clearBackgroundMusic();
+    };
+  }, []);
+
+  // Music control functions - now using sound manager
+  const startMusic = useCallback(() => {
+    soundManager.loadBackgroundMusic("/music/background-music.mp3", true);
+  }, []);
+
+  const stopMusic = useCallback(() => {
+    soundManager.stopBackgroundMusic();
+  }, []);
+
+  // Function to return to welcome page (used by Play Again button)
+  const returnToWelcomePage = useCallback(() => {
+    setGameStarted(false);
+    setShowTutorial(true);
+    setShowGameResult(false);
+    setGameResult(null);
+    setSpellCooldowns({});
+    setAreSpellsDisabled(false);
+    setSpellDisableTimeRemaining(0);
+    // Stop music when returning to welcome page
+    soundManager.clearBackgroundMusic();
   }, []);
 
   // Handle spell disable countdown timer
@@ -322,18 +353,25 @@ export default function EduBattle(): ReactElement {
     setShowTutorial(false);
     setGameStarted(true);
 
+    // Start background music when game starts
+    soundManager.loadBackgroundMusic("/music/background-music.mp3", true);
+
     // Disable spells for 10 seconds at game start
     setAreSpellsDisabled(true);
     setSpellDisableTimeRemaining(30); // spell cooldown
   }, [currentUser]);
 
-  // Handle game completion and record win
-  const handleGameComplete = useCallback(
-    (playerWon: boolean) => {
-      // Game completion is now handled in handleGameStateUpdate
-    },
-    [currentUser]
-  );
+  const resetGameState = useCallback(() => {
+    setGameStarted(false);
+    setShowTutorial(true);
+    setShowGameResult(false);
+    setGameResult(null);
+    setSpellCooldowns({});
+    setAreSpellsDisabled(false);
+    setSpellDisableTimeRemaining(0);
+    // Stop music when returning to welcome page
+    soundManager.clearBackgroundMusic();
+  }, []);
 
   // Auth handlers
   const handlePlayAsGuest = async () => {
@@ -370,7 +408,7 @@ export default function EduBattle(): ReactElement {
       // Use enhanced wallet connection with custom username if provided
       const result = await auth.connectWallet(
         undefined,
-        guestUsername.trim() || undefined
+        walletUsername.trim() || undefined
       );
 
       if (result.success && result.user) {
@@ -379,7 +417,7 @@ export default function EduBattle(): ReactElement {
         setShowTutorial(true);
         setGameStarted(false);
         // Clear username after successful connection
-        setGuestUsername("");
+        setWalletUsername("");
       } else {
         setAuthError(result.error || "Wallet connection failed");
       }
@@ -415,7 +453,10 @@ export default function EduBattle(): ReactElement {
       setShowGameResult(false);
       setGameResult(null);
 
+      // Reset spell cooldowns and disable state
       setSpellCooldowns({});
+      setAreSpellsDisabled(true);
+      setSpellDisableTimeRemaining(25);
     }
   }, []);
 
@@ -631,8 +672,8 @@ export default function EduBattle(): ReactElement {
                     <input
                       type="text"
                       placeholder="Enter username (optional)"
-                      value={guestUsername}
-                      onChange={(e) => setGuestUsername(e.target.value)}
+                      value={walletUsername}
+                      onChange={(e) => setWalletUsername(e.target.value)}
                       className="w-full nes-input text-sm p-2"
                       maxLength={20}
                     />
@@ -672,6 +713,7 @@ export default function EduBattle(): ReactElement {
                     setShowAuthModal(false);
                     setAuthError("");
                     setGuestUsername("");
+                    setWalletUsername("");
                   }}
                   type="button"
                   className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
@@ -733,8 +775,7 @@ export default function EduBattle(): ReactElement {
                   <Button
                     onClick={() => {
                       setShowGameResult(false);
-                      setShowTutorial(true);
-                      setGameStarted(false);
+                      resetGameState();
                     }}
                     variant="outline"
                     className="flex-1 text-white border-white hover:bg-white hover:text-black"
@@ -746,7 +787,7 @@ export default function EduBattle(): ReactElement {
                 <Button
                   onClick={() => {
                     setShowGameResult(false);
-                    setShowTutorial(true);
+                    resetGameState();
                   }}
                   variant="outline"
                   className="w-full text-white border-white hover:bg-white hover:text-black"
@@ -787,6 +828,7 @@ export default function EduBattle(): ReactElement {
           onRequestQuiz={handleRequestQuiz}
           onGameReady={handleGameReady}
           onRequestSpellQuiz={handleRequestSpellQuiz}
+          onPlayAgain={returnToWelcomePage}
         />
       </div>
 

@@ -30,6 +30,7 @@ interface BattleArenaProps {
     spellId: string,
     callback: (correct: boolean) => void
   ) => void;
+  onPlayAgain?: () => void; // Add callback for returning to welcome page
 }
 
 const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
@@ -40,6 +41,7 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
       onRequestQuiz,
       onGameReady,
       onRequestSpellQuiz,
+      onPlayAgain,
     },
     ref
   ) => {
@@ -70,8 +72,13 @@ const BattleArena = React.forwardRef<BattleArenaRef, BattleArenaProps>(
     }, [onGameReady]);
 
     const restartGame = useCallback(() => {
-      window.location.reload(); // Simple restart
-    }, []);
+      if (gameRef.current) {
+        gameRef.current.resetGameState();
+      }
+      if (onPlayAgain) {
+        onPlayAgain();
+      }
+    }, [onPlayAgain]);
 
     // Expose methods to parent
     React.useImperativeHandle(
