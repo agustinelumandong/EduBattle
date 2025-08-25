@@ -64,7 +64,7 @@ export default function LeaderboardView() {
             <div className="font-bold text-2xl sm:text-3xl text-center">
               {player.rank === 1 && "🥇"}
               {player.rank === 2 && "🥈"}
-              {player.rank === 3 && "🥉"}
+              {player.rank === 3 && "🥉"} 
               {player.rank > 3 && `#${player.rank}`}
             </div>
             <div className="truncate">
@@ -81,7 +81,7 @@ export default function LeaderboardView() {
               </div>
             </div>
             <div className="font-bold text-green-400 text-center">{player.totalWins}</div>
-            <div className="text-xs text-center">
+            <div className="text-xs text-center hidden sm:block">
               {player.user?.authMethod === "wallet" ? "🔗 Wallet" : "📧 Email"}
             </div>
           </div>
