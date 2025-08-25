@@ -38,6 +38,54 @@ export class Auth {
 
   private constructor() {}
 
+  // Simple JSON fetch with retry and backoff to reduce intermittent network/cold-start failures
+  private async fetchJsonWithRetry(
+    input: RequestInfo | URL,
+    init: RequestInit & { retryCount?: number; retryDelayMs?: number } = {}
+  ): Promise<{ response: Response; json: any }> {
+    const { retryCount = 2, retryDelayMs = 300, ...requestInit } = init;
+
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt <= retryCount; attempt++) {
+      try {
+        const response = await fetch(input, {
+          // Ensure no caching artifacts in some environments
+          cache: "no-store",
+          ...requestInit,
+          headers: {
+            "Content-Type": "application/json",
+            ...(requestInit.headers || {}),
+          },
+        });
+
+        // Parse JSON once per attempt
+        const json = await response.json().catch(() => ({}));
+
+        // Retry on transient server/network errors
+        if (response.status >= 500) {
+          if (attempt < retryCount) {
+            await new Promise((r) =>
+              setTimeout(r, retryDelayMs * (attempt + 1))
+            );
+            continue;
+          }
+        }
+
+        return { response, json };
+      } catch (error) {
+        lastError = error;
+        if (attempt < retryCount) {
+          await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
+          continue;
+        }
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Network request failed");
+  }
+
   public static getInstance(): Auth {
     if (!Auth.instance) {
       Auth.instance = new Auth();
@@ -102,23 +150,23 @@ export class Auth {
     try {
       console.log("📧 Starting email authentication for:", authData.email);
 
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: authData.email,
-          password: authData.password,
-        }),
-      });
+      const { response, json: result } = await this.fetchJsonWithRetry(
+        "/api/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: authData.email,
+            password: authData.password,
+          }),
+          retryCount: 2,
+          retryDelayMs: 300,
+        }
+      );
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
+      if (!response.ok || !result?.success) {
         return {
           success: false,
-          error: result.error || "Email login failed",
+          error: result?.error || "Email login failed",
         };
       }
 
@@ -276,24 +324,24 @@ export class Auth {
         };
       }
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: authData.email,
-          password: authData.password,
-          username: authData.username,
-        }),
-      });
+      const { response, json: result } = await this.fetchJsonWithRetry(
+        "/api/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: authData.email,
+            password: authData.password,
+            username: authData.username,
+          }),
+          retryCount: 2,
+          retryDelayMs: 300,
+        }
+      );
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
+      if (!response.ok || !result?.success) {
         return {
           success: false,
-          error: result.error || "Email registration failed",
+          error: result?.error || "Email registration failed",
         };
       }
 
