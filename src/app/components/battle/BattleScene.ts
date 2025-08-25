@@ -926,6 +926,9 @@ export default class BattleScene extends Phaser.Scene {
 
   // Public method to reset game state (called when restarting)
   public resetGameState(): void {
+    // Stop background music when resetting game state
+    soundManager.clearBackgroundMusic();
+
     this.gameState = {
       playerBaseHp: GAME_CONFIG.battle.baseMaxHealth,
       enemyBaseHp: GAME_CONFIG.battle.baseMaxHealth,
