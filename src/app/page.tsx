@@ -599,7 +599,7 @@ export default function EduBattle(): ReactElement {
                     <span className="text-red-500 text-sm sm:text-base">
                       💥
                     </span>
-                    Sudden death mode will end the game immediately
+                    Sudden death starts when time runs out—first base breach wins the game!
                   </li>
                 </ul>
               </div>
