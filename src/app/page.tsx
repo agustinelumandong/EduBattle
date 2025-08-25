@@ -1,6 +1,5 @@
 "use client";
 
-import EmailLoginForm from "@/components/ui/EmailLoginForm";
 import LeaderboardView from "@/components/ui/LeaderboardView";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +49,7 @@ export default function EduBattle(): ReactElement {
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
   const [showGameResult, setShowGameResult] = useState<boolean>(false);
   const [gameResult, setGameResult] = useState<{
@@ -59,6 +58,7 @@ export default function EduBattle(): ReactElement {
   } | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>("");
+  const [guestUsername, setGuestUsername] = useState<string>("");
 
   const [spellCooldowns, setSpellCooldowns] = useState<Record<string, number>>(
     {}
@@ -73,18 +73,8 @@ export default function EduBattle(): ReactElement {
 
   // Check auth status on component mount
   useEffect(() => {
-    const checkAuth = async () => {
-      if (auth.isAuthenticated()) {
-        setCurrentUser(auth.getCurrentUser());
-      } else {
-        // Try to restore session for email users
-        const result = await auth.restoreSession();
-        if (result.success && result.user) {
-          setCurrentUser(result.user);
-        }
-      }
-    };
-    checkAuth();
+    // For now, no session restoration - users start fresh each time
+    // This can be enhanced later with localStorage if needed
   }, []);
 
   // Handle spell disable countdown timer
@@ -159,21 +149,15 @@ export default function EduBattle(): ReactElement {
 
         
 
-        // Record game result via API
-        fetch("/api/game/record", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            won: playerWon,
-            score: playerWon ? 100 : 0,
-            gameData: {
-              playerBaseHp: state.playerBaseHp,
-              enemyBaseHp: state.enemyBaseHp,
-              matchTimeLeft: state.matchTimeLeft,
+        // Only record game result if user is not a guest (has wallet)
+        if (!currentUser.isGuest) {
+          // Record game result via API
+          fetch("/api/game/record", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
+<<<<<<< HEAD
           }),
         })
           .then((response) => response.json())
@@ -181,10 +165,35 @@ export default function EduBattle(): ReactElement {
             if (!result.success) {
               console.error("❌ Failed to record game:", result.error);
             }
+=======
+            body: JSON.stringify({
+              userId: currentUser.id,
+              won: playerWon,
+              score: playerWon ? 100 : 0,
+              gameData: {
+                playerBaseHp: state.playerBaseHp,
+                enemyBaseHp: state.enemyBaseHp,
+                matchTimeLeft: state.matchTimeLeft,
+              },
+            }),
+>>>>>>> bdff4c576389d54a7b55bc4b0c800ea3e5dd738c
           })
-          .catch((error) => {
-            console.error("❌ Failed to record game result:", error);
-          });
+            .then((response) => response.json())
+            .then((result) => {
+              if (result.success) {
+                console.log("✅ Game result recorded successfully!");
+              } else {
+                console.error("❌ Failed to record game:", result.error);
+              }
+            })
+            .catch((error) => {
+              console.error("❌ Failed to record game result:", error);
+            });
+        } else {
+          console.log(
+            "👻 Guest user - game result not recorded to leaderboard"
+          );
+        }
 
         if (playerWon) {
           setGameResult({
@@ -317,7 +326,7 @@ export default function EduBattle(): ReactElement {
 
   const startGame = useCallback(() => {
     if (!currentUser) {
-      setShowLoginModal(true);
+      setShowAuthModal(true);
       return;
     }
     setShowTutorial(false);
@@ -337,75 +346,55 @@ export default function EduBattle(): ReactElement {
   );
 
   // Auth handlers
-  const handleLoginWithWallet = async () => {
+  const handlePlayAsGuest = async () => {
+    if (!guestUsername.trim()) {
+      setAuthError("Please enter a username");
+      return;
+    }
+
     setAuthLoading(true);
     setAuthError("");
 
     try {
-      const result = await auth.loginWithWallet();
+      const result = await auth.createGuestUser(guestUsername.trim());
       if (result.success && result.user) {
         setCurrentUser(result.user);
-        setShowLoginModal(false);
-        // ✅ Show welcome page instead of immediately starting game
+        setShowAuthModal(false);
         setShowTutorial(true);
         setGameStarted(false);
       } else {
-        setAuthError(result.error || "Wallet login failed");
+        setAuthError(result.error || "Failed to create guest user");
       }
     } catch (error) {
-      setAuthError("Wallet authentication error");
+      setAuthError("Guest user creation error");
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleLoginWithEmail = async (email: string, password: string) => {
+  const handleConnectWallet = async () => {
     setAuthLoading(true);
     setAuthError("");
 
     try {
-      const result = await auth.loginWithEmail({ email, password });
+      // Use enhanced wallet connection with custom username if provided
+      const result = await auth.connectWallet(
+        undefined,
+        guestUsername.trim() || undefined
+      );
+
       if (result.success && result.user) {
         setCurrentUser(result.user);
-        setShowLoginModal(false);
-        // ✅ Show welcome page instead of immediately starting game
+        setShowAuthModal(false);
         setShowTutorial(true);
         setGameStarted(false);
+        // Clear username after successful connection
+        setGuestUsername("");
       } else {
-        setAuthError(result.error || "Email login failed");
+        setAuthError(result.error || "Wallet connection failed");
       }
     } catch (error) {
-      setAuthError("Email authentication error");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleRegisterWithEmail = async (
-    email: string,
-    password: string,
-    username: string
-  ) => {
-    setAuthLoading(true);
-    setAuthError("");
-
-    try {
-      const result = await auth.registerWithEmail({
-        email,
-        password,
-        username,
-      });
-      if (result.success && result.user) {
-        setCurrentUser(result.user);
-        setShowLoginModal(false);
-        // ✅ Show welcome page instead of immediately starting game
-        setShowTutorial(true);
-        setGameStarted(false);
-      } else {
-        setAuthError(result.error || "Registration failed");
-      }
-    } catch (error) {
-      setAuthError("Registration error");
+      setAuthError("Wallet connection error");
     } finally {
       setAuthLoading(false);
     }
@@ -449,6 +438,9 @@ export default function EduBattle(): ReactElement {
             <div className="flex items-center gap-3">
               <span className="text-white text-sm">
                 Welcome, {currentUser.username}!
+                {currentUser.isGuest && " (Guest)"}
+                {!currentUser.isGuest && " 🔗"}
+                {!currentUser.isGuest && auth.isOnchainkitAvailable() && " ⚡"}
               </span>
 
               <button
@@ -575,7 +567,7 @@ export default function EduBattle(): ReactElement {
               >
                 {currentUser ? "Start Battle!" : "Login to Play!"}
               </Button>
-              {currentUser && (
+              {currentUser && !currentUser.isGuest && (
                 <Button
                   onClick={() => setShowLeaderboard(true)}
                   size="lg"
@@ -584,20 +576,25 @@ export default function EduBattle(): ReactElement {
                   🏆 Leaderboard
                 </Button>
               )}
+              {currentUser && currentUser.isGuest && (
+                <div className="text-yellow-400 text-sm">
+                  👻 Guest Mode - Scores won't be saved to leaderboard
+                </div>
+              )}
             </div>
-          </div>
 
-          <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text mb-4">
-            Get ready for educational warfare! 🎓⚔️
-          </p>
+            <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text mb-4">
+              Get ready for educational warfare! 🎓⚔️
+            </p>
+          </div>
         </div>
 
-        {/* Login Modal */}
-        {showLoginModal && (
+        {/* Auth Modal */}
+        {showAuthModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 login-modal">
             <Card className="w-full max-w-md nes-container is-rounded is-dark">
               <CardHeader className="text-center text-white">
-                <CardTitle className="text-xl">Login to Play</CardTitle>
+                <CardTitle className="text-xl">Choose Your Adventure</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {authError && (
@@ -607,28 +604,85 @@ export default function EduBattle(): ReactElement {
                 )}
 
                 <div className="space-y-3">
-                  <button
-                    onClick={handleLoginWithWallet}
-                    disabled={authLoading}
-                    type="button"
-                    className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
-                  >
-                    {authLoading ? "Connecting..." : "🔗 Connect Wallet"}
-                  </button>
+                  {/* Guest Mode */}
+                  <div className="space-y-2">
+                    <h4 className="text-white text-sm font-semibold">
+                      👻 Play as Guest
+                    </h4>
+                    <input
+                      type="text"
+                      placeholder="Enter username"
+                      value={guestUsername}
+                      onChange={(e) => setGuestUsername(e.target.value)}
+                      className="w-full nes-input text-sm p-2"
+                      maxLength={20}
+                    />
+                    <button
+                      onClick={handlePlayAsGuest}
+                      disabled={authLoading || !guestUsername.trim()}
+                      type="button"
+                      className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
+                    >
+                      {authLoading ? "Creating..." : "🎮 Play as Guest"}
+                    </button>
+                    <p className="text-xs text-gray-400 text-center">
+                      Can play but won't save to leaderboard
+                    </p>
+                  </div>
 
                   <div className="text-center text-white text-sm">or</div>
 
-                  <EmailLoginForm
-                    onLogin={handleLoginWithEmail}
-                    onRegister={handleRegisterWithEmail}
-                    loading={authLoading}
-                  />
+                  {/* Wallet Connection */}
+                  <div className="space-y-2">
+                    <h4 className="text-white text-sm font-semibold">
+                      🔗 Connect Wallet
+                      {auth.isOnchainkitAvailable() && " (Enhanced)"}
+                    </h4>
+                    <input
+                      type="text"
+                      placeholder="Enter username (optional)"
+                      value={guestUsername}
+                      onChange={(e) => setGuestUsername(e.target.value)}
+                      className="w-full nes-input text-sm p-2"
+                      maxLength={20}
+                    />
+                    <button
+                      onClick={handleConnectWallet}
+                      disabled={authLoading}
+                      type="button"
+                      className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
+                    >
+                      {authLoading ? "Connecting..." : "🔗 Connect Wallet"}
+                    </button>
+                    <p className="text-xs text-gray-400 text-center">
+                      Can play and save to leaderboard
+                      {auth.isOnchainkitAvailable() &&
+                        " • Coinbase onchainkit enabled"}
+                    </p>
+                    {/* Show detected wallets */}
+                    {(() => {
+                      const availableWallets = auth.getAvailableWallets();
+                      if (availableWallets.length > 0) {
+                        return (
+                          <div className="text-xs text-green-400 text-center">
+                            🎯 Detected: {availableWallets.join(", ")}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="text-xs text-yellow-400 text-center">
+                          ⚠️ No wallet extensions detected
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 <button
                   onClick={() => {
-                    setShowLoginModal(false);
+                    setShowAuthModal(false);
                     setAuthError("");
+                    setGuestUsername("");
                   }}
                   type="button"
                   className="w-full nes-btn text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
@@ -678,6 +732,15 @@ export default function EduBattle(): ReactElement {
                 <p className="text-white">{gameResult.message}</p>
 
                 <div className="flex gap-3">
+                  <Button
+                    onClick={() => {
+                      setShowGameResult(false);
+                      setShowLeaderboard(true);
+                    }}
+                    className="flex-1 is-primary"
+                  >
+                    🏆 View Leaderboard
+                  </Button>
                   <Button
                     onClick={() => {
                       setShowGameResult(false);

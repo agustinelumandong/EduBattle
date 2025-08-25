@@ -1,4 +1,3 @@
-import MiniKitProvider from "@/components/MinikitsProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Orbitron, Press_Start_2P } from "next/font/google";
 import "./globals.css";
@@ -26,26 +25,29 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
+<<<<<<< HEAD
   title: "QuizBlaster",
   description: "QuizBlaster is a platform for learning and competing in quizzes", 
   icons: {
     icon: "/icon.png",
   },
+=======
+  title: "EduBattle - Quiz Challenge Game",
+  description: "Educational quiz game with blockchain integration",
+>>>>>>> bdff4c576389d54a7b55bc4b0c800ea3e5dd738c
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${pressStart2P.variable} antialiased`}
       >
-        <MiniKitProvider>
-          {children}
-        </MiniKitProvider>
+        {children}
       </body>
     </html>
   );

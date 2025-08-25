@@ -116,7 +116,7 @@ export const GAME_CONFIG: GameConfig = {
     },
   ],
   battle: {
-    matchDurationMinutes: 4,
+    matchDurationMinutes: 0,
     baseMaxHealth: 100,
     laneWidth: 800,
     unitSpeed: 50,
@@ -306,7 +306,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "math_020",
     subject: "math",
     difficulty: "hard",
-    question: "What is the circumference of a circle with radius 7? (Use π ≈ 3.14)",
+    question:
+      "What is the circumference of a circle with radius 7? (Use π ≈ 3.14)",
     options: ["43.96", "44.04", "43.88", "44.12"],
     correctAnswer: "43.96",
     explanation: "Circumference = 2πr = 2 × 3.14 × 7 = 43.96",
@@ -441,7 +442,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     question: "What is the process by which plants make food called?",
     options: ["Respiration", "Photosynthesis", "Digestion", "Circulation"],
     correctAnswer: "Photosynthesis",
-    explanation: "Plants use sunlight, water, and CO2 to make glucose and oxygen",
+    explanation:
+      "Plants use sunlight, water, and CO2 to make glucose and oxygen",
     timeLimit: 10,
   },
   {
@@ -477,7 +479,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "sci_018",
     subject: "science",
     difficulty: "hard",
-    question: "What type of electromagnetic radiation has the shortest wavelength?",
+    question:
+      "What type of electromagnetic radiation has the shortest wavelength?",
     options: ["Radio waves", "Microwaves", "X-rays", "Gamma rays"],
     correctAnswer: "Gamma rays",
     explanation: "Gamma rays have the highest energy and shortest wavelength",
@@ -596,7 +599,12 @@ export const QUIZ_BANK: QuizQuestion[] = [
     subject: "history",
     difficulty: "easy",
     question: "Who wrote 'Noli Me Tangere'?",
-    options: ["Andres Bonifacio", "Jose Rizal", "Apolinario Mabini", "Marcelo del Pilar"],
+    options: [
+      "Andres Bonifacio",
+      "Jose Rizal",
+      "Apolinario Mabini",
+      "Marcelo del Pilar",
+    ],
     correctAnswer: "Jose Rizal",
     timeLimit: 10,
   },
@@ -605,7 +613,12 @@ export const QUIZ_BANK: QuizQuestion[] = [
     subject: "history",
     difficulty: "easy",
     question: "Who is known as the 'Father of the Philippine Revolution'?",
-    options: ["Jose Rizal", "Andres Bonifacio", "Emilio Aguinaldo", "Apolinario Mabini"],
+    options: [
+      "Jose Rizal",
+      "Andres Bonifacio",
+      "Emilio Aguinaldo",
+      "Apolinario Mabini",
+    ],
     correctAnswer: "Andres Bonifacio",
     timeLimit: 10,
   },
@@ -614,7 +627,12 @@ export const QUIZ_BANK: QuizQuestion[] = [
     subject: "history",
     difficulty: "normal",
     question: "Who was the founder of the Katipunan?",
-    options: ["Jose Rizal", "Andres Bonifacio", "Emilio Jacinto", "Apolinario Mabini"],
+    options: [
+      "Jose Rizal",
+      "Andres Bonifacio",
+      "Emilio Jacinto",
+      "Apolinario Mabini",
+    ],
     correctAnswer: "Andres Bonifacio",
     explanation: "Andres Bonifacio founded the Katipunan in 1892",
     timeLimit: 10,
@@ -623,7 +641,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "hist_012",
     subject: "history",
     difficulty: "normal",
-    question: "In what year did the Philippines gain independence from America?",
+    question:
+      "In what year did the Philippines gain independence from America?",
     options: ["1946", "1945", "1947", "1948"],
     correctAnswer: "1946",
     timeLimit: 10,
@@ -633,17 +652,29 @@ export const QUIZ_BANK: QuizQuestion[] = [
     subject: "history",
     difficulty: "normal",
     question: "Who was the first Filipino to circumnavigate the globe?",
-    options: ["Ferdinand Magellan", "Enrique of Malacca", "Miguel Lopez de Legazpi", "Rajah Humabon"],
+    options: [
+      "Ferdinand Magellan",
+      "Enrique of Malacca",
+      "Miguel Lopez de Legazpi",
+      "Rajah Humabon",
+    ],
     correctAnswer: "Enrique of Malacca",
-    explanation: "Enrique of Malacca, Magellan's slave, was the first Filipino to circumnavigate the globe.",
+    explanation:
+      "Enrique of Malacca, Magellan's slave, was the first Filipino to circumnavigate the globe.",
     timeLimit: 10,
   },
   {
     id: "hist_014",
     subject: "history",
     difficulty: "normal",
-    question: "What was the name of the secret society that fought for Philippine independence from Spain?",
-    options: ["La Liga Filipina", "Katipunan", "Propaganda Movement", "Hukbalahap"],
+    question:
+      "What was the name of the secret society that fought for Philippine independence from Spain?",
+    options: [
+      "La Liga Filipina",
+      "Katipunan",
+      "Propaganda Movement",
+      "Hukbalahap",
+    ],
     correctAnswer: "Katipunan",
     timeLimit: 10,
   },
@@ -651,7 +682,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "hist_015",
     subject: "history",
     difficulty: "normal",
-    question: "Who was the first Filipino president of the Commonwealth of the Philippines?",
+    question:
+      "Who was the first Filipino president of the Commonwealth of the Philippines?",
     options: ["Manuel Roxas", "Sergio Osmeña", "Manuel Quezon", "Jose Laurel"],
     correctAnswer: "Manuel Quezon",
     timeLimit: 10,
@@ -660,10 +692,17 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "hist_016",
     subject: "history",
     difficulty: "normal",
-    question: "Who led the longest revolt in Philippine history, known as the Dagohoy Rebellion?",
-    options: ["Diego Silang", "Francisco Dagohoy", "Gabriela Silang", "Apolinario dela Cruz"],
+    question:
+      "Who led the longest revolt in Philippine history, known as the Dagohoy Rebellion?",
+    options: [
+      "Diego Silang",
+      "Francisco Dagohoy",
+      "Gabriela Silang",
+      "Apolinario dela Cruz",
+    ],
     correctAnswer: "Francisco Dagohoy",
-    explanation: "Francisco Dagohoy led the Dagohoy Rebellion in Bohol, which lasted for 85 years.",
+    explanation:
+      "Francisco Dagohoy led the Dagohoy Rebellion in Bohol, which lasted for 85 years.",
     timeLimit: 10,
   },
   {
@@ -673,7 +712,8 @@ export const QUIZ_BANK: QuizQuestion[] = [
     question: "What year was the Katipunan discovered by Spanish authorities?",
     options: ["1895", "1896", "1897", "1898"],
     correctAnswer: "1896",
-    explanation: "The Katipunan was discovered in August 1896, leading to the Philippine Revolution",
+    explanation:
+      "The Katipunan was discovered in August 1896, leading to the Philippine Revolution",
     timeLimit: 10,
   },
   {
@@ -681,7 +721,12 @@ export const QUIZ_BANK: QuizQuestion[] = [
     subject: "history",
     difficulty: "hard",
     question: "Who was the Brain of the Katipunan?",
-    options: ["Andres Bonifacio", "Jose Rizal", "Emilio Jacinto", "Marcelo del Pilar"],
+    options: [
+      "Andres Bonifacio",
+      "Jose Rizal",
+      "Emilio Jacinto",
+      "Marcelo del Pilar",
+    ],
     correctAnswer: "Emilio Jacinto",
     explanation: "Emilio Jacinto was known as the Brain of the Katipunan",
     timeLimit: 10,
@@ -690,20 +735,34 @@ export const QUIZ_BANK: QuizQuestion[] = [
     id: "hist_019",
     subject: "history",
     difficulty: "hard",
-    question: "Who was the first president of the Third Republic of the Philippines?",
-    options: ["Manuel Roxas", "Elpidio Quirino", "Ramon Magsaysay", "Carlos P. Garcia"],
+    question:
+      "Who was the first president of the Third Republic of the Philippines?",
+    options: [
+      "Manuel Roxas",
+      "Elpidio Quirino",
+      "Ramon Magsaysay",
+      "Carlos P. Garcia",
+    ],
     correctAnswer: "Manuel Roxas",
-    explanation: "Manuel Roxas became the first president of the independent Third Republic in 1946.",
+    explanation:
+      "Manuel Roxas became the first president of the independent Third Republic in 1946.",
     timeLimit: 10,
   },
   {
     id: "hist_020",
     subject: "history",
     difficulty: "hard",
-    question: "Who was the leader of the Philippine revolutionaries during the Philippine-American War?",
-    options: ["Andres Bonifacio", "Emilio Aguinaldo", "Antonio Luna", "Gregorio del Pilar"],
+    question:
+      "Who was the leader of the Philippine revolutionaries during the Philippine-American War?",
+    options: [
+      "Andres Bonifacio",
+      "Emilio Aguinaldo",
+      "Antonio Luna",
+      "Gregorio del Pilar",
+    ],
     correctAnswer: "Emilio Aguinaldo",
-    explanation: "Emilio Aguinaldo led the Filipino forces during the Philippine-American War.",
+    explanation:
+      "Emilio Aguinaldo led the Filipino forces during the Philippine-American War.",
     timeLimit: 10,
   },
 

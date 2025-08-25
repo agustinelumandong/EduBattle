@@ -19,26 +19,16 @@ function validateEnvironment() {
     const maskedUrl = dbUrl.replace(/(:\/\/)([^:]+):([^@]+)@/, "$1***:***@");
     
   }
-
-  if (
-    !process.env.JWT_SECRET ||
-    process.env.JWT_SECRET === "fallback-secret-key-for-demo"
-  ) {
-    console.warn(
-      "⚠️ JWT_SECRET not set or using fallback. Please set a secure JWT_SECRET in production."
-    );
-  }
 }
 
 // Validate environment on import
 validateEnvironment();
 
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Create Prisma client with better error handling
 const prisma =
-globalForPrisma.prisma ||
+  globalForPrisma.prisma ||
   new PrismaClient({
     log:
       process.env.NODE_ENV === "development"
@@ -52,11 +42,9 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export interface CreateUserData {
-  email?: string;
   username: string;
-  authMethod: "wallet" | "email";
   walletAddress?: string;
-  passwordHash?: string;
+  isGuest?: boolean;
 }
 
 export interface GameResult {
@@ -70,19 +58,35 @@ export class DatabaseService {
   // User management
   async createUser(data: CreateUserData) {
     try {
+<<<<<<< HEAD
        
+=======
+      console.log("💾 Database: Creating user with data:", {
+        username: data.username,
+        walletAddress: data.walletAddress
+          ? data.walletAddress.slice(0, 10) + "..."
+          : "none",
+        isGuest: data.isGuest || false,
+      });
+>>>>>>> bdff4c576389d54a7b55bc4b0c800ea3e5dd738c
 
       const user = await prisma.user.create({
         data: {
-          email: data.email,
           username: data.username,
-          authMethod: data.authMethod,
           walletAddress: data.walletAddress,
-          passwordHash: data.passwordHash,
+          isGuest: data.isGuest || false,
         },
       });
 
+<<<<<<< HEAD
        
+=======
+      console.log("✅ Database: User created successfully:", {
+        id: user.id,
+        username: user.username,
+        isGuest: user.isGuest,
+      });
+>>>>>>> bdff4c576389d54a7b55bc4b0c800ea3e5dd738c
 
       return user;
     } catch (error: any) {
@@ -92,7 +96,6 @@ export class DatabaseService {
         meta: error.meta,
         data: {
           username: data.username,
-          authMethod: data.authMethod,
           walletAddress: data.walletAddress
             ? data.walletAddress.slice(0, 10) + "..."
             : "none",
@@ -100,12 +103,6 @@ export class DatabaseService {
       });
       throw error;
     }
-  }
-
-  async findUserByEmail(email: string) {
-    return await prisma.user.findUnique({
-      where: { email },
-    });
   }
 
   async findUserByWallet(walletAddress: string) {
@@ -116,7 +113,19 @@ export class DatabaseService {
         where: { walletAddress },
       });
 
+<<<<<<< HEAD
        
+=======
+      if (user) {
+        console.log("✅ Database: Found existing user:", {
+          id: user.id,
+          username: user.username,
+          isGuest: user.isGuest,
+        });
+      } else {
+        console.log("ℹ️ Database: No existing user found for wallet address");
+      }
+>>>>>>> bdff4c576389d54a7b55bc4b0c800ea3e5dd738c
 
       return user;
     } catch (error: any) {
@@ -133,6 +142,30 @@ export class DatabaseService {
     return await prisma.user.findUnique({
       where: { id },
     });
+  }
+
+  async createGuestUser(username: string) {
+    try {
+      console.log("👻 Database: Creating guest user:", username);
+
+      const user = await prisma.user.create({
+        data: {
+          username,
+          isGuest: true,
+        },
+      });
+
+      console.log("✅ Database: Guest user created:", {
+        id: user.id,
+        username: user.username,
+        isGuest: user.isGuest,
+      });
+
+      return user;
+    } catch (error: any) {
+      console.error("❌ Database: Failed to create guest user:", error);
+      throw error;
+    }
   }
 
   // Game management
@@ -173,13 +206,13 @@ export class DatabaseService {
       update: {
         totalWins,
         totalGames,
-        updatedAt: new Date(), // Ensure updatedAt is set on every update
+        updatedAt: new Date(),
       },
       create: {
         userId,
         totalWins,
         totalGames,
-        updatedAt: new Date(), // Ensure updatedAt is set on creation
+        updatedAt: new Date(),
       },
     });
   }
@@ -190,16 +223,12 @@ export class DatabaseService {
         user: {
           select: {
             username: true,
-            authMethod: true,
+            isGuest: true,
             walletAddress: true,
-            email: true,
           },
         },
       },
-      orderBy: [
-        { totalWins: "desc" },
-        { updatedAt: "asc" } // Earlier entries (older players) rank higher when tied
-      ],
+      orderBy: [{ totalWins: "desc" }, { updatedAt: "asc" }],
     });
 
     // Add rank numbers
@@ -216,9 +245,8 @@ export class DatabaseService {
         user: {
           select: {
             username: true,
-            authMethod: true,
+            isGuest: true,
             walletAddress: true,
-            email: true,
           },
         },
       },
@@ -227,7 +255,8 @@ export class DatabaseService {
     if (!entry) return null;
 
     const leaderboardEntries = await this.getLeaderboard();
-    const rank = leaderboardEntries.findIndex((e: any) => e.userId === userId) + 1;
+    const rank =
+      leaderboardEntries.findIndex((e: any) => e.userId === userId) + 1;
 
     return {
       ...entry,

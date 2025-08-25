@@ -1,201 +1,58 @@
-// Interface for leaderboard player entry
-export interface LeaderboardPlayer {
-    rank: number;
-    id: string;              // User ID (wallet address or email user ID)
+/**
+ * 🏆 LEADERBOARD MANAGEMENT
+ * Simple leaderboard system for authenticated users
+ */
+
+export interface LeaderboardEntry {
+  id: string;
+  userId: string;
+  totalWins: number;
+  totalGames: number;
+  rank?: number;
+  updatedAt: Date;
+  user: {
     username: string;
-    totalWins: number;
-    authMethod: 'wallet' | 'email';  // How the user authenticates
-    displayId: string;       // For display purposes (shortened wallet or email)
-  }
-  
-  // Interface for leaderboard data storage
-  export interface LeaderboardData {
-    players: Record<string, {
-      username: string;
-      totalWins: number;
-      authMethod: 'wallet' | 'email';
-      displayId: string;
-      lastUpdated: number; // Timestamp for ranking purposes
-    }>;
-  }
-  
-  /**
-   * Universal Leaderboard supporting both wallet and email authenticated users
-   * This manages win tracking and competitive rankings based on number of wins
-   * Works with both blockchain wallet addresses and email user IDs
-   */
-  export class Leaderboard {
-    private static instance: Leaderboard;
-    private storageKey = 'blockchain_quiz_leaderboard';
-  
-    private constructor() {}
-  
-    public static getInstance(): Leaderboard {
-      if (!Leaderboard.instance) {
-        Leaderboard.instance = new Leaderboard();
-      }
-      return Leaderboard.instance;
-    }
-  
-    /**
-     * Initialize leaderboard data structure
-     */
-    private getDefaultData(): LeaderboardData {
-      return {
-        players: {}
-      };
-    }
-  
-    /**
-     * Get leaderboard data from storage (using localStorage as MiniKit storage interface)
-     * In a production app, this would use MiniKit's backend storage capabilities
-     */
-    private getLeaderboardData(): LeaderboardData {
-      try {
-        const stored = localStorage.getItem(this.storageKey);
-        if (stored) {
-          const data = JSON.parse(stored);
-          // Migrate existing data to include lastUpdated field
-          this.migrateData(data);
-          return data;
-        }
-      } catch (error) {
-        console.error('Failed to load leaderboard data:', error);
-      }
-      return this.getDefaultData();
+    isGuest: boolean;
+    walletAddress?: string;
+  };
+}
+
+/**
+ * Get leaderboard data from the database
+ * This fetches real-time data for authenticated users
+ */
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  try {
+    const response = await fetch("/api/leaderboard");
+    if (!response.ok) {
+      throw new Error("Failed to fetch leaderboard");
     }
 
-    /**
-     * Migrate existing data to include lastUpdated field
-     */
-    private migrateData(data: any): void {
-      if (data.players) {
-        Object.keys(data.players).forEach(playerId => {
-          if (!data.players[playerId].lastUpdated) {
-            data.players[playerId].lastUpdated = Date.now();
-          }
-        });
-      }
-    }
-  
-    /**
-     * Save leaderboard data to storage
-     */
-    private saveLeaderboardData(data: LeaderboardData): void {
-      try {
-        localStorage.setItem(this.storageKey, JSON.stringify(data));
-      } catch (error) {
-        console.error('Failed to save leaderboard data:', error);
-      }
-    }
-  
-    /**
-     * Record a win for the specified player
-     * This function should be called after a successful game completion
-     * 
-     * @param playerId - The unique identifier (wallet address or email user ID)
-     * @param username - The player's display name
-     * @param authMethod - The authentication method used ('wallet' or 'email')
-     */
-    public recordWin(playerId: string, username: string, authMethod: 'wallet' | 'email' = 'wallet'): void {
-      const data = this.getLeaderboardData();
-      
-      // Create display ID for UI purposes
-      const displayId = authMethod === 'wallet' 
-        ? `${playerId.slice(0, 6)}...${playerId.slice(-4)}` // Wallet: 0x1234...5678
-        : playerId.includes('@') ? playerId : `User ${playerId.slice(-6)}`; // Email or ID
-      
-      if (data.players[playerId]) {
-        // Player exists, increment wins
-        data.players[playerId].totalWins += 1;
-        // Update username in case it changed
-        data.players[playerId].username = username;
-        data.players[playerId].authMethod = authMethod;
-        data.players[playerId].displayId = displayId;
-        // Update timestamp for ranking purposes
-        data.players[playerId].lastUpdated = Date.now();
-      } else {
-        // New player, initialize with first win
-        data.players[playerId] = {
-          username: username,
-          totalWins: 1,
-          authMethod: authMethod,
-          displayId: displayId,
-          lastUpdated: Date.now() // Track when player was added
-        };
-      }
-  
-      this.saveLeaderboardData(data);
-    }
-  
-    /**
-     * Get the current leaderboard ranked by total wins
-     * Returns players sorted from highest to lowest wins
-     */
-    public getLeaderboard(): LeaderboardPlayer[] {
-      const data = this.getLeaderboardData();
-      
-      // Convert to array and sort by total wins (descending), then by join time (earlier players rank higher when tied)
-      const sortedPlayers = Object.entries(data.players)
-        .map(([id, playerData]) => ({
-          id,
-          username: playerData.username,
-          totalWins: playerData.totalWins,
-          authMethod: playerData.authMethod,
-          displayId: playerData.displayId,
-          lastUpdated: playerData.lastUpdated
-        }))
-        .sort((a, b) => {
-          // First sort by total wins (descending)
-          if (b.totalWins !== a.totalWins) {
-            return b.totalWins - a.totalWins;
-          }
-          // If wins are tied, sort by join time (earlier players rank higher)
-          return a.lastUpdated - b.lastUpdated;
-        });
-  
-      // Add rank numbers
-      return sortedPlayers.map((player, index) => ({
-        ...player,
-        rank: index + 1
-      }));
-    }
-  
-    /**
-     * Get a specific player's stats
-     */
-    public getPlayerStats(playerId: string): { username: string; totalWins: number; rank: number; authMethod: 'wallet' | 'email'; displayId: string } | null {
-      const leaderboard = this.getLeaderboard();
-      const player = leaderboard.find(p => p.id === playerId);
-      
-      if (player) {
-        return {
-          username: player.username,
-          totalWins: player.totalWins,
-          rank: player.rank,
-          authMethod: player.authMethod,
-          displayId: player.displayId
-        };
-      }
-      
+    const result = await response.json();
+    return result.entries || [];
+  } catch (error) {
+    console.error("Failed to fetch leaderboard:", error);
+    return [];
+  }
+}
+
+/**
+ * Get user stats from the database
+ * Returns null for guest users or if user not found
+ */
+export async function getUserStats(
+  userId: string
+): Promise<LeaderboardEntry | null> {
+  try {
+    const response = await fetch("/api/leaderboard/user/" + userId);
+    if (!response.ok) {
       return null;
     }
-  
-    /**
-     * Get total number of players on leaderboard
-     */
-    public getTotalPlayers(): number {
-      const data = this.getLeaderboardData();
-      return Object.keys(data.players).length;
-    }
-  
-    /**
-     * Clear all leaderboard data (admin function)
-     */
-    public clearLeaderboard(): void {
-      this.saveLeaderboardData(this.getDefaultData());
-    }
+
+    const result = await response.json();
+    return result.entry || null;
+  } catch (error) {
+    console.error("Failed to fetch user stats:", error);
+    return null;
   }
-  
-  // Export singleton instance for easy access
-  export const leaderboard = Leaderboard.getInstance();
+}
