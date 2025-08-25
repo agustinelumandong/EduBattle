@@ -342,7 +342,7 @@ export default function EduBattle(): ReactElement {
 
     // Disable spells for 10 seconds at game start
     setAreSpellsDisabled(true);
-    setSpellDisableTimeRemaining(25);
+    setSpellDisableTimeRemaining(30); // spell cooldown
   }, [currentUser]);
 
   // Handle game completion and record win
