@@ -25,8 +25,11 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "EduBattle - Quiz Challenge Game",
+  title: "QuizBlaster",
   description: "Educational quiz game with blockchain integration",
+  icons: {
+    icon: "/icon.jpg",
+  },
 };
 
 export default function RootLayout({
