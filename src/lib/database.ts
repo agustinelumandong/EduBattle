@@ -122,6 +122,49 @@ export class DatabaseService {
     });
   }
 
+  async findUserByUsername(username: string) {
+    try {
+      console.log("🔍 Database: Searching for user by username:", username);
+
+      const user = await prisma.user.findFirst({
+        where: { username },
+      });
+
+      if (user) {
+        console.log("✅ Database: Found user by username:", {
+          id: user.id,
+          username: user.username,
+          authMethod: user.authMethod,
+        });
+      } else {
+        console.log("ℹ️ Database: No user found with username:", username);
+      }
+
+      return user;
+    } catch (error: any) {
+      console.error("❌ Database: Failed to find user by username:", {
+        error: error.message,
+        code: error.code,
+        username: username,
+      });
+      throw error;
+    }
+  }
+
+  // 🆕 Check if username is available for registration
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    try {
+      const existingUser = await this.findUserByUsername(username);
+      return !existingUser; // Username is available if no user found
+    } catch (error) {
+      console.error(
+        "❌ Database: Failed to check username availability:",
+        error
+      );
+      return false; // Assume unavailable on error for safety
+    }
+  }
+
   async findUserByWallet(walletAddress: string) {
     try {
       console.log(
@@ -158,6 +201,40 @@ export class DatabaseService {
     return await prisma.user.findUnique({
       where: { id },
     });
+  }
+
+  // 🆕 Add method to update user information
+  async updateUser(id: string, data: Partial<CreateUserData>) {
+    try {
+      console.log("🔄 Database: Updating user:", { id, updateData: data });
+
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: {
+          ...(data.username && { username: data.username }),
+          ...(data.email && { email: data.email }),
+          ...(data.authMethod && { authMethod: data.authMethod }),
+          ...(data.walletAddress && { walletAddress: data.walletAddress }),
+          ...(data.passwordHash && { passwordHash: data.passwordHash }),
+        },
+      });
+
+      console.log("✅ Database: User updated successfully:", {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        authMethod: updatedUser.authMethod,
+      });
+
+      return updatedUser;
+    } catch (error: any) {
+      console.error("❌ Database: Failed to update user:", {
+        error: error.message,
+        code: error.code,
+        userId: id,
+        updateData: data,
+      });
+      throw error;
+    }
   }
 
   // Game management

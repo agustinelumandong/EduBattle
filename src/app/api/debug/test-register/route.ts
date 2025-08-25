@@ -83,6 +83,65 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    if (testType === "device-compatibility") {
+      // 🆕 Test device compatibility for Apple vs Android
+      console.log("📱 Testing device compatibility...");
+
+      // Simulate different payload structures
+      const androidPayload = {
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        user: { username: "android_user" },
+      };
+
+      const iosPayload = {
+        address: "0xabcdef1234567890abcdef1234567890abcdef12",
+        username: "ios_user",
+      };
+
+      console.log("🤖 Android-style payload:", androidPayload);
+      console.log("🍎 iOS-style payload:", iosPayload);
+
+      // Test username extraction logic
+      const extractUsername = (payload: any) => {
+        let username = "";
+
+        if (payload.user?.username) {
+          username = payload.user.username;
+          console.log("✅ Got username from MiniKit user data:", username);
+        } else if (payload.username) {
+          username = payload.username;
+          console.log("✅ Got username from payload directly:", username);
+        } else {
+          const shortAddress = payload.address.slice(2, 8);
+          username = `Player_${shortAddress}`;
+          console.log("⚠️ No username found, generated fallback:", username);
+        }
+
+        return username;
+      };
+
+      const androidUsername = extractUsername(androidPayload);
+      const iosUsername = extractUsername(iosPayload);
+
+      return NextResponse.json({
+        success: true,
+        message: "Device compatibility test successful",
+        testType: "device-compatibility",
+        results: {
+          android: {
+            payload: androidPayload,
+            extractedUsername: androidUsername,
+          },
+          ios: { payload: iosPayload, extractedUsername: iosUsername },
+        },
+        steps: [
+          "Database connection",
+          "Payload simulation",
+          "Username extraction",
+        ],
+      });
+    }
+
     // Default email user test
     const testData = {
       email: `debug_${Date.now()}@test.com`,

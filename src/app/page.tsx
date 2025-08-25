@@ -527,11 +527,82 @@ export default function EduBattle(): ReactElement {
                     {currentUser.username}
                   </span>
                 </div>
+
+                {/* 🆕 Username update feature */}
+                {currentUser.authMethod === "wallet" && (
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Update username"
+                        className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm"
+                        onChange={(e) => {
+                          if (e.target.value.trim()) {
+                            localStorage.setItem(
+                              "wallet_username",
+                              e.target.value.trim()
+                            );
+                          } else {
+                            localStorage.removeItem("wallet_username");
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={async () => {
+                          const newUsername =
+                            localStorage.getItem("wallet_username");
+                          if (
+                            newUsername &&
+                            newUsername !== currentUser.username
+                          ) {
+                            try {
+                              const response = await fetch(
+                                "/api/auth/update-username",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    userId: currentUser.id,
+                                    username: newUsername,
+                                  }),
+                                }
+                              );
+
+                              if (response.ok) {
+                                // Update local state
+                                setCurrentUser({
+                                  ...currentUser,
+                                  username: newUsername,
+                                });
+                                localStorage.removeItem("wallet_username");
+                                alert("Username updated successfully!");
+                              }
+                            } catch (error) {
+                              console.error(
+                                "Failed to update username:",
+                                error
+                              );
+                              alert("Failed to update username");
+                            }
+                          }
+                        }}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+                      >
+                        Update
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Change your username (will be saved for future logins)
+                    </p>
+                  </div>
+                )}
+
                 {currentUser.authMethod === "wallet" && (
                   <div className="text-sm text-gray-400 mb-2">
                     Wallet: {currentUser.address?.slice(0, 8)}...
                     {currentUser.address?.slice(-6)}
-                    Wallet transparent: {currentUser.address}
                   </div>
                 )}
               </div>
@@ -645,6 +716,32 @@ export default function EduBattle(): ReactElement {
                 )}
 
                 <div className="space-y-3">
+                  {/* 🆕 Username input for wallet users */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-white">
+                      Username (for wallet users)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter your username"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                      onChange={(e) => {
+                        if (e.target.value.trim()) {
+                          localStorage.setItem(
+                            "wallet_username",
+                            e.target.value.trim()
+                          );
+                        } else {
+                          localStorage.removeItem("wallet_username");
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-gray-400">
+                      Set a username before connecting your wallet (especially
+                      for iOS devices)
+                    </p>
+                  </div>
+
                   <button
                     onClick={handleLoginWithWallet}
                     disabled={authLoading}

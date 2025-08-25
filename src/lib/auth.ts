@@ -225,16 +225,56 @@ export class Auth {
         verifyResult
       );
 
-      // Get username from response or generate fallback
-      const storedUsername =
-        typeof window !== "undefined"
-          ? localStorage.getItem("wallet_username")
-          : null;
-      const username =
-        storedUsername ||
-        MiniKit.user?.username ||
-        verifyResult.user?.username ||
-        `Player_${finalPayload.address.slice(0, 6)}`;
+      // 🆕 IMPROVED USERNAME HANDLING for Apple vs Android compatibility
+      console.log(
+        "📱 Frontend: Checking username sources for iOS/Android compatibility"
+      );
+
+      // Get username from multiple sources with priority order
+      let username = "";
+
+      // Priority 1: Username from database response (most reliable)
+      if (verifyResult.user?.username) {
+        username = verifyResult.user.username;
+        console.log(
+          "✅ Frontend: Got username from database response:",
+          username
+        );
+      }
+      // Priority 2: Stored username from localStorage (user preference)
+      else if (
+        typeof window !== "undefined" &&
+        localStorage.getItem("wallet_username")
+      ) {
+        username = localStorage.getItem("wallet_username")!;
+        console.log("✅ Frontend: Got username from localStorage:", username);
+      }
+      // Priority 3: MiniKit user data (Android devices)
+      else if (MiniKit.user?.username) {
+        username = MiniKit.user.username;
+        console.log("✅ Frontend: Got username from MiniKit.user:", username);
+      }
+      // Priority 4: Generate user-friendly fallback
+      else {
+        const shortAddress = finalPayload.address.slice(2, 8); // Remove 0x, get 6 chars
+        username = `Player_${shortAddress}`;
+        console.log(
+          "⚠️ Frontend: No username found, using fallback:",
+          username
+        );
+      }
+
+      // Ensure username is valid
+      if (!username || username.length < 3) {
+        const shortAddress = finalPayload.address.slice(2, 8);
+        username = `Player_${shortAddress}`;
+        console.log(
+          "🔄 Frontend: Username was invalid, using fallback:",
+          username
+        );
+      }
+
+      console.log("🎯 Frontend: Final username selected:", username);
 
       // Create authenticated user object
       this.user = {
@@ -245,7 +285,7 @@ export class Auth {
         address: finalPayload.address,
       };
 
-      console.log("👤 User object created:", this.user);
+      console.log("👤 Frontend: User object created:", this.user);
 
       // Clear stored username after successful authentication
       if (typeof window !== "undefined") {

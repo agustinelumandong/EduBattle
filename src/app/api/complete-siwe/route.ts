@@ -47,8 +47,43 @@ export async function POST(req: NextRequest) {
           "🔐 SIWE verification successful, registering user in database..."
         );
 
-        // Generate username from wallet address if not provided
-        const username = `Player_${payload.address.slice(0, 6)}`;
+        // 🆕 IMPROVED USERNAME HANDLING for Apple vs Android compatibility
+        console.log("📱 Device compatibility check - Payload details:", {
+          address: payload.address,
+          // Log available fields for debugging
+          allFields: Object.keys(payload),
+        });
+
+        // Try to get username from multiple sources (iOS vs Android compatibility)
+        let username = "";
+
+        // Priority 1: Try to get username from MiniKit user data (Android)
+        // Note: MiniKit payload structure may vary between devices
+        if ((payload as any).user?.username) {
+          username = (payload as any).user.username;
+          console.log("✅ Got username from MiniKit user data:", username);
+        }
+        // Priority 2: Try to get username from payload directly (iOS fallback)
+        else if ((payload as any).username) {
+          username = (payload as any).username;
+          console.log("✅ Got username from payload directly:", username);
+        }
+        // Priority 3: Generate user-friendly username from wallet address
+        else {
+          // Create a more user-friendly username
+          const shortAddress = payload.address.slice(2, 8); // Remove 0x and get 6 chars
+          username = `Player_${shortAddress}`;
+          console.log("⚠️ No username found, generated fallback:", username);
+        }
+
+        // Ensure username is not empty and has reasonable length
+        if (!username || username.length < 3) {
+          const shortAddress = payload.address.slice(2, 8);
+          username = `Player_${shortAddress}`;
+          console.log("🔄 Username was invalid, using fallback:", username);
+        }
+
+        console.log("🎯 Final username selected:", username);
 
         // Check if user already exists
         const existingUser = await database.findUserByWallet(payload.address);
@@ -58,6 +93,32 @@ export async function POST(req: NextRequest) {
             "✅ User already exists in database:",
             existingUser.username
           );
+
+          // 🆕 Update username if it's different (for returning users)
+          if (
+            existingUser.username !== username &&
+            username !== `Player_${payload.address.slice(2, 8)}`
+          ) {
+            console.log("🔄 Updating username for existing user:", {
+              old: existingUser.username,
+              new: username,
+            });
+
+            // Update the username in database
+            const updatedUser = await database.updateUser(existingUser.id, {
+              username,
+            });
+            console.log("✅ Username updated:", updatedUser.username);
+
+            return NextResponse.json({
+              status: "success",
+              isValid: true,
+              address: payload.address,
+              message: "Authentication successful - user updated",
+              user: updatedUser,
+            });
+          }
+
           return NextResponse.json({
             status: "success",
             isValid: true,
