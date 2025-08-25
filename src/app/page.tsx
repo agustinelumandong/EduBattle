@@ -514,27 +514,9 @@ export default function EduBattle(): ReactElement {
 
         <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-4xl nes-container is-rounded is-dark mx-2">
           <div className="text-center text-white p-3 sm:p-2 md:p-6">
-            <div className="text-xl sm:text-lg md:text-3xl lg:text-4xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
-              🎮 Welcome to EduBattle! ⚔️
-            </div>
-
-            {/* Username display and edit for logged-in users */}
-            {currentUser && (
-              <div className="mb-4">
-                <div className="text-lg text-blue-400 mb-2">
-                  Playing as:{" "}
-                  <span className="text-yellow-400">
-                    {currentUser.username}
-                  </span>
-                </div>
-                {currentUser.authMethod === "wallet" && (
-                  <div className="text-sm text-gray-400 mb-2">
-                    Wallet: {currentUser.address?.slice(0, 8)}...
-                    {currentUser.address?.slice(-6)}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="text-lg sm:text-lg md:text-xl lg:text-3xl font-bold pt-2 sm:pt-4 pb-2 sm:pb-4 mb-1 sm:mb-2 game-title">
+              🎮Welcome to QuizBlaster!🚀
+            </div> 
           </div>
 
           <div className="p-2 sm:p-1 md:p-2 lg:p-4">
@@ -604,30 +586,33 @@ export default function EduBattle(): ReactElement {
               </div>
             </div>
 
-            <div className="mt-4 sm:mt-6 md:mt-8 mb-4 sm:mb-6 md:mb-8 text-center">
+            <div className="flex flex-col items-center justify-center  mt-4 sm:mt-6 md:mt-8  text-center gap-2">
               <Button
                 onClick={startGame}
                 size="lg"
-                className="is-primary text-xs sm:text-sm md:text-base px-6 sm:px-12 md:px-16 lg:px-24 py-3 sm:py-4 md:py-6 lg:py-8 cursor-pointer mb-4 sm:mb-6 md:mb-8 game-button nes-btn"
+                className="is-primary text-xs sm:text-sm md:text-base cursor-pointer  game-button nes-btn mb-4"
               >
                 {currentUser ? "Start Battle!" : "Login to Play!"}
               </Button>
+              {currentUser && (
+              <Button
+                onClick={() => setShowLeaderboard(true)}
+              size="lg"
+                className="nes-btn text-xs sm:text-sm md:text-base  game-button nes-btn cursor-pointer"
+              >
+                🏆 Leaderboard
+              </Button>
+            )}
             </div>
-            <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text">
+           
+          </div>
+         
+         <p className="text-xs sm:text-sm md:text-base text-gray-500 mt-4 sm:mt-6 md:mt-8 text-center game-ui-text mb-4">
               Get ready for educational warfare! 🎓⚔️
             </p>
-          </div>
         </div>
 
-        {currentUser && (
-          <button
-            onClick={() => setShowLeaderboard(true)}
-            type="button"
-            className="nes-btn absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 text-xs sm:text-sm md:text-base px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 lg:py-5 game-button nes-btn cursor-pointer"
-          >
-            🏆 Leaderboard
-          </button>
-        )}
+        
 
         {/* Login Modal */}
         {showLoginModal && (
