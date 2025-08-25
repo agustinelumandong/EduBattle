@@ -28,6 +28,9 @@ const pressStart2P = Press_Start_2P({
 export const metadata: Metadata = {
   title: "QuizBlaster",
   description: "QuizBlaster is a platform for learning and competing in quizzes", 
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
