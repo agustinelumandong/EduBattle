@@ -48,30 +48,30 @@ export default function LeaderboardView() {
         </button>
       </div>
       
-      <div className="hidden sm:grid grid-cols-4 gap-4 text-sm font-semibold text-white border-b border-gray-600 pb-2">
+      <div className="hidden sm:grid grid-cols-3 gap-4 text-sm font-semibold text-white border-b border-gray-600 pb-2">
         <div className="col-span-1 text-center">Rank</div>
         <div className="col-span-1 text-center">Player</div>
         <div className="col-span-1 text-center">Wins</div>
-        <div className="col-span-1 text-center">Type</div>
+         
       </div>
 
       <div className="max-h-80 overflow-y-auto pr-1">
         {players.map((player) => (
           <div
             key={player.id}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 items-center text-sm text-white border-b border-gray-700 pb-2"
+            className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 items-center text-sm text-white border-b border-gray-700 pb-2"
           >
-            <div className="font-bold text-2xl sm:text-3xl text-center">
+            <div className="font-bold text-2xl sm:text-2xl text-center">
               {player.rank === 1 && "🥇"}
               {player.rank === 2 && "🥈"}
               {player.rank === 3 && "🥉"}
               {player.rank > 3 && `#${player.rank}`}
             </div>
             <div className="truncate">
-              <div className="font-medium">
+              <div className="font-medium text-center">
                 {player.user?.username || player.username || "Unknown"}
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-gray-400 text-center">
                 {player.user?.walletAddress
                   ? `${player.user.walletAddress.slice(
                       0,
@@ -81,9 +81,7 @@ export default function LeaderboardView() {
               </div>
             </div>
             <div className="font-bold text-green-400 text-center">{player.totalWins}</div>
-            <div className="text-xs text-center">
-              {player.user?.authMethod === "wallet" ? "🔗 Wallet" : "📧 Email"}
-            </div>
+             
           </div>
         ))}
       </div>
