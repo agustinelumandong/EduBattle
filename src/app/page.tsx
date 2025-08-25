@@ -673,7 +673,6 @@ export default function EduBattle(): ReactElement {
                       if (availableWallets.length > 0) {
                         return (
                           <div className="text-xs text-green-400 text-center">
-                            🎯 Detected: {availableWallets.join(", ")}
                           </div>
                         );
                       }
