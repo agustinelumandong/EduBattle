@@ -1,41 +1,37 @@
 'use client'
 
-import { MiniKit } from '@worldcoin/minikit-js';
+// TODO: Replace with Base MiniKit imports
+// import { useMiniKit, useAuthenticate, AuthenticateProvider } from '@coinbase/onchainkit/minikit';
 import { ReactNode, useEffect, useState } from 'react';
 
-interface MiniKitProviderProps {
+interface BaseMiniKitProviderProps {
   children: ReactNode;
 }
 
-export default function MiniKitProvider({ children }: MiniKitProviderProps) {
+export default function BaseMiniKitProvider({ children }: BaseMiniKitProviderProps) {
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   
   useEffect(() => {
-    const appId = 'app_quiz_blockchain_challenge';
+    // TODO: Initialize Base MiniKit with NEXT_PUBLIC_BASE_APP_ID
+    const appId = process.env.NEXT_PUBLIC_BASE_APP_ID || 'base_app_quiz_blaster';
     
     try {
-      // Initialize MiniKit
-      MiniKit.install(appId);
+      // TODO: Initialize Base MiniKit
+      // const { context } = useMiniKit();
+      // const { user } = useAuthenticate();
       
-      // Check installation after a brief delay to ensure proper initialization
-      const checkInstallation = () => {
-        const installed = MiniKit.isInstalled();
-         
-        setIsInstalled(installed);
-      };
-      
-      // Check immediately and after a delay
-      checkInstallation();
-      setTimeout(checkInstallation, 500);
+      // For now, simulate that Base MiniKit is available
+      setIsInstalled(true);
       
     } catch (error) {
-      console.error('Failed to install MiniKit:', error);
+      console.error('Failed to initialize Base MiniKit:', error);
       setIsInstalled(false);
     }
   }, []);
   
   return (
-    <div data-minikit-installed={isInstalled}>
+    <div data-base-minikit-installed={isInstalled}>
+      {/* TODO: Wrap with AuthenticateProvider when Base MiniKit is implemented */}
       {children}
     </div>
   );

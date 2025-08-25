@@ -47,8 +47,8 @@ export interface LeaderboardPlayer {
     }
   
     /**
-     * Get leaderboard data from storage (using localStorage as MiniKit storage interface)
-     * In a production app, this would use MiniKit's backend storage capabilities
+     * Get leaderboard data from storage (using localStorage as temporary storage)
+     * In a production app, this would use Base MiniKit's backend storage capabilities
      */
     private getLeaderboardData(): LeaderboardData {
       try {

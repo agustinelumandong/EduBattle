@@ -1,4 +1,5 @@
-import { MiniKit, WalletAuthInput } from "@worldcoin/minikit-js";
+// TODO: Replace with Base MiniKit imports
+// import { useMiniKit, useAuthenticate } from '@coinbase/onchainkit/minikit';
 
 // Interface for user authentication state
 export interface User {
@@ -29,7 +30,7 @@ export interface EmailAuthData {
 /**
  * Hybrid Authentication class supporting both blockchain wallets AND email/password
  * This handles:
- * 1. Wallet authentication using MiniKit Sign in with Ethereum (SIWE)
+ * 1. Wallet authentication using Base MiniKit Quick Auth / wallet auth
  * 2. Email/password authentication using secure JWT tokens
  */
 export class Auth {
@@ -109,24 +110,11 @@ export class Auth {
 
   public async loginWithWallet(): Promise<AuthResult> {
     try {
-      
-
-      // Wait a moment for MiniKit to initialize if needed
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      
-
-      // Check if MiniKit is available
-      if (!MiniKit.isInstalled()) {
-        return {
-          success: false,
-          error:
-            "Wallet authentication requires World App. Please use email login or open in World App.",
-        };
-      }
-
-      
-      return await this.performBlockchainAuth();
+      // TODO: Implement Base MiniKit wallet authentication
+      return {
+        success: false,
+        error: "Base MiniKit wallet authentication not yet implemented",
+      };
     } catch (error) {
       console.error("Wallet authentication error:", error);
       return {
@@ -145,7 +133,6 @@ export class Auth {
   public async loginWithEmail(authData: EmailAuthData): Promise<AuthResult> {
     try {
        
-
       const { response, json: result } = await this.fetchJsonWithRetry(
         "/api/auth/login",
         {
@@ -203,97 +190,14 @@ export class Auth {
   }
 
   /**
-   * Perform real blockchain authentication via MiniKit
+   * TODO: Implement Base MiniKit blockchain authentication
    */
   private async performBlockchainAuth(): Promise<AuthResult> {
     try {
-      // Step 1: Get nonce from backend for security
-      const nonceResponse = await fetch("/api/nonce");
-      if (!nonceResponse.ok) {
-        throw new Error("Failed to get authentication nonce");
-      }
-      const { nonce } = await nonceResponse.json();
-
-      
-      const walletAuthInput: WalletAuthInput = {
-        nonce: nonce,
-        requestId: crypto.randomUUID(),
-        expirationTime: new Date(
-          new Date().getTime() + 7 * 24 * 60 * 60 * 1000
-        ), // 7 days
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000), // 1 day ago
-        statement:
-          "Welcome to Blockchain Quiz Challenge! Sign in to compete on the leaderboard.",
-      };
-
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth(
-        walletAuthInput
-      );
-
-      if (finalPayload.status === "error") {
-        return {
-          success: false,
-          error: "Wallet authentication failed. Please try again.",
-        };
-      }
-
-      
-      const verifyResponse = await fetch("/api/complete-siwe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          payload: finalPayload,
-          nonce,
-        }),
-      });
-
-      if (!verifyResponse.ok) {
-        throw new Error("Authentication verification failed");
-      }
-
-      const verifyResult = await verifyResponse.json();
-
-      if (!verifyResult.isValid) {
-        return {
-          success: false,
-          error: "Authentication signature is invalid",
-        };
-      }
-
-      
-
-      
-      const storedUsername =
-        typeof window !== "undefined"
-          ? localStorage.getItem("wallet_username")
-          : null;
-      const username =
-        storedUsername ||
-        MiniKit.user?.username ||
-        verifyResult.user?.username ||
-        `Player_${finalPayload.address.slice(0, 6)}`;
-
-      
-      this.user = {
-        id: verifyResult.user?.id || finalPayload.address, // Use database ID if available
-        username: username,
-        authMethod: "wallet",
-        isAuthenticated: true,
-        address: finalPayload.address,
-      };
-
-      
-
-      
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("wallet_username");
-      }
-
+      // TODO: Replace with Base MiniKit authentication flow
       return {
-        success: true,
-        user: this.user,
+        success: false,
+        error: "Base MiniKit authentication not yet implemented",
       };
     } catch (error) {
       console.error("Blockchain auth error:", error);
@@ -306,8 +210,7 @@ export class Auth {
    */
   public async registerWithEmail(authData: EmailAuthData): Promise<AuthResult> {
     try {
-      
-
+       
       if (!authData.username) {
         return {
           success: false,

@@ -1,9 +1,10 @@
-import { MiniKit, type WalletAuthInput } from "@worldcoin/minikit-js";
+// TODO: Replace with Base MiniKit imports
+// import { useMiniKit, useAuthenticate } from '@coinbase/onchainkit/minikit';
 
 /**
  * 🔐 MODULAR AUTHENTICATION SYSTEM
  * Copy-pastable authentication module supporting:
- * - MiniKit blockchain authentication (SIWE)
+ * - Base MiniKit blockchain authentication (Quick Auth / wallet auth)
  * - Email/password authentication
  * - Session management
  *
@@ -59,67 +60,16 @@ export class ModularAuth {
   }
 
   /**
-   * 🔐 MINIKIT WALLET AUTHENTICATION
-   * Real blockchain authentication with SIWE
+   * 🔐 BASE MINIKIT WALLET AUTHENTICATION
+   * Real blockchain authentication with Base MiniKit
    */
   public async authenticateWithWallet(): Promise<AuthResult> {
     try {
-       
-
-      if (!MiniKit.isInstalled()) {
-        return {
-          success: false,
-          error:
-            "MiniKit not available. Please use World App or try email authentication.",
-        };
-      }
-
-      // Step 1: Get secure nonce
-      const nonceResponse = await fetch("/api/nonce");
-      if (!nonceResponse.ok) throw new Error("Failed to get nonce");
-      const { nonce } = await nonceResponse.json();
-
-      // Step 2: MiniKit wallet authentication
-      const walletAuthInput: WalletAuthInput = {
-        nonce,
-        requestId: crypto.randomUUID(),
-        expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        statement: "Sign in to Quiz Challenge with your wallet",
+      // TODO: Implement Base MiniKit wallet authentication
+      return {
+        success: false,
+        error: "Base MiniKit wallet authentication not yet implemented",
       };
-
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth(
-        walletAuthInput
-      );
-
-      if (finalPayload.status === "error") {
-        return { success: false, error: "Wallet authentication cancelled" };
-      }
-
-      // Step 3: Verify signature on backend
-      const verifyResponse = await fetch("/api/complete-siwe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: finalPayload, nonce }),
-      });
-
-      if (!verifyResponse.ok) throw new Error("Signature verification failed");
-
-      const verifyResult = await verifyResponse.json();
-      if (!verifyResult.isValid) {
-        return { success: false, error: "Invalid signature" };
-      }
-
-      // Create authenticated user
-      this.user = {
-        id: finalPayload.address,
-        username: MiniKit.user?.username || finalPayload.address.slice(0, 8),
-        authMethod: "wallet",
-        isAuthenticated: true,
-        address: finalPayload.address,
-      };
-
-      return { success: true, user: this.user };
     } catch (error) {
       console.error("Wallet auth error:", error);
       return {
@@ -142,7 +92,6 @@ export class ModularAuth {
   ): Promise<AuthResult> {
     try {
        
-
       const response = await fetch(
         `/api/auth/${isRegister ? "register" : "login"}`,
         {
